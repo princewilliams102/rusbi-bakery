@@ -105,50 +105,68 @@ async function run() {
   console.log(' [PASS] Zero payment preset (Credit ₦0): Entire ₦12,000 drops into owing balance. Checkout enabled!');
 
   // ==========================================
-  // TEST 2: PRODUCTION (DRAWER & END BATCH)
+  // TEST 2: PRODUCTION (TWO-STEP DRAWER: MIX -> BAG)
   // ==========================================
-  console.log('\n--- 2. Testing Production Drawer & Batch Flow ---');
+  console.log('\n--- 2. Testing Production Two-Step Drawer (Mix -> Bag) ---');
   await page.evaluate(() => window.navigateTo('batches'));
   await new Promise(r => setTimeout(r, 500));
 
-  // Open Drawer
+  // 1. Open Drawer (+ Batch)
   await page.evaluate(() => window.openNewBatchDrawer());
   await new Promise(r => setTimeout(r, 300));
   const drawerOpen = await page.$eval('#drawer-new-batch', el => el.classList.contains('open'));
   assert.strictEqual(drawerOpen, true, 'Production drawer must open');
-  console.log(' [PASS] Production + Batch slide-out drawer opened');
+  console.log(' [PASS] Production + Batch drawer opened');
 
-  // Start Batch
+  // 2. Verify Phase 1 (The Mix): Immediate Target and Inventory Deductions Table
   await page.evaluate(() => {
     document.getElementById('batch-input-bags').value = '15';
-    window.executeStartBatch();
+    window.calcBatchMixPhase();
   });
-  await new Promise(r => setTimeout(r, 400));
+  const targetMixText = await page.$eval('#batch-mix-target-display', el => el.innerText);
+  const deductFlour = await page.$eval('#deduct-flour-qty', el => el.innerText);
+  const deductSugar = await page.$eval('#deduct-sugar-qty', el => el.innerText);
+  const deductMarg = await page.$eval('#deduct-marg-qty', el => el.innerText);
+  assert.ok(targetMixText.includes('1,875'), 'Target must be immediately visible as 1,875 Loaves');
+  assert.ok(deductFlour.includes('-15'), 'Flour deduction must show -15 Bags');
+  assert.ok(deductSugar.includes('-1'), 'Sugar deduction must show -1 Bag');
+  assert.ok(deductMarg.includes('-5'), 'Margarine deduction must show -5 Cartons');
+  console.log(` [PASS] Phase 1 Mix verified: Target ${targetMixText}, Deductions: Flour ${deductFlour}, Sugar ${deductSugar}, Marg ${deductMarg}`);
 
-  // Verify batch table has In Progress batch
-  const firstBatchStatus = await page.$eval('.table tbody tr:first-child td:nth-child(10)', el => el.innerText.trim());
-  assert.ok(firstBatchStatus.includes('In Progress') || firstBatchStatus.includes('Aiki'), 'New batch must be In Progress');
-  console.log(' [PASS] Batch created with status In Progress');
-
-  // Click End Batch
-  await page.evaluate(() => {
-    const endBtn = document.querySelector('.table tbody tr:first-child button');
-    if (endBtn) endBtn.click();
-  });
+  // 3. Click Start Batch: Raw materials drop, drawer stays open, transitions to Phase 2 (The Bag)
+  await page.evaluate(() => window.executeStartBatch());
   await new Promise(r => setTimeout(r, 300));
-  const modalEndOpen = await page.$eval('#modal-end-batch', el => el.classList.contains('open'));
-  assert.strictEqual(modalEndOpen, true, 'End batch modal must open');
-  console.log(' [PASS] End batch modal opened with target loaves and inputs');
+  const drawerStillOpen = await page.$eval('#drawer-new-batch', el => el.classList.contains('open'));
+  const phase1Display = await page.$eval('#batch-phase-1', el => el.style.display);
+  const phase2Display = await page.$eval('#batch-phase-2', el => el.style.display);
+  const targetBagText = await page.$eval('#end-batch-target-display', el => el.innerText);
+  assert.strictEqual(drawerStillOpen, true, 'Drawer must stay open after Start Batch');
+  assert.strictEqual(phase1Display, 'none', 'Phase 1 must be hidden');
+  assert.strictEqual(phase2Display, 'flex', 'Phase 2 (The Bag) must be visible');
+  assert.ok(targetBagText.includes('1,875'), 'Phase 2 must immediately display Target: 1,875 Loaves');
+  console.log(` [PASS] Start Batch transitioned drawer to Phase 2. Target retained: ${targetBagText}`);
 
-  // Submit End Batch
+  // 4. Input Actuals & Verify Live Yield and Variance Math
   await page.evaluate(() => {
     document.getElementById('end-batch-bagged').value = '1855';
     document.getElementById('end-batch-burnt').value = '10';
     document.getElementById('end-batch-fallen').value = '5';
-    window.executeEndBatch();
+    window.calcBatchEndYield();
   });
+  const yieldDisplay = await page.$eval('#end-batch-yield-display', el => el.innerText);
+  const varianceDisplay = await page.$eval('#end-batch-variance-display', el => el.innerText);
+  assert.ok(yieldDisplay.includes('98.9%'), 'Yield must compute to 98.9%');
+  assert.ok(varianceDisplay.includes('-20'), 'Variance must compute to -20');
+  console.log(` [PASS] Live math verified: Yield ${yieldDisplay}, Variance ${varianceDisplay}`);
+
+  // 5. Submit End Batch: Finished goods added to inventory, batch completed, drawer closed
+  await page.evaluate(() => window.executeEndBatch());
   await new Promise(r => setTimeout(r, 400));
-  console.log(' [PASS] Batch finished, yield computed, finished bread added to inventory');
+  const drawerClosed = await page.$eval('#drawer-new-batch', el => !el.classList.contains('open'));
+  assert.strictEqual(drawerClosed, true, 'Drawer must close upon completing batch');
+  const firstBatchStatus = await page.$eval('.table tbody tr:first-child td:nth-child(10)', el => el.innerText.trim());
+  assert.ok(firstBatchStatus.includes('Completed') || firstBatchStatus.includes('Kammala'), 'Batch status must be Completed');
+  console.log(' [PASS] End Batch complete: Added to inventory, status Completed, table updated with [ View ]');
 
   // ==========================================
   // TEST 3: CRATES (SECURITY GUARD & RECOVERY)

@@ -123,11 +123,11 @@ async function captureAll() {
     if (item.route === 'pos') {
       console.log('Capturing: Sales POS Balanced State...');
       await page.evaluate(() => {
-        const cashInput = document.getElementById('tender-cash');
+        const paidInput = document.getElementById('pos-amount-paid');
         const target = window.posCalculatedTotal || 8500;
-        if (cashInput) {
-          cashInput.value = target;
-          window.calcLiveTenders();
+        if (paidInput) {
+          paidInput.value = target;
+          if (typeof window.calcPosPaymentMath === 'function') window.calcPosPaymentMath();
         }
       });
       await new Promise(r => setTimeout(r, 400));
@@ -136,9 +136,9 @@ async function captureAll() {
       console.log(`Saved: ${paidPath}`);
     }
 
-    // If batches, capture slide-out drawer
+    // If batches, capture Two-Step slide-out drawer (Phase 1: Mix & Phase 2: Bag)
     if (item.route === 'batches') {
-      console.log('Capturing: Production + Batch Slide Drawer...');
+      console.log('Capturing: Production Drawer Phase 1 (Mix & Raw Materials Deduction)...');
       await page.evaluate(() => {
         if (typeof window.openNewBatchDrawer === 'function') window.openNewBatchDrawer();
       });
@@ -146,6 +146,16 @@ async function captureAll() {
       const drawerPath = path.join(pagesDir, '04b_production_batch_drawer.png');
       await page.screenshot({ path: drawerPath, fullPage: false });
       console.log(`Saved: ${drawerPath}`);
+
+      console.log('Capturing: Production Drawer Phase 2 (The Bag & Target Loaves)...');
+      await page.evaluate(() => {
+        if (typeof window.executeStartBatch === 'function') window.executeStartBatch();
+      });
+      await new Promise(r => setTimeout(r, 500));
+      const phase2Path = path.join(pagesDir, '04c_production_batch_bag_phase.png');
+      await page.screenshot({ path: phase2Path, fullPage: false });
+      console.log(`Saved: ${phase2Path}`);
+
       await page.evaluate(() => {
         if (typeof window.closeModal === 'function') window.closeModal('drawer-new-batch');
       });

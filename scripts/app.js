@@ -9707,14 +9707,63 @@ window.submitPosCheckout = function() {
 };
 
 // ----------------------------------------------------
-// OPERATIONAL LOGIC: PRODUCTION DRAWER & MODAL
+// OPERATIONAL LOGIC: TWO-STEP PRODUCTION DRAWER (MIX -> BAG)
 // ----------------------------------------------------
+window.calcBatchMixPhase = function() {
+  const recipeEl = document.getElementById('batch-input-recipe');
+  const recipe = recipeEl?.value || 'Jumbo';
+  let yieldPerBag = 125;
+  if (recipe.includes('Family')) yieldPerBag = 150;
+  if (recipe.includes('Medium')) yieldPerBag = 180;
+
+  const bagsInput = document.getElementById('batch-input-bags');
+  const bags = Math.max(1, Number(bagsInput?.value || 15));
+
+  const targetLoaves = bags * yieldPerBag;
+  const targetDisplay = document.getElementById('batch-mix-target-display');
+  if (targetDisplay) {
+    targetDisplay.innerText = targetLoaves.toLocaleString() + ' Loaves';
+  }
+
+  // Live Inventory Deductions Table
+  const flourEl = document.getElementById('deduct-flour-qty');
+  const sugarEl = document.getElementById('deduct-sugar-qty');
+  const margEl = document.getElementById('deduct-marg-qty');
+  const yeastEl = document.getElementById('deduct-yeast-qty');
+
+  const sugarBags = Math.max(1, Math.round(bags / 15));
+  const margCartons = Math.max(1, Math.round(bags / 3));
+  const yeastCartons = Math.max(1, Math.round(bags / 5));
+
+  if (flourEl) flourEl.innerText = `-${bags} Bags`;
+  if (sugarEl) sugarEl.innerText = `-${sugarBags} Bag${sugarBags > 1 ? 's' : ''}`;
+  if (margEl) margEl.innerText = `-${margCartons} Carton${margCartons > 1 ? 's' : ''}`;
+  if (yeastEl) yeastEl.innerText = `-${yeastCartons} Carton${yeastCartons > 1 ? 's' : ''}`;
+};
+
 window.openNewBatchDrawer = function() {
   const dtInput = document.getElementById('batch-input-datetime');
   if (dtInput) {
     const now = new Date();
     dtInput.value = now.toISOString().slice(0, 16).replace('T', ' ');
   }
+
+  const titleEl = document.getElementById('batch-drawer-title');
+  if (titleEl) titleEl.innerText = '+ Batch';
+
+  const badgeEl = document.getElementById('batch-drawer-step-badge');
+  if (badgeEl) {
+    badgeEl.innerText = 'Phase 1: Mix';
+    badgeEl.className = 'badge badge--pine';
+  }
+
+  const phase1 = document.getElementById('batch-phase-1');
+  const phase2 = document.getElementById('batch-phase-2');
+  if (phase1) phase1.style.display = 'flex';
+  if (phase2) phase2.style.display = 'none';
+
+  window.calcBatchMixPhase();
+
   const drawer = document.getElementById('drawer-new-batch');
   if (drawer) drawer.classList.add('open');
 };
@@ -9725,7 +9774,12 @@ window.executeStartBatch = function(e) {
   const shift = document.getElementById('batch-input-shift')?.value || 'Morning Shift';
   const baker = document.getElementById('batch-input-baker')?.value || 'Aliyu Danladi (Head Baker)';
   const recipe = document.getElementById('batch-input-recipe')?.value || 'Rusbi Special Jumbo Loaf (₦850)';
-  const bags = Number(document.getElementById('batch-input-bags')?.value || 15);
+  const bags = Math.max(1, Number(document.getElementById('batch-input-bags')?.value || 15));
+
+  let yieldPerBag = 125;
+  if (recipe.includes('Family')) yieldPerBag = 150;
+  if (recipe.includes('Medium')) yieldPerBag = 180;
+  const targetLoaves = bags * yieldPerBag;
 
   const entity = state.entities[0];
   if (!Array.isArray(entity.flourBatches)) entity.flourBatches = [];
@@ -9735,13 +9789,14 @@ window.executeStartBatch = function(e) {
   const flourItem = inv.find(i => (i.name || '').toLowerCase().includes('flour'));
   if (flourItem) flourItem.qtyOnHand = Math.max(0, (Number(flourItem.qtyOnHand) || 120) - bags);
 
+  const sugarDeduct = Math.max(1, Math.round(bags / 15));
   const sugarItem = inv.find(i => (i.name || '').toLowerCase().includes('sugar'));
-  if (sugarItem) sugarItem.qtyOnHand = Math.max(0, (Number(sugarItem.qtyOnHand) || 50) - 1);
+  if (sugarItem) sugarItem.qtyOnHand = Math.max(0, (Number(sugarItem.qtyOnHand) || 50) - sugarDeduct);
 
+  const margDeduct = Math.max(1, Math.round(bags / 3));
   const margItem = inv.find(i => (i.name || '').toLowerCase().includes('margarine'));
-  if (margItem) margItem.qtyOnHand = Math.max(0, (Number(margItem.qtyOnHand) || 40) - 5);
+  if (margItem) margItem.qtyOnHand = Math.max(0, (Number(margItem.qtyOnHand) || 40) - margDeduct);
 
-  const targetLoaves = bags * 125;
   const newBatch = {
     id: `BAT-2026-${Date.now().toString().slice(-4)}`,
     datetime: dt,
@@ -9759,41 +9814,247 @@ window.executeStartBatch = function(e) {
 
   entity.flourBatches.unshift(newBatch);
   saveState();
-  window.closeModal('drawer-new-batch');
-  showToast(`✓ Batch started: ${bags} bags flour deducted from inventory!`);
-  window.navigateTo('batches');
+
+  // Re-render table in background if currently visible
+  const mainContent = document.getElementById('main-content');
+  if (mainContent && window.currentNav === 'batches') {
+    renderBatchesView(mainContent, state);
+  }
+
+  // TRANSITION DIRECTLY TO PHASE 2 IN THE SAME DRAWER (DO NOT CLOSE!)
+  const titleEl = document.getElementById('batch-drawer-title');
+  if (titleEl) titleEl.innerHTML = `Batch: <b>${newBatch.id.split('-').slice(-2).join('-')}</b>`;
+
+  const badgeEl = document.getElementById('batch-drawer-step-badge');
+  if (badgeEl) {
+    badgeEl.innerText = 'Phase 2: Bag';
+    badgeEl.className = 'badge badge--butter';
+  }
+
+  const idInput = document.getElementById('end-batch-id');
+  if (idInput) idInput.value = newBatch.id;
+
+  const recipeTitle = document.getElementById('end-batch-recipe-title');
+  if (recipeTitle) recipeTitle.innerText = recipe.split('(')[0].trim();
+
+  const bakerSub = document.getElementById('end-batch-baker-subtitle');
+  if (bakerSub) bakerSub.innerText = `${baker.split('(')[0].trim()} • ${bags} Bags`;
+
+  const statusBadge = document.getElementById('end-batch-status-badge');
+  if (statusBadge) {
+    statusBadge.innerText = 'In Progress';
+    statusBadge.className = 'badge badge--butter';
+  }
+
+  const targetDisplay = document.getElementById('end-batch-target-display');
+  if (targetDisplay) targetDisplay.innerText = `${targetLoaves.toLocaleString()} Loaves`;
+
+  const baggedInput = document.getElementById('end-batch-bagged');
+  if (baggedInput) {
+    baggedInput.disabled = false;
+    baggedInput.value = targetLoaves - 20;
+  }
+
+  const burntInput = document.getElementById('end-batch-burnt');
+  if (burntInput) {
+    burntInput.disabled = false;
+    burntInput.value = 10;
+  }
+
+  const fallenInput = document.getElementById('end-batch-fallen');
+  if (fallenInput) {
+    fallenInput.disabled = false;
+    fallenInput.value = 5;
+  }
+
+  const endBtn = document.getElementById('btn-end-batch');
+  if (endBtn) {
+    endBtn.innerText = 'End Batch';
+    endBtn.style.display = 'flex';
+    endBtn.onclick = window.executeEndBatch;
+  }
+
+  window.calcBatchEndYield();
+
+  const phase1 = document.getElementById('batch-phase-1');
+  const phase2 = document.getElementById('batch-phase-2');
+  if (phase1) phase1.style.display = 'none';
+  if (phase2) phase2.style.display = 'flex';
+
+  const drawer = document.getElementById('drawer-new-batch');
+  if (drawer) drawer.classList.add('open');
+
+  showToast(`✓ Batch started: ${bags} bags deducted! Target: ${targetLoaves.toLocaleString()} loaves.`);
+};
+
+window.openFinishBatchDrawer = function(batchId) {
+  const entity = state.entities[0];
+  const batch = (entity.flourBatches || []).find(b => b.id === batchId);
+  if (!batch) return;
+
+  const targetLoaves = batch.targetLoaves || (batch.flourBags50kg * 125);
+
+  const titleEl = document.getElementById('batch-drawer-title');
+  if (titleEl) titleEl.innerHTML = `Batch: <b>${batch.id.split('-').slice(-2).join('-')}</b>`;
+
+  const badgeEl = document.getElementById('batch-drawer-step-badge');
+  if (badgeEl) {
+    badgeEl.innerText = 'Phase 2: Bag';
+    badgeEl.className = 'badge badge--butter';
+  }
+
+  const idInput = document.getElementById('end-batch-id');
+  if (idInput) idInput.value = batch.id;
+
+  const recipeTitle = document.getElementById('end-batch-recipe-title');
+  if (recipeTitle) recipeTitle.innerText = (batch.recipe || '').split('(')[0].trim();
+
+  const bakerSub = document.getElementById('end-batch-baker-subtitle');
+  if (bakerSub) bakerSub.innerText = `${(batch.chiefBaker || '').split('(')[0].trim()} • ${batch.flourBags50kg || 15} Bags`;
+
+  const statusBadge = document.getElementById('end-batch-status-badge');
+  if (statusBadge) {
+    statusBadge.innerText = 'In Progress';
+    statusBadge.className = 'badge badge--butter';
+  }
+
+  const targetDisplay = document.getElementById('end-batch-target-display');
+  if (targetDisplay) targetDisplay.innerText = `${targetLoaves.toLocaleString()} Loaves`;
+
+  const baggedInput = document.getElementById('end-batch-bagged');
+  if (baggedInput) {
+    baggedInput.disabled = false;
+    baggedInput.value = batch.actualLoaves > 0 ? batch.actualLoaves : (targetLoaves - 20);
+  }
+
+  const burntInput = document.getElementById('end-batch-burnt');
+  if (burntInput) {
+    burntInput.disabled = false;
+    burntInput.value = batch.burntLoaves || 10;
+  }
+
+  const fallenInput = document.getElementById('end-batch-fallen');
+  if (fallenInput) {
+    fallenInput.disabled = false;
+    fallenInput.value = batch.fallenLoaves || 5;
+  }
+
+  const endBtn = document.getElementById('btn-end-batch');
+  if (endBtn) {
+    endBtn.innerText = 'End Batch';
+    endBtn.style.display = 'flex';
+    endBtn.onclick = window.executeEndBatch;
+  }
+
+  window.calcBatchEndYield();
+
+  const phase1 = document.getElementById('batch-phase-1');
+  const phase2 = document.getElementById('batch-phase-2');
+  if (phase1) phase1.style.display = 'none';
+  if (phase2) phase2.style.display = 'flex';
+
+  const drawer = document.getElementById('drawer-new-batch');
+  if (drawer) drawer.classList.add('open');
+};
+
+window.openViewBatchDrawer = function(batchId) {
+  const entity = state.entities[0];
+  const batch = (entity.flourBatches || []).find(b => b.id === batchId);
+  if (!batch) return;
+
+  const targetLoaves = batch.targetLoaves || (batch.flourBags50kg * 125);
+
+  const titleEl = document.getElementById('batch-drawer-title');
+  if (titleEl) titleEl.innerHTML = `Batch: <b>${batch.id.split('-').slice(-2).join('-')}</b>`;
+
+  const badgeEl = document.getElementById('batch-drawer-step-badge');
+  if (badgeEl) {
+    badgeEl.innerText = 'Completed';
+    badgeEl.className = 'badge badge--pine';
+  }
+
+  const idInput = document.getElementById('end-batch-id');
+  if (idInput) idInput.value = batch.id;
+
+  const recipeTitle = document.getElementById('end-batch-recipe-title');
+  if (recipeTitle) recipeTitle.innerText = (batch.recipe || '').split('(')[0].trim();
+
+  const bakerSub = document.getElementById('end-batch-baker-subtitle');
+  if (bakerSub) bakerSub.innerText = `${(batch.chiefBaker || '').split('(')[0].trim()} • ${batch.flourBags50kg || 15} Bags`;
+
+  const statusBadge = document.getElementById('end-batch-status-badge');
+  if (statusBadge) {
+    statusBadge.innerText = 'Completed';
+    statusBadge.className = 'badge badge--pine';
+  }
+
+  const targetDisplay = document.getElementById('end-batch-target-display');
+  if (targetDisplay) targetDisplay.innerText = `${targetLoaves.toLocaleString()} Loaves`;
+
+  const baggedInput = document.getElementById('end-batch-bagged');
+  if (baggedInput) {
+    baggedInput.disabled = true;
+    baggedInput.value = batch.actualLoaves;
+  }
+
+  const burntInput = document.getElementById('end-batch-burnt');
+  if (burntInput) {
+    burntInput.disabled = true;
+    burntInput.value = batch.burntLoaves;
+  }
+
+  const fallenInput = document.getElementById('end-batch-fallen');
+  if (fallenInput) {
+    fallenInput.disabled = true;
+    fallenInput.value = batch.fallenLoaves;
+  }
+
+  const endBtn = document.getElementById('btn-end-batch');
+  if (endBtn) {
+    endBtn.innerText = 'Close';
+    endBtn.style.display = 'flex';
+    endBtn.onclick = function() { window.closeModal('drawer-new-batch'); };
+  }
+
+  window.calcBatchEndYield();
+
+  const phase1 = document.getElementById('batch-phase-1');
+  const phase2 = document.getElementById('batch-phase-2');
+  if (phase1) phase1.style.display = 'none';
+  if (phase2) phase2.style.display = 'flex';
+
+  const drawer = document.getElementById('drawer-new-batch');
+  if (drawer) drawer.classList.add('open');
 };
 
 window.openEndBatchModal = function(batchId, targetLoaves) {
-  const idInput = document.getElementById('end-batch-id');
-  const targetDisplay = document.getElementById('end-batch-target-display');
-  const baggedInput = document.getElementById('end-batch-bagged');
-  const burntInput = document.getElementById('end-batch-burnt');
-  const fallenInput = document.getElementById('end-batch-fallen');
-
-  if (idInput) idInput.value = batchId;
-  if (targetDisplay) targetDisplay.innerText = Number(targetLoaves).toLocaleString();
-  if (baggedInput) baggedInput.value = targetLoaves - 20;
-  if (burntInput) burntInput.value = 15;
-  if (fallenInput) fallenInput.value = 5;
-
-  window.calcBatchEndYield();
-  const modal = document.getElementById('modal-end-batch');
-  if (modal) modal.classList.add('open');
+  window.openFinishBatchDrawer(batchId);
 };
 
 window.calcBatchEndYield = function() {
   const targetDisplay = document.getElementById('end-batch-target-display');
-  const target = Number((targetDisplay?.innerText || '1875').replace(/,/g, '')) || 1875;
+  const target = Number((targetDisplay?.innerText || '1875').replace(/[^0-9]/g, '')) || 1875;
   const bagged = Number(document.getElementById('end-batch-bagged')?.value || 0);
   const burnt = Number(document.getElementById('end-batch-burnt')?.value || 0);
   const fallen = Number(document.getElementById('end-batch-fallen')?.value || 0);
-  const yieldPct = ((bagged + burnt + fallen) / target) * 100;
 
-  const display = document.getElementById('end-batch-yield-display');
-  if (display) {
-    display.innerText = `${yieldPct.toFixed(1)}%`;
-    display.style.color = Math.abs(yieldPct - 100) <= 2.5 ? 'var(--rusbi-green)' : 'var(--bad)';
+  const accounted = bagged + burnt + fallen;
+  const yieldPct = target > 0 ? (bagged / target) * 100 : 100;
+  const variance = bagged - target;
+
+  const accountedEl = document.getElementById('end-batch-accounted-display');
+  if (accountedEl) accountedEl.innerText = `${accounted.toLocaleString()} Loaves`;
+
+  const yieldEl = document.getElementById('end-batch-yield-display');
+  if (yieldEl) {
+    yieldEl.innerText = `${yieldPct.toFixed(1)}%`;
+    yieldEl.style.color = Math.abs(yieldPct - 100) <= 2.5 ? 'var(--rusbi-green)' : 'var(--bad)';
+  }
+
+  const varianceEl = document.getElementById('end-batch-variance-display');
+  if (varianceEl) {
+    varianceEl.innerText = `${variance >= 0 ? '+' : ''}${variance.toLocaleString()}`;
+    varianceEl.style.color = variance >= -25 ? 'var(--rusbi-green)' : 'var(--bad)';
   }
 };
 
@@ -9822,9 +10083,14 @@ window.executeEndBatch = function(e) {
   }
 
   saveState();
-  window.closeModal('modal-end-batch');
-  showToast(`✓ Batch completed: ${bagged.toLocaleString()} loaves added to finished inventory!`);
-  window.navigateTo('batches');
+  window.closeModal('drawer-new-batch');
+  const yieldVal = ((bagged / target) * 100).toFixed(1);
+  showToast(`✓ Batch completed: ${bagged.toLocaleString()} loaves added to finished inventory! Yield: ${yieldVal}%`);
+
+  const mainContent = document.getElementById('main-content');
+  if (mainContent && window.currentNav === 'batches') {
+    renderBatchesView(mainContent, state);
+  }
 };
 
 // ----------------------------------------------------

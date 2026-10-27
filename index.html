@@ -293,98 +293,172 @@
     </div>
   </div>
 
-  <!-- Drawer: New Production Batch -->
+  <!-- Drawer: Production Batch (Two-Step: Mix & Bag) -->
   <div class="apex-modal-overlay" id="drawer-new-batch">
     <div class="apex-drawer-card">
       <div class="apex-modal-header">
-        <b style="font-size: 16px;">+ <span data-i18n="nav_batches">Batch</span></b>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <b style="font-size: 16px;" id="batch-drawer-title">+ Batch</b>
+          <span class="badge badge--pine" id="batch-drawer-step-badge">Phase 1: Mix</span>
+        </div>
         <button type="button" class="ibtn ibtn--sm" onclick="window.closeModal('drawer-new-batch')">✕</button>
       </div>
       <div class="apex-modal-body">
-        <form onsubmit="window.executeStartBatch(event)" style="display: flex; flex-direction: column; gap: 14px;">
+        <!-- ================= PHASE 1: THE MIX (Raw Materials Go OUT) ================= -->
+        <div id="batch-phase-1" style="display: flex; flex-direction: column; gap: 14px;">
           <div>
-            <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Date &amp; Time</label>
+            <label style="font-size: 11.5px; font-weight: 800; text-transform: uppercase; color: var(--muted); letter-spacing: 0.03em; display: block; margin-bottom: 4px;">
+              Date &amp; Time
+            </label>
             <input type="text" id="batch-input-datetime" class="input" required>
           </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div>
+              <label style="font-size: 11.5px; font-weight: 800; text-transform: uppercase; color: var(--muted); letter-spacing: 0.03em; display: block; margin-bottom: 4px;">
+                Shift
+              </label>
+              <select id="batch-input-shift" class="input" style="font-weight: 700;">
+                <option value="Morning Shift (5:00 AM - 1:00 PM)">Morning</option>
+                <option value="Afternoon Shift (1:00 PM - 9:00 PM)">Afternoon</option>
+                <option value="Night Shift (9:00 PM - 5:00 AM)">Night</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size: 11.5px; font-weight: 800; text-transform: uppercase; color: var(--muted); letter-spacing: 0.03em; display: block; margin-bottom: 4px;">
+                Baker
+              </label>
+              <select id="batch-input-baker" class="input" style="font-weight: 700;">
+                <option value="Aliyu Danladi (Head Baker)">Aliyu</option>
+                <option value="Ibrahim Sani (Assistant Baker)">Ibrahim</option>
+                <option value="Usman Bello (Shift Master)">Usman</option>
+              </select>
+            </div>
+          </div>
+
           <div>
-            <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Shift</label>
-            <select id="batch-input-shift" class="input" style="font-weight: 700;">
-              <option value="Morning Shift (5:00 AM - 1:00 PM)">Morning Shift</option>
-              <option value="Afternoon Shift (1:00 PM - 9:00 PM)">Afternoon Shift</option>
-              <option value="Night Shift (9:00 PM - 5:00 AM)">Night Shift</option>
+            <label style="font-size: 11.5px; font-weight: 800; text-transform: uppercase; color: var(--muted); letter-spacing: 0.03em; display: block; margin-bottom: 4px;">
+              Recipe
+            </label>
+            <select id="batch-input-recipe" class="input" style="font-weight: 700;" onchange="window.calcBatchMixPhase()">
+              <option value="Rusbi Special Jumbo Loaf (₦850)" data-yield="125" selected>Jumbo Bread (₦850)</option>
+              <option value="Rusbi Special Family Loaf (₦600)" data-yield="150">Family Bread (₦600)</option>
+              <option value="Rusbi Special Medium Loaf (₦450)" data-yield="180">Medium Bread (₦450)</option>
             </select>
           </div>
+
           <div>
-            <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Baker</label>
-            <select id="batch-input-baker" class="input" style="font-weight: 700;">
-              <option value="Aliyu Danladi (Head Baker)">Aliyu Danladi</option>
-              <option value="Ibrahim Sani (Assistant Baker)">Ibrahim Sani</option>
-              <option value="Usman Bello (Shift Master)">Usman Bello</option>
-            </select>
+            <label style="font-size: 11.5px; font-weight: 800; text-transform: uppercase; color: var(--muted); letter-spacing: 0.03em; display: block; margin-bottom: 4px;">
+              Flour Bags Used
+            </label>
+            <input type="number" id="batch-input-bags" class="input" min="1" value="15" required style="font-size: 22px; font-weight: 900; text-align: center; height: 46px;" oninput="window.calcBatchMixPhase()">
           </div>
-          <div>
-            <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Recipe</label>
-            <select id="batch-input-recipe" class="input" style="font-weight: 700;">
-              <option value="Rusbi Special Jumbo Loaf (₦850)">Jumbo Bread (₦850)</option>
-              <option value="Rusbi Special Family Loaf (₦600)">Family Bread (₦600)</option>
-              <option value="Rusbi Special Medium Loaf (₦450)">Medium Bread (₦450)</option>
-            </select>
+
+          <!-- Immediate Live Target Banner -->
+          <div style="background: var(--well); border-radius: 10px; padding: 12px 16px; border: 1.5px solid var(--rusbi-green); display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 11.5px; font-weight: 800; text-transform: uppercase; color: var(--muted); letter-spacing: 0.04em;">Target</span>
+            <b id="batch-mix-target-display" style="font-size: 20px; font-weight: 900; color: var(--rusbi-green);">1,875 Loaves</b>
           </div>
-          <div>
-            <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Flour Bags Used</label>
-            <input type="number" id="batch-input-bags" class="input" min="1" value="15" required style="font-size: 20px; font-weight: 900; text-align: center;">
+
+          <!-- Structured Inventory Deduction Table -->
+          <div style="background: var(--well); border-radius: 10px; padding: 12px 14px; border: 1px solid var(--line);">
+            <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--muted); letter-spacing: 0.04em; margin-bottom: 8px;">
+              Raw Materials Deducted
+            </div>
+            <table style="width: 100%; font-size: 13px; border-collapse: collapse;">
+              <tbody>
+                <tr style="border-bottom: 1px dashed var(--line); height: 28px;">
+                  <td style="font-weight: 600;">Flour</td>
+                  <td id="deduct-flour-qty" style="text-align: right; font-weight: 800; color: var(--bad);">-15 Bags</td>
+                </tr>
+                <tr style="border-bottom: 1px dashed var(--line); height: 28px;">
+                  <td style="font-weight: 600;">Sugar</td>
+                  <td id="deduct-sugar-qty" style="text-align: right; font-weight: 800; color: var(--bad);">-1 Bag</td>
+                </tr>
+                <tr style="border-bottom: 1px dashed var(--line); height: 28px;">
+                  <td style="font-weight: 600;">Margarine</td>
+                  <td id="deduct-marg-qty" style="text-align: right; font-weight: 800; color: var(--bad);">-5 Cartons</td>
+                </tr>
+                <tr style="height: 28px;">
+                  <td style="font-weight: 600;">Yeast</td>
+                  <td id="deduct-yeast-qty" style="text-align: right; font-weight: 800; color: var(--bad);">-3 Cartons</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          <div style="background: var(--well); border-radius: 8px; padding: 12px; font-size: 12px; color: var(--muted); border: 1px solid var(--line);">
-            <span>Ingredients automatically deducted on Start:</span><br>
-            <b>• 15 Bags Flour (50kg) • 1 Bag Sugar • 5 Cartons Margarine</b>
-          </div>
-          <button type="submit" class="btn btn--ink" style="width: 100%; height: 46px; font-weight: 850; background: var(--rusbi-green); border-color: var(--rusbi-green); justify-content: center; margin-top: 10px;">
+
+          <button type="button" id="btn-start-batch" class="btn btn--ink" onclick="window.executeStartBatch(event)" style="width: 100%; height: 48px; font-weight: 850; background: var(--rusbi-green); border-color: var(--rusbi-green); justify-content: center; font-size: 16px;">
             Start Batch
           </button>
-        </form>
+        </div>
+
+        <!-- ================= PHASE 2: THE BAG (Finished Goods Go IN) ================= -->
+        <div id="batch-phase-2" style="display: none; flex-direction: column; gap: 14px;">
+          <input type="hidden" id="end-batch-id">
+
+          <!-- Active Batch Info Card -->
+          <div style="background: var(--well); border-radius: 10px; padding: 12px; border: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div id="end-batch-recipe-title" style="font-size: 14px; font-weight: 800;">Jumbo Bread</div>
+              <div id="end-batch-baker-subtitle" style="font-size: 12px; color: var(--muted); font-weight: 600;">Aliyu • 15 Bags</div>
+            </div>
+            <span class="badge badge--butter" id="end-batch-status-badge">In Progress</span>
+          </div>
+
+          <!-- Prominent Target Banner -->
+          <div style="background: var(--well); border-radius: 10px; padding: 14px; border: 2px solid var(--rusbi-green); text-align: center;">
+            <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--muted); letter-spacing: 0.05em; margin-bottom: 4px;">Target</div>
+            <b id="end-batch-target-display" style="font-size: 26px; font-weight: 900; color: var(--rusbi-green);">1,875 Loaves</b>
+          </div>
+
+          <div>
+            <label style="font-size: 11.5px; font-weight: 800; text-transform: uppercase; color: var(--muted); letter-spacing: 0.03em; display: block; margin-bottom: 4px;">
+              Bagged
+            </label>
+            <input type="number" id="end-batch-bagged" class="input" min="0" required style="font-size: 22px; font-weight: 900; text-align: center; height: 46px;" oninput="window.calcBatchEndYield()">
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div>
+              <label style="font-size: 11.5px; font-weight: 800; text-transform: uppercase; color: var(--bad); letter-spacing: 0.03em; display: block; margin-bottom: 4px;">
+                Burnt
+              </label>
+              <input type="number" id="end-batch-burnt" class="input" min="0" value="0" style="font-size: 18px; font-weight: 850; text-align: center; color: var(--bad);" oninput="window.calcBatchEndYield()">
+            </div>
+            <div>
+              <label style="font-size: 11.5px; font-weight: 800; text-transform: uppercase; color: var(--bad); letter-spacing: 0.03em; display: block; margin-bottom: 4px;">
+                Fallen
+              </label>
+              <input type="number" id="end-batch-fallen" class="input" min="0" value="0" style="font-size: 18px; font-weight: 850; text-align: center; color: var(--bad);" oninput="window.calcBatchEndYield()">
+            </div>
+          </div>
+
+          <!-- Live Math & Yield/Variance Card -->
+          <div style="background: var(--well); border-radius: 10px; padding: 12px 14px; border: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px;">
+              <span style="color: var(--muted); font-weight: 700;">Accounted:</span>
+              <b id="end-batch-accounted-display" style="font-weight: 800;">1,870 Loaves</b>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 13px; font-weight: 800;">Yield:</span>
+              <b id="end-batch-yield-display" style="font-size: 20px; font-weight: 900; color: var(--rusbi-green);">98.9%</b>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 13px; font-weight: 800;">Variance:</span>
+              <b id="end-batch-variance-display" style="font-size: 16px; font-weight: 850; color: var(--bad);">-20</b>
+            </div>
+          </div>
+
+          <button type="button" id="btn-end-batch" class="btn btn--ink" onclick="window.executeEndBatch(event)" style="width: 100%; height: 48px; font-weight: 850; background: var(--rusbi-green); border-color: var(--rusbi-green); justify-content: center; font-size: 16px;">
+            End Batch
+          </button>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Modal: End Production Batch -->
-  <div class="apex-modal-overlay" id="modal-end-batch">
-    <div class="apex-modal-card" style="max-width: 440px;">
-      <div class="apex-modal-header">
-        <b style="font-size: 16px;">End Batch</b>
-        <button type="button" class="ibtn ibtn--sm" onclick="window.closeModal('modal-end-batch')">✕</button>
-      </div>
-      <div class="apex-modal-body">
-        <form onsubmit="window.executeEndBatch(event)" style="display: flex; flex-direction: column; gap: 12px;">
-          <input type="hidden" id="end-batch-id">
-          <div style="background: var(--well); border-radius: 8px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-size: 12px; color: var(--muted); font-weight: 700;">Target Loaves:</span>
-            <b id="end-batch-target-display" style="font-size: 16px;">1,875</b>
-          </div>
-          <div>
-            <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Bagged Loaves</label>
-            <input type="number" id="end-batch-bagged" class="input" min="0" required style="font-size: 18px; font-weight: 850;" oninput="window.calcBatchEndYield()">
-          </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-            <div>
-              <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px; color: var(--bad);">Burnt</label>
-              <input type="number" id="end-batch-burnt" class="input" min="0" value="0" style="font-size: 16px; font-weight: 850;" oninput="window.calcBatchEndYield()">
-            </div>
-            <div>
-              <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px; color: var(--bad);">Fallen</label>
-              <input type="number" id="end-batch-fallen" class="input" min="0" value="0" style="font-size: 16px; font-weight: 850;" oninput="window.calcBatchEndYield()">
-            </div>
-          </div>
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: var(--well); border-radius: 8px; margin-top: 4px;">
-            <span style="font-size: 12px; font-weight: 700;">Yield Efficiency:</span>
-            <b id="end-batch-yield-display" style="font-size: 18px; color: var(--rusbi-green); font-weight: 900;">100.0%</b>
-          </div>
-          <button type="submit" class="btn btn--ink" style="width: 100%; height: 46px; font-weight: 850; background: var(--rusbi-green); border-color: var(--rusbi-green); justify-content: center; margin-top: 8px;">
-            Finish Batch
-          </button>
-        </form>
-      </div>
-    </div>
-  </div>
+  <!-- Backward Compatibility Alias Overlay for End Batch Modal queries -->
+  <div class="apex-modal-overlay" id="modal-end-batch" style="display: none;"></div>
 
   <!-- Modal: Crates Return or Charge -->
   <div class="apex-modal-overlay" id="modal-crate-action">

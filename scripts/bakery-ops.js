@@ -769,7 +769,7 @@ export function renderBatchesView(container, state) {
               <th>${isHa ? 'Faduwa' : 'Fallen'}</th>
               <th>${isHa ? 'Kashi' : 'Yield'}</th>
               <th>${isHa ? 'Hali' : 'Status'}</th>
-              <th>${isHa ? 'Aiki' : 'Action'}</th>
+              <th style="text-align: right;"></th>
             </tr>
           </thead>
           <tbody>
@@ -781,14 +781,14 @@ export function renderBatchesView(container, state) {
                 <td>${b.shift.split('(')[0].trim()}</td>
                 <td><b>${b.recipe.split('(')[0].split('&')[0].trim()}</b></td>
                 <td><b>${b.flourBags50kg}</b></td>
-                <td class="num">${b.targetLoaves}</td>
-                <td class="num font-bold" style="color: var(--rusbi-green);">${isInProgress ? '—' : b.actualLoaves}</td>
+                <td class="num font-bold">${b.targetLoaves.toLocaleString()}</td>
+                <td class="num font-bold" style="color: var(--rusbi-green);">${isInProgress ? '—' : b.actualLoaves.toLocaleString()}</td>
                 <td class="num" style="color: var(--bad);">${isInProgress ? '—' : b.burntLoaves}</td>
                 <td class="num" style="color: var(--bad);">${isInProgress ? '—' : b.fallenLoaves}</td>
                 <td>
                   ${isInProgress
                     ? `<span class="badge badge--butter">${isHa ? 'Yana Aiki' : 'In Progress'}</span>`
-                    : `<span class="badge ${Math.abs(b.variancePct) <= 2 ? 'badge--pine' : 'badge--tomato'}">${(100 + (b.variancePct || 0)).toFixed(1)}%</span>`
+                    : `<span class="badge ${Math.abs(b.variancePct) <= 2.5 ? 'badge--pine' : 'badge--tomato'}">${(100 + (b.variancePct || 0)).toFixed(1)}%</span>`
                   }
                 </td>
                 <td>
@@ -797,10 +797,10 @@ export function renderBatchesView(container, state) {
                     : `<span class="badge badge--pine">${isHa ? 'Kammala' : 'Completed'}</span>`
                   }
                 </td>
-                <td>
+                <td style="text-align: right;">
                   ${isInProgress
-                    ? `<button class="btn btn--sm btn--ink" onclick="window.openEndBatchModal('${b.id}', ${b.targetLoaves})" style="background: var(--rusbi-green); border-color: var(--rusbi-green); font-weight: 700;">${isHa ? 'Kammala' : 'End Batch'}</button>`
-                    : `<span style="color: var(--muted); font-size: 12px; font-weight: 700;">✓ ${isHa ? 'Daidai' : 'Done'}</span>`
+                    ? `<button class="btn btn--sm btn--ink" onclick="window.openFinishBatchDrawer('${b.id}')" style="background: var(--rusbi-green); border-color: var(--rusbi-green); font-weight: 800; padding: 4px 12px;">${isHa ? 'Kammala' : 'Finish Batch'}</button>`
+                    : `<button class="btn btn--sm btn--ghost" onclick="window.openViewBatchDrawer('${b.id}')" style="font-weight: 700; color: var(--muted); padding: 4px 12px;">${isHa ? 'Duba' : 'View'}</button>`
                   }
                 </td>
               </tr>`;
