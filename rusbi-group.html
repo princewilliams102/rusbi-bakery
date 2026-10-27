@@ -1,0 +1,2526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RUSBI Group — Agriculture, Industry &amp; Human Potential</title>
+  <meta name="description" content="RUSBI Group of Companies Ltd — a Nigerian diversified conglomerate headquartered in Kano. SON/MANCAP certified NPK fertilizers, NBTE-accredited skills academy, metal fabrication, commercial bakery, and healthcare." />
+  <meta name="theme-color" content="#0F5132" />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600;1,700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ============================================================
+       DESIGN TOKENS
+    ============================================================ */
+    :root {
+      --green-950: #071f13;
+      --green-900: #0a3622;
+      --green-800: #0F5132;
+      --green-700: #134E2E;
+      --green-600: #1a6b3f;
+      --green-500: #2e8b57;
+      --gold-500:  #F59E0B;
+      --gold-400:  #EAB308;
+      --gold-300:  #FCD34D;
+      --slate-900: #0F172A;
+      --slate-700: #334155;
+      --slate-500: #64748b;
+      --slate-300: #cbd5e1;
+      --cream:     #F8FAFC;
+      --white:     #ffffff;
+      --radius-sm: 8px;
+      --radius:    14px;
+      --radius-lg: 22px;
+      --shadow-sm: 0 2px 8px -2px rgba(15, 23, 42, 0.08);
+      --shadow:    0 10px 30px -10px rgba(15, 23, 42, 0.16);
+      --shadow-lg: 0 24px 60px -20px rgba(15, 23, 42, 0.28);
+      --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+      --font-head: 'Playfair Display', Georgia, serif;
+    }
+
+    /* ============================================================
+       RESET & BASE
+    ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+    body {
+      font-family: var(--font-body);
+      color: var(--slate-900);
+      background: var(--white);
+      line-height: 1.65;
+      font-size: 16px;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+    img { max-width: 100%; display: block; }
+    a { color: inherit; text-decoration: none; }
+    button, input, select, textarea { font: inherit; color: inherit; }
+    ul { list-style: none; }
+    section { scroll-margin-top: 84px; }
+
+    h1, h2, h3, h4 {
+      font-family: var(--font-head);
+      line-height: 1.18;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    .section { padding: 96px 0; }
+    .section-alt { background: var(--cream); }
+
+    .section-header {
+      max-width: 720px;
+      margin: 0 auto 56px;
+      text-align: center;
+    }
+    .eyebrow {
+      display: inline-block;
+      font-family: var(--font-body);
+      font-size: 0.76rem;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--gold-500);
+      margin-bottom: 14px;
+    }
+    .section-header h2 {
+      font-size: clamp(1.9rem, 4vw, 2.9rem);
+      color: var(--green-900);
+      margin-bottom: 16px;
+    }
+    .section-header h2 .accent { color: var(--gold-500); }
+    .section-header p {
+      color: var(--slate-500);
+      font-size: 1.05rem;
+      max-width: 620px;
+      margin: 0 auto;
+    }
+    .gold-rule {
+      width: 56px; height: 4px;
+      background: linear-gradient(90deg, var(--gold-500), var(--gold-300));
+      border-radius: 99px;
+      margin: 18px auto 0;
+    }
+
+    /* ============================================================
+       BUTTONS
+    ============================================================ */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      padding: 14px 28px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
+      white-space: nowrap;
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn-primary {
+      background: var(--gold-500);
+      color: var(--green-950);
+      box-shadow: 0 8px 22px -8px rgba(245, 158, 11, 0.7);
+    }
+    .btn-primary:hover { background: var(--gold-400); transform: translateY(-2px); box-shadow: 0 14px 30px -8px rgba(245, 158, 11, 0.8); }
+    .btn-outline {
+      border-color: rgba(255,255,255,0.45);
+      color: var(--white);
+      background: rgba(255,255,255,0.06);
+      backdrop-filter: blur(4px);
+    }
+    .btn-outline:hover { background: rgba(255,255,255,0.16); border-color: var(--white); transform: translateY(-2px); }
+    .btn-dark {
+      background: var(--green-800);
+      color: var(--white);
+      box-shadow: 0 8px 22px -8px rgba(15, 81, 50, 0.6);
+    }
+    .btn-dark:hover { background: var(--green-700); transform: translateY(-2px); }
+    .btn-block { width: 100%; }
+
+    /* ============================================================
+       TOP ANNOUNCEMENT / LANGUAGE BAR
+    ============================================================ */
+    .top-bar {
+      background: #05160d;
+      color: rgba(255,255,255,0.78);
+      font-size: 0.78rem;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .top-bar-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .top-bar-motto {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .top-bar-motto span.badge {
+      background: rgba(245, 158, 11, 0.2);
+      color: var(--gold-300);
+      font-weight: 700;
+      font-size: 0.65rem;
+      padding: 2px 7px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .top-bar-links {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .lang-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(255,255,255,0.08);
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      color: var(--gold-300);
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.1);
+      transition: background 0.2s;
+    }
+    .lang-pill:hover { background: rgba(255,255,255,0.15); }
+
+    /* ============================================================
+       NAVBAR
+    ============================================================ */
+    .nav {
+      position: sticky;
+      top: 0; left: 0; right: 0;
+      z-index: 1000;
+      background: rgba(10, 54, 34, 0.94);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      transition: background 0.3s ease, box-shadow 0.3s ease;
+    }
+    .nav.scrolled {
+      background: rgba(7, 31, 19, 0.98);
+      box-shadow: 0 8px 30px -12px rgba(0,0,0,0.5);
+    }
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 72px;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--white);
+    }
+    .logo-mark {
+      width: 40px; height: 40px;
+      background: linear-gradient(145deg, var(--gold-400), var(--gold-500));
+      color: var(--green-950);
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      font-family: var(--font-head);
+      font-weight: 800;
+      font-size: 1.35rem;
+      box-shadow: 0 4px 14px -4px rgba(245,158,11,0.6);
+    }
+    .logo-text {
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 1.2rem;
+      letter-spacing: 0.02em;
+      line-height: 1.1;
+    }
+    .logo-text span {
+      display: block;
+      font-family: var(--font-body);
+      font-size: 0.62rem;
+      font-weight: 600;
+      letter-spacing: 0.32em;
+      color: var(--gold-400);
+      margin-top: 1px;
+    }
+
+    .nav-menu {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .nav-menu a {
+      color: rgba(255,255,255,0.82);
+      font-size: 0.9rem;
+      font-weight: 500;
+      padding: 8px 14px;
+      border-radius: 8px;
+      transition: color 0.2s ease, background 0.2s ease;
+    }
+    .nav-menu a:hover { color: var(--white); background: rgba(255,255,255,0.08); }
+    .nav-cta { margin-left: 10px; padding: 10px 22px; font-size: 0.88rem; }
+
+    .nav-toggle {
+      display: none;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 8px;
+      color: var(--white);
+    }
+    .nav-toggle svg { display: block; }
+
+    /* ============================================================
+       HERO
+    ============================================================ */
+    .hero {
+      position: relative;
+      min-height: 90vh;
+      display: flex;
+      align-items: center;
+      padding: 100px 0 90px;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 18% 82%, rgba(245, 158, 11, 0.16) 0%, transparent 46%),
+        radial-gradient(circle at 82% 18%, rgba(46, 139, 87, 0.28) 0%, transparent 50%),
+        linear-gradient(135deg, #071f13 0%, #0a3622 42%, #0F5132 100%);
+      color: var(--white);
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+      background-size: 64px 64px;
+      mask-image: radial-gradient(ellipse at center, black 20%, transparent 75%);
+      -webkit-mask-image: radial-gradient(ellipse at center, black 20%, transparent 75%);
+      pointer-events: none;
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      width: 560px; height: 560px;
+      right: -160px; top: -120px;
+      background: radial-gradient(circle, rgba(245,158,11,0.18) 0%, transparent 68%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .hero-inner {
+      position: relative;
+      z-index: 2;
+      max-width: 840px;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 18px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.16);
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--gold-300);
+      margin-bottom: 28px;
+      backdrop-filter: blur(6px);
+    }
+    .hero-badge .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--gold-400);
+      box-shadow: 0 0 0 4px rgba(245,158,11,0.25);
+      animation: pulse 2.4s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 4px rgba(245,158,11,0.25); }
+      50%      { box-shadow: 0 0 0 8px rgba(245,158,11,0.05); }
+    }
+    .hero h1 {
+      font-size: clamp(2.4rem, 5.5vw, 4.1rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 24px;
+      line-height: 1.1;
+    }
+    .hero h1 .highlight {
+      color: var(--gold-400);
+      position: relative;
+      white-space: nowrap;
+    }
+    .hero p.sub {
+      font-size: clamp(1rem, 1.6vw, 1.18rem);
+      color: rgba(255,255,255,0.85);
+      max-width: 660px;
+      margin-bottom: 40px;
+      line-height: 1.7;
+    }
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 56px;
+    }
+    .hero-motto {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      color: rgba(255,255,255,0.65);
+      font-size: 0.95rem;
+      font-style: italic;
+      font-family: var(--font-head);
+    }
+    .hero-motto::before {
+      content: '';
+      width: 36px; height: 2px;
+      background: var(--gold-500);
+      border-radius: 2px;
+    }
+
+    /* ============================================================
+       METRICS STRIP
+    ============================================================ */
+    .metrics {
+      background: var(--green-900);
+      border-top: 1px solid rgba(255,255,255,0.06);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      padding: 0;
+    }
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+    }
+    .metric {
+      padding: 44px 28px;
+      text-align: center;
+      position: relative;
+    }
+    .metric + .metric::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 26%; bottom: 26%;
+      width: 1px;
+      background: rgba(255,255,255,0.1);
+    }
+    .metric .num {
+      font-family: var(--font-head);
+      font-size: clamp(1.8rem, 3.4vw, 2.6rem);
+      font-weight: 700;
+      color: var(--gold-400);
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    .metric .label {
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.72);
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      line-height: 1.4;
+    }
+
+    /* ============================================================
+       ABOUT
+    ============================================================ */
+    .about-grid {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 64px;
+      align-items: start;
+    }
+    .about-copy h2 {
+      font-size: clamp(1.9rem, 3.6vw, 2.6rem);
+      color: var(--green-900);
+      margin-bottom: 20px;
+    }
+    .about-copy p {
+      color: var(--slate-700);
+      margin-bottom: 18px;
+      font-size: 1.02rem;
+    }
+    .about-copy p:last-of-type { margin-bottom: 0; }
+    .about-quote {
+      margin-top: 28px;
+      padding: 20px 24px;
+      border-left: 4px solid var(--gold-500);
+      background: var(--cream);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      font-family: var(--font-head);
+      font-style: italic;
+      font-size: 1.08rem;
+      color: var(--green-800);
+      line-height: 1.55;
+    }
+    .about-quote .translation {
+      display: block;
+      font-family: var(--font-body);
+      font-style: normal;
+      font-size: 0.82rem;
+      color: var(--slate-500);
+      margin-top: 8px;
+      letter-spacing: 0.01em;
+    }
+
+    .vmv-cards { display: flex; flex-direction: column; gap: 20px; }
+    .vmv-card {
+      background: var(--white);
+      border: 1px solid var(--slate-300);
+      border-radius: var(--radius);
+      padding: 26px 28px;
+      box-shadow: var(--shadow-sm);
+      transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    }
+    .vmv-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow);
+      border-color: var(--green-500);
+    }
+    .vmv-card .vmv-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold-500);
+      margin-bottom: 10px;
+    }
+    .vmv-card h3 {
+      font-family: var(--font-body);
+      font-size: 1.02rem;
+      font-weight: 600;
+      color: var(--green-900);
+      margin-bottom: 8px;
+    }
+    .vmv-card p {
+      font-size: 0.94rem;
+      color: var(--slate-500);
+      line-height: 1.6;
+    }
+    .vmv-card .icon {
+      width: 38px; height: 38px;
+      border-radius: 10px;
+      background: rgba(15, 81, 50, 0.08);
+      color: var(--green-800);
+      display: grid;
+      place-items: center;
+      margin-bottom: 14px;
+    }
+
+    .values-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      margin-top: 8px;
+    }
+    .value-pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      background: var(--cream);
+      border-radius: 10px;
+      font-size: 0.86rem;
+      font-weight: 500;
+      color: var(--slate-700);
+    }
+    .value-pill .check {
+      width: 20px; height: 20px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      background: var(--green-800);
+      color: var(--gold-400);
+      display: grid;
+      place-items: center;
+      font-size: 0.7rem;
+      font-weight: 800;
+    }
+
+    /* ============================================================
+       SECTORS
+    ============================================================ */
+    .sectors-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+    .sector-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 34px 30px;
+      border: 1px solid var(--slate-300);
+      box-shadow: var(--shadow-sm);
+      transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .sector-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--green-800), var(--gold-500));
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.4s ease;
+    }
+    .sector-card:hover {
+      transform: translateY(-6px);
+      box-shadow: var(--shadow-lg);
+      border-color: transparent;
+    }
+    .sector-card:hover::before { transform: scaleX(1); }
+    .sector-icon {
+      width: 54px; height: 54px;
+      border-radius: 14px;
+      background: linear-gradient(145deg, rgba(15,81,50,0.1), rgba(15,81,50,0.04));
+      color: var(--green-800);
+      display: grid;
+      place-items: center;
+      margin-bottom: 22px;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+    .sector-card:hover .sector-icon {
+      background: var(--green-800);
+      color: var(--gold-400);
+    }
+    .sector-card h3 {
+      font-family: var(--font-body);
+      font-size: 1.12rem;
+      font-weight: 700;
+      color: var(--green-900);
+      margin-bottom: 10px;
+      line-height: 1.35;
+    }
+    .sector-card p {
+      font-size: 0.92rem;
+      color: var(--slate-500);
+      line-height: 1.65;
+      flex-grow: 1;
+    }
+    .sector-tag {
+      display: inline-block;
+      align-self: flex-start;
+      margin-top: 18px;
+      padding: 5px 12px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--green-800);
+      background: rgba(15, 81, 50, 0.07);
+      border-radius: 999px;
+    }
+    .sectors-grid .sector-card:nth-child(4),
+    .sectors-grid .sector-card:nth-child(5) {
+      grid-column: span 1.5;
+    }
+
+    /* ============================================================
+       PRODUCTS
+    ============================================================ */
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+      margin-bottom: 56px;
+    }
+    .product-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      border: 1px solid var(--slate-300);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+    .product-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lg);
+    }
+    .product-top {
+      padding: 28px 30px 22px;
+      background: linear-gradient(135deg, var(--green-900), var(--green-800));
+      color: var(--white);
+      position: relative;
+      overflow: hidden;
+    }
+    .product-top::after {
+      content: '';
+      position: absolute;
+      width: 180px; height: 180px;
+      right: -60px; top: -60px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(245,158,11,0.22), transparent 70%);
+    }
+    .product-cert {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.66rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--gold-300);
+      background: rgba(245,158,11,0.14);
+      border: 1px solid rgba(245,158,11,0.3);
+      padding: 4px 10px;
+      border-radius: 999px;
+      margin-bottom: 16px;
+      position: relative;
+      z-index: 1;
+    }
+    .product-name {
+      font-family: var(--font-body);
+      font-size: 1.18rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+      position: relative;
+      z-index: 1;
+    }
+    .product-sub {
+      font-size: 0.84rem;
+      color: rgba(255,255,255,0.7);
+      position: relative;
+      z-index: 1;
+    }
+    .npk-ratio {
+      display: flex;
+      gap: 6px;
+      margin-top: 18px;
+      position: relative;
+      z-index: 1;
+    }
+    .npk-cell {
+      flex: 1;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px;
+      padding: 10px 6px;
+      text-align: center;
+    }
+    .npk-cell .n {
+      display: block;
+      font-family: var(--font-head);
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--gold-400);
+      line-height: 1;
+    }
+    .npk-cell .l {
+      display: block;
+      font-size: 0.62rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      color: rgba(255,255,255,0.6);
+      margin-top: 3px;
+    }
+    .product-body { padding: 24px 30px 28px; flex: 1; display: flex; flex-direction: column; }
+    .product-body .best-for {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--slate-500);
+      margin-bottom: 6px;
+    }
+    .product-body .crops {
+      font-size: 0.94rem;
+      font-weight: 600;
+      color: var(--green-900);
+      margin-bottom: 16px;
+    }
+    .product-body .benefit {
+      font-size: 0.9rem;
+      color: var(--slate-500);
+      line-height: 1.6;
+      margin-top: auto;
+      padding-top: 14px;
+      border-top: 1px solid var(--slate-300);
+    }
+
+    /* Fertilizer calculator */
+    .calculator {
+      background: linear-gradient(135deg, var(--green-900), var(--green-700));
+      border-radius: var(--radius-lg);
+      padding: 48px;
+      color: var(--white);
+      position: relative;
+      overflow: hidden;
+    }
+    .calculator::before {
+      content: '';
+      position: absolute;
+      width: 400px; height: 400px;
+      right: -140px; bottom: -140px;
+      background: radial-gradient(circle, rgba(245,158,11,0.16), transparent 70%);
+      pointer-events: none;
+    }
+    .calc-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      align-items: center;
+      position: relative;
+      z-index: 1;
+    }
+    .calc-copy .eyebrow { color: var(--gold-400); }
+    .calc-copy h3 {
+      font-size: clamp(1.5rem, 2.8vw, 2.1rem);
+      margin-bottom: 14px;
+    }
+    .calc-copy p {
+      color: rgba(255,255,255,0.76);
+      font-size: 0.98rem;
+      line-height: 1.7;
+      margin-bottom: 20px;
+    }
+    .calc-features {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .calc-feat-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.88rem;
+      color: rgba(255,255,255,0.9);
+    }
+    .calc-feat-item span.c-dot {
+      width: 8px; height: 8px; border-radius: 50%; background: var(--gold-400);
+    }
+    .calc-form {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: var(--radius);
+      padding: 28px;
+      backdrop-filter: blur(8px);
+    }
+    .calc-field { margin-bottom: 18px; }
+    .calc-field label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.75);
+      margin-bottom: 8px;
+    }
+    .calc-field select,
+    .calc-field input {
+      width: 100%;
+      padding: 13px 16px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.22);
+      background: rgba(255,255,255,0.1);
+      color: var(--white);
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s ease, background 0.2s ease;
+    }
+    .calc-field select option { color: var(--slate-900); background: #ffffff; }
+    .calc-field select:focus,
+    .calc-field input:focus {
+      border-color: var(--gold-500);
+      background: rgba(255,255,255,0.16);
+    }
+    .calc-result {
+      margin-top: 18px;
+      padding: 0;
+      border-radius: 12px;
+      background: rgba(245,158,11,0.15);
+      border: 1px solid rgba(245,158,11,0.35);
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: max-height 0.5s ease, opacity 0.4s ease, padding 0.4s ease;
+    }
+    .calc-result.show {
+      max-height: 520px;
+      opacity: 1;
+      padding: 20px;
+    }
+    .calc-result .calc-heading {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--gold-300);
+      margin-bottom: 12px;
+      border-bottom: 1px dashed rgba(245,158,11,0.3);
+      padding-bottom: 6px;
+    }
+    .calc-result ul { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+    .calc-result li {
+      font-size: 0.92rem;
+      color: rgba(255,255,255,0.95);
+      padding-left: 22px;
+      position: relative;
+      line-height: 1.45;
+    }
+    .calc-result li strong { color: var(--gold-300); }
+    .calc-result li::before {
+      content: '✓';
+      position: absolute;
+      left: 0;
+      color: var(--gold-400);
+      font-weight: 800;
+    }
+    .calc-note {
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.65);
+      line-height: 1.5;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+    .calc-order-cta {
+      display: inline-block;
+      margin-top: 12px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: var(--green-950);
+      background: var(--gold-400);
+      padding: 8px 16px;
+      border-radius: 6px;
+      text-align: center;
+      transition: background 0.2s;
+    }
+    .calc-order-cta:hover { background: var(--gold-300); }
+    .calc-error {
+      font-size: 0.88rem;
+      color: #fca5a5;
+    }
+
+    /* ============================================================
+       ACADEMY
+    ============================================================ */
+    .academy-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 64px;
+      align-items: center;
+    }
+    .academy-copy h2 {
+      font-size: clamp(1.9rem, 3.6vw, 2.6rem);
+      color: var(--green-900);
+      margin-bottom: 18px;
+    }
+    .academy-copy p {
+      color: var(--slate-700);
+      font-size: 1.02rem;
+      margin-bottom: 18px;
+    }
+    .nbte-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      border-radius: 999px;
+      background: rgba(15, 81, 50, 0.08);
+      border: 1px solid rgba(15, 81, 50, 0.18);
+      color: var(--green-800);
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      margin-bottom: 24px;
+    }
+    .nbte-badge svg { color: var(--gold-500); }
+    .trades-list {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 8px;
+    }
+    .trade-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 16px 18px;
+      background: var(--white);
+      border: 1px solid var(--slate-300);
+      border-radius: 12px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--slate-700);
+      transition: border-color 0.2s ease, transform 0.2s ease;
+    }
+    .trade-item:hover { border-color: var(--green-500); transform: translateY(-2px); }
+    .trade-item .t-icon {
+      width: 30px; height: 30px;
+      flex-shrink: 0;
+      border-radius: 8px;
+      background: rgba(245,158,11,0.12);
+      color: var(--gold-500);
+      display: grid;
+      place-items: center;
+    }
+    .academy-visual {
+      position: relative;
+      border-radius: var(--radius-lg);
+      background: linear-gradient(145deg, var(--green-900), var(--green-700));
+      padding: 44px 40px;
+      color: var(--white);
+      overflow: hidden;
+      box-shadow: var(--shadow-lg);
+    }
+    .academy-visual::after {
+      content: '';
+      position: absolute;
+      width: 260px; height: 260px;
+      right: -80px; bottom: -80px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(245,158,11,0.22), transparent 70%);
+    }
+    .academy-visual .stat {
+      position: relative;
+      z-index: 1;
+      padding: 20px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+    }
+    .academy-visual .stat:last-child { border-bottom: none; }
+    .academy-visual .stat .num {
+      font-family: var(--font-head);
+      font-size: 2.1rem;
+      font-weight: 700;
+      color: var(--gold-400);
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .academy-visual .stat .desc {
+      font-size: 0.88rem;
+      color: rgba(255,255,255,0.72);
+      line-height: 1.5;
+    }
+
+    /* ============================================================
+       PARTNER / FORM
+    ============================================================ */
+    .partner-grid {
+      display: grid;
+      grid-template-columns: 0.9fr 1.1fr;
+      gap: 56px;
+      align-items: start;
+    }
+    .partner-copy h2 {
+      font-size: clamp(1.9rem, 3.6vw, 2.6rem);
+      color: var(--green-900);
+      margin-bottom: 18px;
+    }
+    .partner-copy > p {
+      color: var(--slate-700);
+      font-size: 1.02rem;
+      margin-bottom: 28px;
+    }
+    .benefit-list { display: flex; flex-direction: column; gap: 18px; }
+    .benefit-item {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+    .benefit-item .b-icon {
+      width: 34px; height: 34px;
+      flex-shrink: 0;
+      border-radius: 10px;
+      background: rgba(15, 81, 50, 0.08);
+      color: var(--green-800);
+      display: grid;
+      place-items: center;
+    }
+    .benefit-item h4 {
+      font-family: var(--font-body);
+      font-size: 0.96rem;
+      font-weight: 600;
+      color: var(--green-900);
+      margin-bottom: 3px;
+    }
+    .benefit-item p {
+      font-size: 0.88rem;
+      color: var(--slate-500);
+      line-height: 1.55;
+    }
+
+    .dealer-form {
+      background: var(--white);
+      border: 1px solid var(--slate-300);
+      border-radius: var(--radius-lg);
+      padding: 40px;
+      box-shadow: var(--shadow);
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+    .form-field { margin-bottom: 18px; }
+    .form-field label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--slate-700);
+      margin-bottom: 7px;
+    }
+    .form-field label .req { color: #dc2626; }
+    .form-field input,
+    .form-field select,
+    .form-field textarea {
+      width: 100%;
+      padding: 12px 15px;
+      border-radius: 10px;
+      border: 1px solid var(--slate-300);
+      background: var(--white);
+      font-size: 0.93rem;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .form-field input:focus,
+    .form-field select:focus,
+    .form-field textarea:focus {
+      border-color: var(--green-500);
+      box-shadow: 0 0 0 3px rgba(46, 139, 87, 0.12);
+    }
+    .checkbox-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 10px 14px;
+      border: 1px solid var(--slate-300);
+      border-radius: 9px;
+      font-size: 0.86rem;
+      color: var(--slate-700);
+      cursor: pointer;
+      transition: border-color 0.2s ease, background 0.2s ease;
+      user-select: none;
+    }
+    .checkbox-item:hover { border-color: var(--green-500); background: var(--cream); }
+    .checkbox-item input { accent-color: var(--green-800); width: 16px; height: 16px; }
+    .form-msg {
+      margin-top: 16px;
+      padding: 14px 18px;
+      border-radius: 10px;
+      background: rgba(22, 163, 74, 0.1);
+      border: 1px solid rgba(22, 163, 74, 0.3);
+      color: #15803d;
+      font-size: 0.88rem;
+      display: none;
+    }
+    .form-msg.show { display: block; }
+
+    /* ============================================================
+       CSR
+    ============================================================ */
+    .csr-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+    .csr-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 36px 30px;
+      border: 1px solid var(--slate-300);
+      box-shadow: var(--shadow-sm);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      position: relative;
+    }
+    .csr-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-lg); }
+    .csr-num {
+      font-family: var(--font-head);
+      font-size: 2.6rem;
+      font-weight: 700;
+      color: rgba(15, 81, 50, 0.12);
+      line-height: 1;
+      margin-bottom: 16px;
+    }
+    .csr-card h3 {
+      font-family: var(--font-body);
+      font-size: 1.06rem;
+      font-weight: 700;
+      color: var(--green-900);
+      margin-bottom: 10px;
+      line-height: 1.4;
+    }
+    .csr-card p {
+      font-size: 0.9rem;
+      color: var(--slate-500);
+      line-height: 1.65;
+    }
+
+    /* ============================================================
+       CONTACT
+    ============================================================ */
+    .contact-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+    .contact-card {
+      background: var(--white);
+      border: 1px solid var(--slate-300);
+      border-radius: var(--radius);
+      padding: 30px 28px;
+      box-shadow: var(--shadow-sm);
+    }
+    .contact-card .c-icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      background: rgba(15, 81, 50, 0.08);
+      color: var(--green-800);
+      display: grid;
+      place-items: center;
+      margin-bottom: 18px;
+    }
+    .contact-card h3 {
+      font-family: var(--font-body);
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--green-900);
+      margin-bottom: 8px;
+    }
+    .contact-card p {
+      font-size: 0.9rem;
+      color: var(--slate-500);
+      line-height: 1.65;
+    }
+    .contact-card a { color: var(--green-700); font-weight: 600; }
+    .contact-card a:hover { text-decoration: underline; }
+
+    .contact-strip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      background: var(--green-900);
+      border-radius: var(--radius-lg);
+      padding: 36px 40px;
+      color: var(--white);
+    }
+    .contact-strip-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .contact-strip-item .cs-icon {
+      width: 42px; height: 42px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      background: rgba(245,158,11,0.14);
+      color: var(--gold-400);
+      display: grid;
+      place-items: center;
+    }
+    .contact-strip-item .cs-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 2px;
+    }
+    .contact-strip-item .cs-value {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--white);
+    }
+    .contact-strip-item .cs-value a { color: inherit; }
+    .contact-strip-item .cs-value a:hover { color: var(--gold-300); }
+
+    /* ============================================================
+       FOOTER
+    ============================================================ */
+    footer {
+      background: var(--green-950);
+      color: rgba(255,255,255,0.7);
+      padding: 72px 0 0;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 1.6fr 1fr 1fr 1.3fr;
+      gap: 48px;
+      padding-bottom: 56px;
+    }
+    .footer-brand .logo { margin-bottom: 18px; }
+    .footer-brand p {
+      font-size: 0.9rem;
+      line-height: 1.7;
+      color: rgba(255,255,255,0.65);
+      max-width: 320px;
+      margin-bottom: 20px;
+    }
+    .footer-motto {
+      font-family: var(--font-head);
+      font-style: italic;
+      font-size: 0.94rem;
+      color: var(--gold-400);
+      line-height: 1.5;
+      padding: 12px 16px;
+      background: rgba(255,255,255,0.03);
+      border-left: 3px solid var(--gold-500);
+      border-radius: 0 8px 8px 0;
+    }
+    .footer-col h4 {
+      font-family: var(--font-body);
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--white);
+      margin-bottom: 18px;
+    }
+    .footer-col ul { display: flex; flex-direction: column; gap: 10px; }
+    .footer-col li { font-size: 0.88rem; line-height: 1.5; }
+    .footer-col a { color: rgba(255,255,255,0.65); transition: color 0.2s ease; }
+    .footer-col a:hover { color: var(--gold-400); }
+    .footer-col address { font-style: normal; font-size: 0.86rem; line-height: 1.65; color: rgba(255,255,255,0.6); }
+
+    .footer-bottom {
+      border-top: 1px solid rgba(255,255,255,0.08);
+      padding: 24px 0;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .footer-bottom p {
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.5);
+    }
+    .footer-bottom .legal {
+      display: flex;
+      gap: 22px;
+    }
+    .footer-bottom .legal a {
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.5);
+      transition: color 0.2s ease;
+    }
+    .footer-bottom .legal a:hover { color: var(--gold-400); }
+
+    /* ============================================================
+       WHATSAPP FLOAT
+    ============================================================ */
+    .whatsapp-float {
+      position: fixed;
+      right: 22px;
+      bottom: 22px;
+      z-index: 999;
+      width: 58px; height: 58px;
+      border-radius: 50%;
+      background: #25D366;
+      color: var(--white);
+      display: grid;
+      place-items: center;
+      box-shadow: 0 10px 26px -6px rgba(37, 211, 102, 0.6);
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .whatsapp-float:hover {
+      transform: scale(1.08) translateY(-2px);
+      box-shadow: 0 16px 34px -6px rgba(37, 211, 102, 0.7);
+    }
+    .whatsapp-float svg { width: 32px; height: 32px; fill: currentColor; }
+    .whatsapp-float::after {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      border: 2px solid rgba(37, 211, 102, 0.4);
+      animation: wa-pulse 2.4s ease-out infinite;
+    }
+    @keyframes wa-pulse {
+      0%   { transform: scale(1);   opacity: 1; }
+      100% { transform: scale(1.5); opacity: 0; }
+    }
+
+    /* ============================================================
+       SCROLL REVEAL
+    ============================================================ */
+    .reveal {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+                  transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+      will-change: opacity, transform;
+    }
+    .reveal.visible { opacity: 1; transform: none; }
+    .reveal.delay-1 { transition-delay: 0.08s; }
+    .reveal.delay-2 { transition-delay: 0.16s; }
+    .reveal.delay-3 { transition-delay: 0.24s; }
+    .reveal.delay-4 { transition-delay: 0.32s; }
+
+    /* ============================================================
+       RESPONSIVE
+    ============================================================ */
+    @media (max-width: 1024px) {
+      .about-grid,
+      .academy-grid,
+      .partner-grid { grid-template-columns: 1fr; gap: 48px; }
+      .sectors-grid { grid-template-columns: repeat(2, 1fr); }
+      .sectors-grid .sector-card:nth-child(4),
+      .sectors-grid .sector-card:nth-child(5) { grid-column: span 1; }
+      .calc-grid { grid-template-columns: 1fr; gap: 36px; }
+      .csr-grid { grid-template-columns: repeat(2, 1fr); }
+      .contact-grid { grid-template-columns: repeat(2, 1fr); }
+      .contact-strip { grid-template-columns: 1fr; gap: 26px; }
+      .footer-grid { grid-template-columns: 1fr 1fr; gap: 40px; }
+    }
+
+    @media (max-width: 820px) {
+      .top-bar-inner { flex-direction: column; gap: 6px; text-align: center; }
+      .nav-menu {
+        position: fixed;
+        top: 72px; left: 0; right: 0;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 2px;
+        background: var(--green-950);
+        padding: 16px 20px 24px;
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+        transform: translateY(-120%);
+        opacity: 0;
+        pointer-events: none;
+        transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+        max-height: calc(100vh - 72px);
+        overflow-y: auto;
+      }
+      .nav-menu.open {
+        transform: translateY(0);
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .nav-menu a { padding: 13px 16px; font-size: 0.98rem; }
+      .nav-cta { margin: 8px 0 0; text-align: center; }
+      .nav-toggle { display: block; }
+
+      .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+      .metric + .metric::before { display: none; }
+      .metric:nth-child(even)::before {
+        content: '';
+        display: block;
+        position: absolute;
+        left: 0; top: 26%; bottom: 26%;
+        width: 1px;
+        background: rgba(255,255,255,0.1);
+      }
+      .metric:nth-child(3), .metric:nth-child(4) {
+        border-top: 1px solid rgba(255,255,255,0.1);
+      }
+
+      .products-grid { grid-template-columns: 1fr; }
+      .sectors-grid { grid-template-columns: 1fr; }
+      .csr-grid { grid-template-columns: 1fr; }
+      .contact-grid { grid-template-columns: 1fr; }
+      .form-row { grid-template-columns: 1fr; }
+      .trades-list { grid-template-columns: 1fr; }
+
+      .section { padding: 72px 0; }
+      .calculator { padding: 32px 24px; }
+      .dealer-form { padding: 28px 22px; }
+      .footer-grid { grid-template-columns: 1fr; gap: 36px; }
+      .footer-bottom { flex-direction: column; align-items: flex-start; }
+    }
+
+    @media (max-width: 520px) {
+      .container { padding: 0 18px; }
+      .hero { padding: 80px 0 60px; }
+      .hero-actions { flex-direction: column; align-items: stretch; }
+      .hero-actions .btn { width: 100%; }
+      .checkbox-group { grid-template-columns: 1fr; }
+      .values-row { grid-template-columns: 1fr; }
+      .metric { padding: 32px 16px; }
+      .whatsapp-float { width: 52px; height: 52px; right: 16px; bottom: 16px; }
+      .whatsapp-float svg { width: 28px; height: 28px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+        scroll-behavior: auto !important;
+      }
+      .reveal { opacity: 1; transform: none; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ============================================================
+       TOP ANNOUNCEMENT & MOTTO BAR
+  ============================================================ -->
+  <div class="top-bar">
+    <div class="container top-bar-inner">
+      <div class="top-bar-motto">
+        <span class="badge">Motto</span>
+        <span>"Nagari Na Kowa, Koda Naka Kaso Na Kwarai" — True quality serves everyone.</span>
+      </div>
+      <div class="top-bar-links">
+        <span>Kano, Nigeria · Dubai, UAE</span>
+        <a href="#products" class="lang-pill" id="langNotice">
+          🌾 SON MANCAP Certified Blends
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       NAVBAR
+  ============================================================ -->
+  <header class="nav" id="nav">
+    <div class="container nav-inner">
+      <a href="#home" class="logo" aria-label="RUSBI Group home">
+        <span class="logo-mark">R</span>
+        <span class="logo-text">RUSBI<span>GROUP</span></span>
+      </a>
+
+      <nav class="nav-menu" id="navMenu" aria-label="Main navigation">
+        <a href="#about">About</a>
+        <a href="#sectors">Sectors</a>
+        <a href="#products">Products</a>
+        <a href="#academy">Academy</a>
+        <a href="#partner">Distributors</a>
+        <a href="#csr">CSR &amp; Impact</a>
+        <a href="#contact">Contact</a>
+        <a href="#partner" class="btn btn-primary nav-cta">Partner With Us</a>
+      </nav>
+
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="navMenu">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="3" y1="6"  x2="21" y2="6"/>
+          <line x1="3" y1="12" x2="21" y2="12"/>
+          <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ============================================================
+         HERO
+    ============================================================ -->
+    <section id="home" class="hero">
+      <div class="container hero-inner">
+        <span class="hero-badge">
+          <span class="dot"></span>
+          Welcome to Rusbi Group of Companies
+        </span>
+
+        <h1>
+          Powering Agricultural Productivity,
+          <span class="highlight">Industrial Capacity</span>
+          &amp; Human Potential.
+        </h1>
+
+        <p class="sub">
+          From certified high-yield fertilizers and agro-processing in Kano to
+          NBTE-accredited technical skills training, Rusbi Group is building the
+          foundation for West Africa's food security and industrial future.
+        </p>
+
+        <div class="hero-actions">
+          <a href="#products" class="btn btn-primary">
+            Explore Our Fertilizers
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          </a>
+          <a href="#partner" class="btn btn-outline">
+            Partner as a Distributor
+          </a>
+        </div>
+
+        <div class="hero-motto">Nagari Na Kowa — True quality serves everyone.</div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         METRICS
+    ============================================================ -->
+    <section class="metrics" aria-label="Key company metrics">
+      <div class="container metrics-grid">
+        <div class="metric reveal">
+          <div class="num">25 T/hr</div>
+          <div class="label">Modern Bulk Blending Capacity (400–500+ T/Day)</div>
+        </div>
+        <div class="metric reveal delay-1">
+          <div class="num">SON / MANCAP</div>
+          <div class="label">Certified NPK 20-10-10, 15-15-15 &amp; 27-13-13</div>
+        </div>
+        <div class="metric reveal delay-2">
+          <div class="num">NBTE</div>
+          <div class="label">Accredited Professional Skills Training Centre</div>
+        </div>
+        <div class="metric reveal delay-3">
+          <div class="num">44+ LGAs</div>
+          <div class="label">Distribution Outreach to Farming Clusters</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         ABOUT
+    ============================================================ -->
+    <section id="about" class="section">
+      <div class="container">
+        <div class="section-header reveal">
+          <span class="eyebrow">About Rusbi Group</span>
+          <h2>A Heritage of Value, <span class="accent">Innovation</span> &amp; National Impact</h2>
+          <div class="gold-rule"></div>
+        </div>
+
+        <div class="about-grid">
+          <div class="about-copy reveal">
+            <p>
+              Founded by <strong>Alhaji Rufa'i Sule Bichi</strong> with a deep commitment
+              to industrial advancement and grassroots empowerment, Rusbi Group has
+              evolved into a multi-sector conglomerate. Operating out of Kano State,
+              Nigeria, our operations span state-of-the-art fertilizer bulk blending,
+              essential healthcare delivery, technical vocational education, and
+              consumer goods.
+            </p>
+            <p>
+              Incorporated on August 17, 2018 (RC: 1519337) initially as Rusbi Agro-Chemicals
+              &amp; Allied Ltd, the group today under the executive leadership of
+              <strong>Muhammad Rufai Sule</strong> serves farmers, commercial dealers,
+              students, and industrial clients across Northern Nigeria and the Sahel corridor.
+            </p>
+            <p>
+              Our guiding philosophy remains simple:
+              <strong>Nagari Na Kowa</strong> — true quality must serve everyone.
+            </p>
+
+            <div class="about-quote">
+              "The future belongs to those who believe in the beauty of their dreams."
+              <span class="translation">— Corporate Philosophy, Rusbi Group</span>
+            </div>
+          </div>
+
+          <div class="vmv-cards reveal delay-1">
+            <!-- Mission -->
+            <div class="vmv-card">
+              <div class="icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+              </div>
+              <span class="vmv-label">Our Mission</span>
+              <p>
+                To drive Northern Nigeria and the nation's industrial and economic
+                growth through sustainable agricultural solutions, technical vocational
+                empowerment, and high-standard manufacturing.
+              </p>
+            </div>
+
+            <!-- Vision -->
+            <div class="vmv-card">
+              <div class="icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+              </div>
+              <span class="vmv-label">Our Vision</span>
+              <p>
+                To be West Africa's leading indigenous conglomerate powering food
+                security, skills acquisition, and community enterprise from grassroots
+                to global standards.
+              </p>
+            </div>
+
+            <!-- Values -->
+            <div class="vmv-card">
+              <div class="icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 15.09 8.26 22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2Z"/></svg>
+              </div>
+              <span class="vmv-label">Core Values</span>
+              <div class="values-row">
+                <div class="value-pill"><span class="check">✓</span> Empowerment</div>
+                <div class="value-pill"><span class="check">✓</span> Quality &amp; Compliance</div>
+                <div class="value-pill"><span class="check">✓</span> Community Development</div>
+                <div class="value-pill"><span class="check">✓</span> Integrity &amp; Innovation</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         SECTORS / SUBSIDIARIES
+    ============================================================ -->
+    <section id="sectors" class="section section-alt">
+      <div class="container">
+        <div class="section-header reveal">
+          <span class="eyebrow">Our Companies</span>
+          <h2>Five Divisions. <span class="accent">One Vision.</span></h2>
+          <p>
+            From fertilizer blending and vocational education to metal fabrication,
+            bakery, and healthcare — each Rusbi subsidiary strengthens the others.
+          </p>
+          <div class="gold-rule"></div>
+        </div>
+
+        <div class="sectors-grid">
+          <!-- 1. Agro -->
+          <article class="sector-card reveal">
+            <div class="sector-icon">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
+            </div>
+            <h3>Rusbi Agricultural Processing &amp; Agro-Chemicals</h3>
+            <p>
+              Bulk blending, packaging, and mass-market distribution of commercial
+              fertilizers, crop protection chemicals, and grain processing. Produces
+              up to 400–500+ metric tonnes daily along the Skyline Western Bypass.
+            </p>
+            <span class="sector-tag">Flagship Division</span>
+          </article>
+
+          <!-- 2. Academy -->
+          <article class="sector-card reveal delay-1">
+            <div class="sector-icon">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+            </div>
+            <h3>Rusbi Skills Academy</h3>
+            <p>
+              NBTE-accredited TVET training centre equipping youth with hands-on
+              vocational and technical skills — welding, metal fabrication, masonry,
+              computer hardware, digital maintenance, and machine tooling.
+            </p>
+            <span class="sector-tag">NBTE Accredited</span>
+          </article>
+
+          <!-- 3. Metal / Engineering -->
+          <article class="sector-card reveal delay-2">
+            <div class="sector-icon">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+            </div>
+            <h3>Rusbi Metal Fabrication &amp; Engineering</h3>
+            <p>
+              Manufacturing architectural steel, doors, burglar/window frames,
+              industrial gates, and structural components — plus deep-water borehole
+              drilling and commercial water supply across Northern Nigeria.
+            </p>
+            <span class="sector-tag">Industrial Works</span>
+          </article>
+
+          <!-- 4. Bakery -->
+          <article class="sector-card reveal delay-3">
+            <div class="sector-icon">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/><path d="M8.5 8.5v.01"/><path d="M16 15.5v.01"/><path d="M12 12v.01"/><path d="M11 17v.01"/><path d="M7 14v.01"/></svg>
+            </div>
+            <h3>Rusbi Bakery &amp; Confectionery</h3>
+            <p>
+              Commercial automated bread baking, pastries, and confectionery
+              distribution serving local FMCG markets and community nutrition needs
+              from Bichi, Kano State.
+            </p>
+            <span class="sector-tag">Consumer Goods</span>
+          </article>
+
+          <!-- 5. Medicare -->
+          <article class="sector-card reveal delay-4">
+            <div class="sector-icon">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/><path d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"/></svg>
+            </div>
+            <h3>Rusbi Medicare Ltd</h3>
+            <p>
+              Essential healthcare access, pharmaceutical supply chain distribution,
+              and health-related community development programs for underserved
+              communities.
+            </p>
+            <span class="sector-tag">Healthcare</span>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         PRODUCTS + CALCULATOR
+    ============================================================ -->
+    <section id="products" class="section">
+      <div class="container">
+        <div class="section-header reveal">
+          <span class="eyebrow">Fertilizers &amp; Agro Processing</span>
+          <h2>Engineered for Northern Nigerian Soils. <span class="accent">Certified for Superior Yields.</span></h2>
+          <p>
+            Rusbi Agricultural Processing Company Limited blends precision agronomy
+            with industrial technology. Our facility along the Western Bypass in Kano
+            produces high-grade granular NPK fertilizers designed to maximise output
+            per hectare.
+          </p>
+          <div class="gold-rule"></div>
+        </div>
+
+        <div class="products-grid">
+          <!-- Product 1 -->
+          <article class="product-card reveal">
+            <div class="product-top">
+              <span class="product-cert">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                SON MANCAP cT-19008
+              </span>
+              <h3 class="product-name">Rusbi NPK 20:10:10</h3>
+              <p class="product-sub">Cereal &amp; Grain Formula (Vegetative Accelerator)</p>
+              <div class="npk-ratio">
+                <div class="npk-cell"><span class="n">20</span><span class="l">NITROGEN</span></div>
+                <div class="npk-cell"><span class="n">10</span><span class="l">PHOSPHORUS</span></div>
+                <div class="npk-cell"><span class="n">10</span><span class="l">POTASSIUM</span></div>
+              </div>
+            </div>
+            <div class="product-body">
+              <span class="best-for">Best For</span>
+              <p class="crops">Maize · Sorghum · Rice · Millet · Wheat</p>
+              <p class="benefit">
+                Promotes rapid root establishment, robust tillering, and enhanced
+                resistance to moisture stress during early vegetative growth.
+              </p>
+            </div>
+          </article>
+
+          <!-- Product 2 -->
+          <article class="product-card reveal delay-1">
+            <div class="product-top">
+              <span class="product-cert">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                SON MANCAP cT-19005
+              </span>
+              <h3 class="product-name">Rusbi NPK 15:15:15</h3>
+              <p class="product-sub">Universal Balanced Compound (Golden Standard)</p>
+              <div class="npk-ratio">
+                <div class="npk-cell"><span class="n">15</span><span class="l">NITROGEN</span></div>
+                <div class="npk-cell"><span class="n">15</span><span class="l">PHOSPHORUS</span></div>
+                <div class="npk-cell"><span class="n">15</span><span class="l">POTASSIUM</span></div>
+              </div>
+            </div>
+            <div class="product-body">
+              <span class="best-for">Best For</span>
+              <p class="crops">Yam · Cassava · Potatoes · Legumes · Vegetables</p>
+              <p class="benefit">
+                Ensures balanced stem development, root expansion, and sustained
+                nutrient release throughout the entire vegetative cycle.
+              </p>
+            </div>
+          </article>
+
+          <!-- Product 3 -->
+          <article class="product-card reveal delay-2">
+            <div class="product-top">
+              <span class="product-cert">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                SON MANCAP cT-19006
+              </span>
+              <h3 class="product-name">Rusbi NPK 27:13:13</h3>
+              <p class="product-sub">High Nitrogen Booster (Yield Maximizer)</p>
+              <div class="npk-ratio">
+                <div class="npk-cell"><span class="n">27</span><span class="l">NITROGEN</span></div>
+                <div class="npk-cell"><span class="n">13</span><span class="l">PHOSPHORUS</span></div>
+                <div class="npk-cell"><span class="n">13</span><span class="l">POTASSIUM</span></div>
+              </div>
+            </div>
+            <div class="product-body">
+              <span class="best-for">Best For</span>
+              <p class="crops">Top-dressing · Hybrid Maize · Leafy Crops</p>
+              <p class="benefit">
+                Accelerates green canopy formation and boosts photosynthesis,
+                resulting in heavier ear and grain weights.
+              </p>
+            </div>
+          </article>
+
+          <!-- Product 4 -->
+          <article class="product-card reveal delay-3">
+            <div class="product-top">
+              <span class="product-cert">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                Industrial Bulk Supply
+              </span>
+              <h3 class="product-name">White Granular Urea</h3>
+              <p class="product-sub">46% Nitrogen Content</p>
+              <div class="npk-ratio">
+                <div class="npk-cell" style="flex:1.6;"><span class="n">46%</span><span class="l">PURE NITROGEN</span></div>
+              </div>
+            </div>
+            <div class="product-body">
+              <span class="best-for">Application</span>
+              <p class="crops">High-efficiency top dressing for all major field crops</p>
+              <p class="benefit">
+                Pristine, free-flowing, anti-caking granular format — supplied directly
+                through partnerships with domestic petrochemical producers.
+              </p>
+            </div>
+          </article>
+        </div>
+
+        <!-- Fertilizer Calculator -->
+        <div class="calculator reveal">
+          <div class="calc-grid">
+            <div class="calc-copy">
+              <span class="eyebrow">Smart Agronomy Tool</span>
+              <h3>Plan Your Inputs Before You Plant</h3>
+              <p>
+                Select your crop and land size. Our calculator estimates the
+                recommended 50kg bags of Rusbi NPK and Urea based on agronomic
+                standards for Northern Nigerian savanna soils.
+              </p>
+              <div class="calc-features">
+                <div class="calc-feat-item"><span class="c-dot"></span> Calibrated for Kano, Jigawa, Katsina, &amp; Kaduna soils</div>
+                <div class="calc-feat-item"><span class="c-dot"></span> Basal planting and vegetative top-dressing schedules</div>
+                <div class="calc-feat-item"><span class="c-dot"></span> Instant direct factory quotation via WhatsApp</div>
+              </div>
+            </div>
+
+            <div class="calc-form">
+              <div class="calc-field">
+                <label for="crop">Select Crop</label>
+                <select id="crop">
+                  <option value="maize">Maize (Cereal Grain)</option>
+                  <option value="rice">Rice (Lowland / Upland)</option>
+                  <option value="sorghum">Sorghum / Guinea Corn</option>
+                  <option value="millet">Millet</option>
+                  <option value="yam">Yam &amp; Tubers</option>
+                  <option value="vegetables">Vegetables (Tomato, Pepper, Onion)</option>
+                  <option value="groundnut">Groundnut &amp; Legumes</option>
+                </select>
+              </div>
+              <div class="calc-field">
+                <label for="hectares">Land Size (Hectares)</label>
+                <input type="number" id="hectares" min="0.1" step="0.1" placeholder="e.g. 2.5" />
+              </div>
+              <button type="button" id="calcBtn" class="btn btn-primary btn-block">
+                Calculate My Input Plan
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="8" y2="10.01"/><line x1="12" y1="10" x2="12" y2="10.01"/><line x1="16" y1="10" x2="16" y2="10.01"/><line x1="8" y1="14" x2="8" y2="14.01"/><line x1="12" y1="14" x2="12" y2="14.01"/><line x1="16" y1="14" x2="16" y2="14.01"/></svg>
+              </button>
+              <div class="calc-result" id="calcResult" aria-live="polite"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         ACADEMY
+    ============================================================ -->
+    <section id="academy" class="section section-alt">
+      <div class="container">
+        <div class="academy-grid">
+          <div class="academy-copy reveal">
+            <span class="nbte-badge">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              NBTE Approved TVET Center
+            </span>
+            <h2>Bridging the Vocational &amp; Technical Skills Gap</h2>
+            <p>
+              Recognized on the National Board for Technical Education (NBTE) official
+              public register, Rusbi Skills Academy equips youths with hands-on,
+              market-ready vocational and technical competencies.
+            </p>
+            <p>
+              We don't just teach theory — we build master craftsmen, certified
+              technicians, and future industrial leaders through accredited trade
+              curricula and real workshop practice.
+            </p>
+
+            <div class="trades-list">
+              <div class="trade-item">
+                <span class="t-icon">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                </span>
+                Electrical Installation &amp; Solar Tech
+              </div>
+              <div class="trade-item">
+                <span class="t-icon">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>
+                </span>
+                Computer Hardware &amp; Digital Tech
+              </div>
+              <div class="trade-item">
+                <span class="t-icon">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h20"/><path d="M5 20V8l7-5 7 5v12"/><path d="M9 20v-6h6v6"/></svg>
+                </span>
+                Building Construction, Masonry &amp; Concreting
+              </div>
+              <div class="trade-item">
+                <span class="t-icon">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                </span>
+                Agro-Machinery &amp; Industrial Maintenance
+              </div>
+            </div>
+          </div>
+
+          <div class="academy-visual reveal delay-1">
+            <div class="stat">
+              <div class="num">NBTE</div>
+              <div class="desc">Officially listed as an approved Technical &amp; Vocational Education and Training (TVET) Skills Training Centre.</div>
+            </div>
+            <div class="stat">
+              <div class="num">Hands-On</div>
+              <div class="desc">Workshop-first curricula — welding, fabrication, masonry, hardware repair, and digital maintenance.</div>
+            </div>
+            <div class="stat">
+              <div class="num">Youth-First</div>
+              <div class="desc">Empowering northern Nigerian youth with market-ready skills that drive industrialization and job creation.</div>
+            </div>
+            <div class="stat">
+              <div class="num">Kumbotso</div>
+              <div class="desc">Campus located at SKY Street, Fandanka Quarters, Western Bypass, Kumbotso LGA, Kano State.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         PARTNER / DISTRIBUTOR
+    ============================================================ -->
+    <section id="partner" class="section">
+      <div class="container">
+        <div class="section-header reveal">
+          <span class="eyebrow">Partnership &amp; Distribution</span>
+          <h2>Partner with Northern Nigeria's <span class="accent">Leading Agro Brand</span></h2>
+          <p>
+            Join our expanding network of authorized dealers across Kano, Jigawa,
+            Katsina, Kaduna, Bauchi, and regional distribution corridors.
+          </p>
+          <div class="gold-rule"></div>
+        </div>
+
+        <div class="partner-grid">
+          <div class="partner-copy reveal">
+            <h2 style="font-size:1.4rem; color:var(--green-800); margin-bottom:20px;">Why Become a Rusbi Dealer?</h2>
+            <div class="benefit-list">
+              <div class="benefit-item">
+                <span class="b-icon">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                </span>
+                <div>
+                  <h4>Direct Factory Pricing</h4>
+                  <p>Competitive bulk rates on 50kg bags straight from our bulk blending lines — no middlemen.</p>
+                </div>
+              </div>
+              <div class="benefit-item">
+                <span class="b-icon">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                </span>
+                <div>
+                  <h4>Fast Haulage &amp; Loading</h4>
+                  <p>Direct priority loading access from our Western Bypass blending terminal in Kumbotso.</p>
+                </div>
+              </div>
+              <div class="benefit-item">
+                <span class="b-icon">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 15.09 8.26 22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2Z"/></svg>
+                </span>
+                <div>
+                  <h4>Marketing &amp; Farmer Engagement Support</h4>
+                  <p>Co-branded banners, farmer field demonstration days, and agronomic education tools.</p>
+                </div>
+              </div>
+              <div class="benefit-item">
+                <span class="b-icon">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </span>
+                <div>
+                  <h4>Seasonal Input-Credit Programs</h4>
+                  <p>Access to vetted "pay-after-harvest" cooperative financing schemes for registered farm groups.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="reveal delay-1">
+            <form class="dealer-form" id="dealerForm" novalidate>
+              <div class="form-row">
+                <div class="form-field">
+                  <label for="fullName">Full Name <span class="req">*</span></label>
+                  <input type="text" id="fullName" name="fullName" placeholder="Your name" required />
+                </div>
+                <div class="form-field">
+                  <label for="company">Company / Business Name</label>
+                  <input type="text" id="company" name="company" placeholder="Registered agro business name" />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-field">
+                  <label for="email">Email Address <span class="req">*</span></label>
+                  <input type="email" id="email" name="email" placeholder="you@company.com" required />
+                </div>
+                <div class="form-field">
+                  <label for="phone">Phone / WhatsApp Number <span class="req">*</span></label>
+                  <input type="tel" id="phone" name="phone" placeholder="+234 800 000 0000" required />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-field">
+                  <label for="state">State / LGA</label>
+                  <input type="text" id="state" name="state" placeholder="e.g. Kano / Kumbotso" />
+                </div>
+                <div class="form-field">
+                  <label for="capacity">Warehouse Capacity (MT)</label>
+                  <input type="text" id="capacity" name="capacity" placeholder="e.g. 250 metric tonnes" />
+                </div>
+              </div>
+
+              <div class="form-field">
+                <label>Requested Products</label>
+                <div class="checkbox-group">
+                  <label class="checkbox-item"><input type="checkbox" name="products" value="NPK 20:10:10" /> NPK 20:10:10</label>
+                  <label class="checkbox-item"><input type="checkbox" name="products" value="NPK 15:15:15" /> NPK 15:15:15</label>
+                  <label class="checkbox-item"><input type="checkbox" name="products" value="NPK 27:13:13" /> NPK 27:13:13</label>
+                  <label class="checkbox-item"><input type="checkbox" name="products" value="Urea 46% N" /> Urea 46% N</label>
+                </div>
+              </div>
+
+              <div class="form-field">
+                <label for="quantity">Estimated Initial Order</label>
+                <input type="text" id="quantity" name="quantity" placeholder="e.g. 1 trailer (600 bags) or 30 metric tonnes" />
+              </div>
+
+              <button type="submit" class="btn btn-dark btn-block">
+                Submit Distributor Application
+              </button>
+
+              <div class="form-msg" id="formMsg" role="status" aria-live="polite"></div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         CSR
+    ============================================================ -->
+    <section id="csr" class="section section-alt">
+      <div class="container">
+        <div class="section-header reveal">
+          <span class="eyebrow">Sustainability &amp; Impact</span>
+          <h2>Empowering Communities, <span class="accent">Sustaining Livelihoods</span></h2>
+          <p>
+            Our corporate social responsibility is built into our business model —
+            not bolted on. Every division invests in the people who make agriculture
+            and industry possible.
+          </p>
+          <div class="gold-rule"></div>
+        </div>
+
+        <div class="csr-grid">
+          <article class="csr-card reveal">
+            <div class="csr-num">01</div>
+            <h3>Farmer Input Financing</h3>
+            <p>
+              Structured "Supply-Now, Pay-After-Harvest" credit models where smallholder
+              farmers receive critical certified fertilizer inputs during planting
+              season and settle accounts post-harvest — shielding rural families from
+              hyperinflation and cash flow distress.
+            </p>
+          </article>
+
+          <article class="csr-card reveal delay-1">
+            <div class="csr-num">02</div>
+            <h3>Free Agronomic Education</h3>
+            <p>
+              Practical field demonstration days across rural LGAs in Northern Nigeria
+              teach optimal micro-dosing fertilizer placement, soil nutrient matching,
+              and timing — reducing input wastage, increasing harvest yield, and
+              curbing runoff.
+            </p>
+          </article>
+
+          <article class="csr-card reveal delay-2">
+            <div class="csr-num">03</div>
+            <h3>Youth Employment &amp; Apprenticeships</h3>
+            <p>
+              Scholarships, apprenticeships, and vocational training at Rusbi Skills
+              Academy for underserved youths in Kano State, creating skilled tradesmen,
+              certified solar/machinery technicians, and local entrepreneurs.
+            </p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         CONTACT
+    ============================================================ -->
+    <section id="contact" class="section">
+      <div class="container">
+        <div class="section-header reveal">
+          <span class="eyebrow">Contact Us</span>
+          <h2>Visit Our Facilities or <span class="accent">Reach Out</span></h2>
+          <p>
+            Our head office and manufacturing terminal are open Monday through
+            Saturday. We respond to all dealer, procurement, and enrollment enquiries
+            within two business days.
+          </p>
+          <div class="gold-rule"></div>
+        </div>
+
+        <div class="contact-grid">
+          <div class="contact-card reveal">
+            <div class="c-icon">
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+            </div>
+            <h3>Head Office &amp; Manufacturing Terminal</h3>
+            <p>
+              Plot No. 2, Skyline Western Bypass,<br />
+              Fandanka Quarters, Kumbotso LGA,<br />
+              Kano State, Nigeria.
+            </p>
+          </div>
+
+          <div class="contact-card reveal delay-1">
+            <div class="c-icon">
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg>
+            </div>
+            <h3>Bichi Administrative Office</h3>
+            <p>
+              No. 20, Hagagawa Quarters,<br />
+              Bichi LGA, Kano State,<br />
+              Nigeria.
+            </p>
+          </div>
+
+          <div class="contact-card reveal delay-2">
+            <div class="c-icon">
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>
+            </div>
+            <h3>Email &amp; Sales Desk</h3>
+            <p>
+              <a href="mailto:info@rusbigroup.com">info@rusbigroup.com</a><br />
+              <a href="mailto:sales@rusbigroup.com">sales@rusbigroup.com</a>
+            </p>
+          </div>
+        </div>
+
+        <div class="contact-strip reveal">
+          <div class="contact-strip-item">
+            <span class="cs-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </span>
+            <div>
+              <div class="cs-label">Operating Hours</div>
+              <div class="cs-value">Mon–Fri: 8:00 AM – 5:00 PM · Sat: 8:00 AM – 2:00 PM</div>
+            </div>
+          </div>
+          <div class="contact-strip-item">
+            <span class="cs-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            </span>
+            <div>
+              <div class="cs-label">Sales &amp; Orders</div>
+              <div class="cs-value"><a href="tel:+2348000000000">+234 800 000 0000</a></div>
+            </div>
+          </div>
+          <div class="contact-strip-item">
+            <span class="cs-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+            </span>
+            <div>
+              <div class="cs-label">WhatsApp Quick-Chat</div>
+              <div class="cs-value"><a href="https://wa.me/2348000000000?text=Hello%20Rusbi%20Group,%20I%20would%20like%20to%20inquire%20about%20your%20fertilizers%20and%20products." target="_blank" rel="noopener">Message our sales desk</a></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ============================================================
+       FOOTER
+  ============================================================ -->
+  <footer>
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="#home" class="logo">
+            <span class="logo-mark">R</span>
+            <span class="logo-text">RUSBI<span>GROUP</span></span>
+          </a>
+          <p>
+            An indigenous Nigerian diversified conglomerate headquartered in Kano State,
+            powering food security, technical vocational empowerment, and high-standard manufacturing.
+          </p>
+          <div class="footer-motto">
+            "Nagari Na Kowa, Koda Naka Kaso Na Kwarai"
+            <div style="font-size:0.75rem; color:rgba(255,255,255,0.4); font-style:normal; margin-top:4px;">
+              A thing of quality is for everyone; even if it is yours, desire what is truly good.
+            </div>
+          </div>
+        </div>
+
+        <div class="footer-col">
+          <h4>Sectors &amp; Units</h4>
+          <ul>
+            <li><a href="#sectors">Rusbi Agro-Chemicals &amp; Blending</a></li>
+            <li><a href="#academy">Rusbi Skills Academy (NBTE)</a></li>
+            <li><a href="#sectors">Rusbi Metal &amp; Water Engineering</a></li>
+            <li><a href="#sectors">Rusbi Bakery &amp; Confectionery</a></li>
+            <li><a href="#sectors">Rusbi Medicare Limited</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Quick Links</h4>
+          <ul>
+            <li><a href="#about">About Rusbi Group</a></li>
+            <li><a href="#products">Certified Fertilizers</a></li>
+            <li><a href="#academy">NBTE Vocational Trades</a></li>
+            <li><a href="#partner">Distributor Onboarding</a></li>
+            <li><a href="#csr">Farmer Input Financing (CSR)</a></li>
+            <li><a href="#contact">Plant &amp; Office Locations</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Headquarters &amp; Plant</h4>
+          <address>
+            <strong style="color:var(--white);">Corporate Blending Terminal:</strong><br />
+            Plot No. 2, Skyline Western Bypass,<br />
+            Fandanka Quarters, Kumbotso LGA, Kano.<br /><br />
+            <strong style="color:var(--white);">Registered Administrative HQ:</strong><br />
+            No. 20, Hagagawa Quarters, Bichi LGA, Kano.<br /><br />
+            <strong style="color:var(--white);">International Liaison:</strong><br />
+            Dubai, United Arab Emirates
+          </address>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>&copy; <span id="currentYear"></span> RUSBI Group of Companies Ltd. All rights reserved. RC: 1519337 (Inc. Aug 2018).</p>
+        <div class="legal">
+          <a href="#about">SON MANCAP Certified</a>
+          <a href="#academy">NBTE Accredited</a>
+          <a href="#contact">Privacy &amp; Terms</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ============================================================
+       FLOATING WHATSAPP BUTTON
+  ============================================================ -->
+  <a href="https://wa.me/2348000000000?text=Hello%20Rusbi%20Group%20sales%20desk,%20I%20would%20like%20to%20inquire%20about%20your%20fertilizers%20and%20products."
+     class="whatsapp-float"
+     target="_blank"
+     rel="noopener noreferrer"
+     aria-label="Chat with Rusbi Group Sales Desk on WhatsApp">
+    <svg viewBox="0 0 24 24">
+      <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2zm.01 1.67c2.2 0 4.26.86 5.82 2.41a8.212 8.212 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.196 8.196 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24zm4.52 11.64c-.25-.12-1.47-.72-1.7-.81-.23-.08-.39-.12-.56.12-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.12-1.05-.39-2-1.23-.74-.66-1.24-1.47-1.38-1.72-.14-.25-.01-.38.11-.5.11-.11.25-.29.37-.43.12-.15.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.12-.56-1.35-.77-1.85-.2-.49-.41-.42-.56-.43l-.48-.01c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.24.9 2.44 1.03 2.61.12.17 1.77 2.7 4.29 3.79.6.26 1.07.41 1.43.53.6.19 1.15.16 1.58.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.15-1.18-.06-.11-.23-.17-.48-.3z"/>
+    </svg>
+  </a>
+
+  <!-- ============================================================
+       SCRIPTS: INTERACTIVITY, CALCULATOR & FORMS
+  ============================================================ -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // 1. Dynamic Current Year
+      const yearEl = document.getElementById('currentYear');
+      if (yearEl) yearEl.textContent = new Date().getFullYear();
+
+      // 2. Mobile Nav Toggle
+      const navToggle = document.getElementById('navToggle');
+      const navMenu = document.getElementById('navMenu');
+      if (navToggle && navMenu) {
+        navToggle.addEventListener('click', () => {
+          const isExpanded = navToggle.getAttribute('aria-expanded') === 'true';
+          navToggle.setAttribute('aria-expanded', String(!isExpanded));
+          navMenu.classList.toggle('open');
+        });
+
+        // Auto close when nav links are clicked
+        navMenu.querySelectorAll('a').forEach(link => {
+          link.addEventListener('click', () => {
+            navMenu.classList.remove('open');
+            navToggle.setAttribute('aria-expanded', 'false');
+          });
+        });
+      }
+
+      // 3. Header Scrolled Styling
+      const nav = document.getElementById('nav');
+      if (nav) {
+        window.addEventListener('scroll', () => {
+          if (window.scrollY > 30) {
+            nav.classList.add('scrolled');
+          } else {
+            nav.classList.remove('scrolled');
+          }
+        }, { passive: true });
+      }
+
+      // 4. Scroll Reveal Animations (Intersection Observer)
+      const reveals = document.querySelectorAll('.reveal');
+      if ('IntersectionObserver' in window) {
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('visible');
+              observer.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.12, rootMargin: '0px 0px -30px 0px' });
+
+        reveals.forEach(el => observer.observe(el));
+      } else {
+        reveals.forEach(el => el.classList.add('visible'));
+      }
+
+      // 5. Fertilizer Agronomy Calculator
+      const cropData = {
+        maize: {
+          name: 'Maize (Cereal Grain)',
+          basalProduct: 'Rusbi NPK 20:10:10 (or NPK 15:15:15)',
+          basalBagsPerHa: 7, // 350 kg/ha
+          topDressProduct: 'White Granular Urea (46% N)',
+          topDressBagsPerHa: 3.5, // 175 kg/ha
+          schedule: 'Apply basal NPK 20:10:10 at planting or 2 weeks after emergence. Apply Urea top-dressing at 4–6 weeks.'
+        },
+        rice: {
+          name: 'Rice (Lowland / Upland)',
+          basalProduct: 'Rusbi NPK 20:10:10 or NPK 15:15:15',
+          basalBagsPerHa: 6,
+          topDressProduct: 'White Granular Urea (46% N)',
+          topDressBagsPerHa: 3,
+          schedule: 'Apply basal fertilizer 10–14 days post-transplanting. Split Urea top-dressing at tillering & panicle initiation.'
+        },
+        sorghum: {
+          name: 'Sorghum / Guinea Corn',
+          basalProduct: 'Rusbi NPK 20:10:10 (Vegetative Accelerator)',
+          basalBagsPerHa: 5,
+          topDressProduct: 'White Granular Urea (46% N)',
+          topDressBagsPerHa: 2.5,
+          schedule: 'Apply basal NPK at 2–3 weeks after germination. Side-dress Urea at knee-high stage.'
+        },
+        millet: {
+          name: 'Pearl Millet',
+          basalProduct: 'Rusbi NPK 20:10:10',
+          basalBagsPerHa: 4,
+          topDressProduct: 'White Granular Urea (46% N)',
+          topDressBagsPerHa: 2,
+          schedule: 'Basal placement at thinning (2 weeks). Top-dress Urea lightly at early tillering.'
+        },
+        yam: {
+          name: 'Yam & Root Tubers',
+          basalProduct: 'Rusbi NPK 15:15:15 (Universal Balanced)',
+          basalBagsPerHa: 8,
+          topDressProduct: 'Rusbi NPK 27:13:13 or Granular Urea',
+          topDressBagsPerHa: 2.5,
+          schedule: 'Apply balanced NPK at mound emergence. Apply booster top-dressing during vigorous vine elongation.'
+        },
+        vegetables: {
+          name: 'Vegetables (Tomato, Pepper, Onion)',
+          basalProduct: 'Rusbi NPK 15:15:15',
+          basalBagsPerHa: 8,
+          topDressProduct: 'Rusbi NPK 27:13:13 High Nitrogen Booster',
+          topDressBagsPerHa: 3.5,
+          schedule: 'Incorporate NPK 15:15:15 basal into raised beds prior to transplanting. Side-dress booster every 3 weeks.'
+        },
+        groundnut: {
+          name: 'Groundnut & Legumes',
+          basalProduct: 'Rusbi NPK 15:15:15 (High P & K for nodulation)',
+          basalBagsPerHa: 4,
+          topDressProduct: 'Minimal / None (Biological Nitrogen Fixation)',
+          topDressBagsPerHa: 0,
+          schedule: 'Apply balanced fertilizer at ridge formation. Legumes fix atmospheric nitrogen, requiring minimal top-dressing.'
+        }
+      };
+
+      const calcBtn = document.getElementById('calcBtn');
+      const calcResult = document.getElementById('calcResult');
+      const cropSelect = document.getElementById('crop');
+      const hectaresInput = document.getElementById('hectares');
+
+      if (calcBtn && calcResult && cropSelect && hectaresInput) {
+        calcBtn.addEventListener('click', () => {
+          const cropKey = cropSelect.value;
+          const ha = parseFloat(hectaresInput.value);
+
+          if (isNaN(ha) || ha <= 0) {
+            calcResult.className = 'calc-result show';
+            calcResult.innerHTML = '<p class="calc-error">⚠️ Please enter a valid land size in hectares (e.g., 1.5, 3, 10).</p>';
+            return;
+          }
+
+          const crop = cropData[cropKey];
+          const basalBags = Math.ceil(ha * crop.basalBagsPerHa);
+          const topDressBags = Math.ceil(ha * crop.topDressBagsPerHa);
+          const totalBags = basalBags + topDressBags;
+          const totalTonnes = ((totalBags * 50) / 1000).toFixed(2);
+
+          const waText = encodeURIComponent(`Hello Rusbi Group, I used your online fertilizer calculator for ${ha} Hectares of ${crop.name}. I need an official quotation for:\n- ${basalBags} bags of ${crop.basalProduct}\n- ${topDressBags} bags of ${crop.topDressProduct}\nTotal: ${totalBags} bags (~${totalTonnes} MT).`);
+
+          calcResult.className = 'calc-result show';
+          calcResult.innerHTML = `
+            <div class="calc-heading">Recommended Input Plan: ${ha} Hectare(s) of ${crop.name}</div>
+            <ul>
+              <li><strong>Basal Planting:</strong> ${basalBags} bags (50kg) of ${crop.basalProduct}</li>
+              ${topDressBags > 0 ? `<li><strong>Top-Dressing:</strong> ${topDressBags} bags (50kg) of ${crop.topDressProduct}</li>` : ''}
+              <li><strong>Total Volume:</strong> <strong>${totalBags} bags</strong> (Approx. <strong>${totalTonnes} Metric Tonnes</strong>)</li>
+            </ul>
+            <p class="calc-note"><strong>Agronomist Schedule:</strong> ${crop.schedule}</p>
+            <a href="https://wa.me/2348000000000?text=${waText}" class="calc-order-cta" target="_blank" rel="noopener">
+              Request WhatsApp Quote for this ${totalBags}-Bag Order &rarr;
+            </a>
+          `;
+        });
+      }
+
+      // 6. Distributor Application Form Handling
+      const dealerForm = document.getElementById('dealerForm');
+      const formMsg = document.getElementById('formMsg');
+
+      if (dealerForm && formMsg) {
+        dealerForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const fullName = document.getElementById('fullName').value.trim();
+          const email = document.getElementById('email').value.trim();
+          const phone = document.getElementById('phone').value.trim();
+
+          if (!fullName || !email || !phone) {
+            formMsg.className = 'form-msg show';
+            formMsg.style.borderColor = '#dc2626';
+            formMsg.style.color = '#b91c1c';
+            formMsg.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+            formMsg.textContent = 'Please fill out all required fields marked with an asterisk (*).';
+            return;
+          }
+
+          // Simulation of CRM submission
+          formMsg.className = 'form-msg show';
+          formMsg.style.borderColor = 'rgba(22, 163, 74, 0.3)';
+          formMsg.style.color = '#15803d';
+          formMsg.style.backgroundColor = 'rgba(22, 163, 74, 0.1)';
+          formMsg.innerHTML = `<strong>Nagode! Application Received.</strong><br/>Thank you, ${fullName}. Your Rusbi dealership inquiry has been logged. Our commercial sales desk at Western Bypass will review your application and contact you within 24–48 hours via phone/WhatsApp.`;
+          dealerForm.reset();
+        });
+      }
+    });
+  </script>
+</body>
+</html>

@@ -652,8 +652,6 @@ export function renderPosView(container, state, engine) {
     </div>
   `;
 }
-  `;
-}
 
 // ----------------------------------------------------
 // 3. FLOUR BATCHES VIEW
