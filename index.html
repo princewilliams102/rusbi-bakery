@@ -566,6 +566,54 @@
     </div>
   </div>
 
+  <!-- Modal: Add New Customer / Buyer -->
+  <div class="apex-modal-overlay" id="modal-add-customer">
+    <div class="apex-modal-card" style="max-width: 440px;">
+      <div class="apex-modal-header">
+        <b style="font-size: 16px;">New Customer</b>
+        <button type="button" class="ibtn ibtn--sm" onclick="window.closeModal('modal-add-customer')">✕</button>
+      </div>
+      <div class="apex-modal-body">
+        <form onsubmit="window.executeAddCustomer(event)" style="display: flex; flex-direction: column; gap: 12px;">
+          <div>
+            <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Full Name</label>
+            <input type="text" id="add-cust-name" class="input" placeholder="e.g. Alhaji Mustapha Danladi" required>
+          </div>
+
+          <div>
+            <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Phone</label>
+            <input type="tel" id="add-cust-phone" class="input" placeholder="e.g. 0803 123 4567" required>
+          </div>
+
+          <div>
+            <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Type</label>
+            <select id="add-cust-type" class="input" style="font-weight: 700;" onchange="window.toggleAddCustTypeFields(this.value)">
+              <option value="retail">Retail Buyer (Counter Walk-in)</option>
+              <option value="wholesale">Wholesale Distributor (Mai Sari)</option>
+              <option value="tea">Tea Vendor (Mai Shayi)</option>
+              <option value="institutional">Institutional Contract</option>
+            </select>
+          </div>
+
+          <div id="add-cust-distributor-fields" style="display: none; flex-direction: column; gap: 12px;">
+            <div>
+              <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Credit Limit (₦)</label>
+              <input type="number" id="add-cust-limit" class="input" placeholder="e.g. 250000" value="250000">
+            </div>
+            <div>
+              <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Daily Allocation (Loaves)</label>
+              <input type="number" id="add-cust-allocation" class="input" placeholder="e.g. 100" value="100">
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn--ink" style="width: 100%; height: 46px; font-weight: 850; background: var(--rusbi-green); border-color: var(--rusbi-green); justify-content: center; margin-top: 6px;">
+            Save Customer
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal: Bakery End-of-Shift Blind Close -->
   <div class="apex-modal-overlay" id="modal-close-shift">
     <div class="apex-modal-card" style="max-width: 420px; text-align: center;">

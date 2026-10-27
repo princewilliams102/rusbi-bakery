@@ -1075,6 +1075,53 @@ export const INITIAL_DATA = {
           "lastPayment": "₦102,000 on 27 Oct (OPay Transfer)"
         }
       ],
+      "retailCustomers": [
+        {
+          "id": "ret-01",
+          "name": "Mallam Shehu Danbaba",
+          "phone": "+234 803 219 4820",
+          "firstVisit": "2026-10-12T09:15:00.000Z",
+          "lastVisit": "2026-10-27T08:30:00.000Z",
+          "totalPurchases": 34500,
+          "visitsCount": 8
+        },
+        {
+          "id": "ret-02",
+          "name": "Hajiya Binta Sani",
+          "phone": "+234 802 841 9032",
+          "firstVisit": "2026-10-15T11:20:00.000Z",
+          "lastVisit": "2026-10-26T17:10:00.000Z",
+          "totalPurchases": 18200,
+          "visitsCount": 5
+        },
+        {
+          "id": "ret-03",
+          "name": "Musa Garba Kanti",
+          "phone": "+234 705 918 2304",
+          "firstVisit": "2026-10-18T14:00:00.000Z",
+          "lastVisit": "2026-10-27T10:45:00.000Z",
+          "totalPurchases": 42000,
+          "visitsCount": 11
+        },
+        {
+          "id": "ret-04",
+          "name": "Ibrahim Yakubu",
+          "phone": "+234 814 209 1187",
+          "firstVisit": "2026-10-20T08:00:00.000Z",
+          "lastVisit": "2026-10-25T16:20:00.000Z",
+          "totalPurchases": 25500,
+          "visitsCount": 6
+        },
+        {
+          "id": "ret-05",
+          "name": "Fatima Al-Hassan",
+          "phone": "+234 809 332 7651",
+          "firstVisit": "2026-10-22T13:30:00.000Z",
+          "lastVisit": "2026-10-27T12:05:00.000Z",
+          "totalPurchases": 15600,
+          "visitsCount": 4
+        }
+      ],
       "flourBatches": [
         {
           "id": "BAT-2026-1027-01",

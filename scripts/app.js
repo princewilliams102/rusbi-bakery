@@ -319,6 +319,9 @@ function loadInitialState() {
         if (!entity.cashShift) {
           entity.cashShift = initEntity?.cashShift ? JSON.parse(JSON.stringify(initEntity.cashShift)) : null;
         }
+        if (!entity.retailCustomers || entity.retailCustomers.length === 0) {
+          entity.retailCustomers = initEntity?.retailCustomers ? JSON.parse(JSON.stringify(initEntity.retailCustomers)) : [];
+        }
       });
       if (parsed.rolePermissions) {
         ['master', 'branch_admin', 'accountant', 'sales_rep', 'storekeeper', 'production_staff'].forEach(role => {
@@ -9686,20 +9689,29 @@ window.submitPosCheckout = function() {
     }
   });
 
-  if (isWalkin && custPhone) {
+  if (isWalkin) {
     if (!entity.retailCustomers) entity.retailCustomers = [];
-    const exists = entity.retailCustomers.find(r => r.phone === custPhone);
-    if (!exists) {
-      entity.retailCustomers.push({
+    const cleanPhone = custPhone.replace(/[^0-9]/g, '');
+    let exists = cleanPhone ? entity.retailCustomers.find(r => (r.phone || '').replace(/[^0-9]/g, '') === cleanPhone) : null;
+    if (!exists && custName && custName !== 'Walk-in Retail') {
+      exists = entity.retailCustomers.find(r => (r.name || '').toLowerCase() === custName.toLowerCase());
+    }
+    if (exists) {
+      exists.totalPurchases = (exists.totalPurchases || 0) + targetTotal;
+      exists.visitsCount = (exists.visitsCount || 1) + 1;
+      exists.lastVisit = new Date().toISOString();
+      if (custName && custName !== 'Walk-in Retail') exists.name = custName;
+      if (custPhone) exists.phone = custPhone;
+    } else if (custPhone || (custName && custName !== 'Walk-in Retail')) {
+      entity.retailCustomers.unshift({
         id: `ret-${Date.now()}`,
-        name: custName,
+        name: custName !== 'Walk-in Retail' ? custName : `Customer (${custPhone})`,
         phone: custPhone,
         firstVisit: new Date().toISOString(),
-        totalPurchases: targetTotal
+        lastVisit: new Date().toISOString(),
+        totalPurchases: targetTotal,
+        visitsCount: 1
       });
-    } else {
-      exists.totalPurchases = (exists.totalPurchases || 0) + targetTotal;
-      if (custName !== 'Walk-in Retail') exists.name = custName;
     }
   }
 
@@ -10112,6 +10124,104 @@ window.executeDeliverWaybill = function(e) {
   saveState();
   window.closeModal('modal-deliver-waybill');
   showToast(`✓ Waybill issued: ${count} loaves dispatched to ${client ? client.name : 'Client'}!`);
+  window.navigateTo('distributors');
+};
+
+// ----------------------------------------------------
+// OPERATIONAL LOGIC: CUSTOMER / BUYER DATA CAPTURE
+// ----------------------------------------------------
+window.lookupWalkinPhone = function(val) {
+  const clean = String(val || '').replace(/[^0-9]/g, '');
+  const badge = document.getElementById('pos-walkin-found-badge');
+  const nameInput = document.getElementById('pos-walkin-name');
+  if (clean.length >= 7) {
+    const entity = state.entities[0];
+    const match = (entity.retailCustomers || []).find(r => (r.phone || '').replace(/[^0-9]/g, '').includes(clean));
+    if (match) {
+      if (nameInput && (!nameInput.value || nameInput.value === 'Walk-in Retail')) {
+        nameInput.value = match.name;
+      }
+      if (badge) {
+        badge.style.display = 'block';
+        badge.innerText = `✓ Returning Buyer: ${match.name} (${match.visitsCount || 1} previous visits)`;
+      }
+      return;
+    }
+  }
+  if (badge) badge.style.display = 'none';
+};
+
+window.openNewCustomerModal = function() {
+  const modal = document.getElementById('modal-add-customer');
+  if (modal) modal.classList.add('open');
+};
+
+window.toggleAddCustTypeFields = function(type) {
+  const distFields = document.getElementById('add-cust-distributor-fields');
+  if (!distFields) return;
+  if (type === 'retail') {
+    distFields.style.display = 'none';
+  } else {
+    distFields.style.display = 'flex';
+  }
+};
+
+window.executeAddCustomer = function(e) {
+  if (e) e.preventDefault();
+  const name = document.getElementById('add-cust-name')?.value.trim();
+  const phone = document.getElementById('add-cust-phone')?.value.trim();
+  const type = document.getElementById('add-cust-type')?.value || 'retail';
+  const limit = Number(document.getElementById('add-cust-limit')?.value || 250000);
+  const allocation = Number(document.getElementById('add-cust-allocation')?.value || 100);
+
+  if (!name || !phone) {
+    showToast("Please enter both Name and Phone number.", true);
+    return;
+  }
+
+  const entity = state.entities[0];
+
+  if (type === 'retail') {
+    if (!entity.retailCustomers) entity.retailCustomers = [];
+    const cleanPhone = phone.replace(/[^0-9]/g, '');
+    let existing = entity.retailCustomers.find(r => (r.phone || '').replace(/[^0-9]/g, '') === cleanPhone);
+    if (!existing) {
+      entity.retailCustomers.unshift({
+        id: `ret-${Date.now()}`,
+        name: name,
+        phone: phone,
+        firstVisit: new Date().toISOString(),
+        lastVisit: new Date().toISOString(),
+        totalPurchases: 0,
+        visitsCount: 1
+      });
+      showToast(`✓ Registered retail buyer: ${name}!`);
+    } else {
+      existing.name = name;
+      showToast(`Updated retail buyer: ${name}`);
+    }
+  } else {
+    if (!entity.bashiDistributors) entity.bashiDistributors = [];
+    const roleLabel = type === 'wholesale' ? 'Wholesale Distributor (Mai Sari)' : (type === 'tea' ? 'Tea Vendor (Mai Shayi)' : 'Institutional Contract');
+    entity.bashiDistributors.unshift({
+      id: `bashi-${Date.now()}`,
+      name: name,
+      role: roleLabel,
+      phone: phone,
+      dailyAllocation: allocation,
+      creditLimit: limit,
+      balanceOwing: 0,
+      overdueDays: 0,
+      status: 'active',
+      guarantor: 'Verified',
+      guarantorPhone: phone,
+      lastPayment: 'None'
+    });
+    showToast(`✓ Registered ${roleLabel}: ${name}!`);
+  }
+
+  saveState();
+  window.closeModal('modal-add-customer');
   window.navigateTo('distributors');
 };
 

@@ -238,6 +238,45 @@ async function run() {
   await new Promise(r => setTimeout(r, 400));
   console.log(' [PASS] Issued waybill delivery note, deducted loaves, updated account receivable');
 
+  // ==========================================
+  // TEST 7: BUYER DATA COLLECTION (WALK-IN & RETAIL)
+  // ==========================================
+  console.log('\n--- 7. Testing Buyer Data Collection (One-Time & Customer) ---');
+  // Switch to Retail Tab
+  await page.evaluate(() => window.setDistributorsTab('retail'));
+  await new Promise(r => setTimeout(r, 300));
+  const retailRows = await page.$$eval('.table tbody tr', trs => trs.length);
+  assert.ok(retailRows >= 1, 'Retail tab must display recorded counter buyers');
+  console.log(` [PASS] Retail tab displays ${retailRows} counter buyers with visit counts and spent totals`);
+
+  // Open New Customer Modal & Register
+  await page.evaluate(() => {
+    window.openNewCustomerModal();
+    document.getElementById('add-cust-name').value = 'Alhaji Bello Kano';
+    document.getElementById('add-cust-phone').value = '0803 999 1122';
+    document.getElementById('add-cust-type').value = 'retail';
+    window.executeAddCustomer();
+  });
+  await new Promise(r => setTimeout(r, 400));
+  console.log(' [PASS] Successfully registered new retail customer with phone and name');
+
+  // Go to POS and test phone auto-complete
+  await page.evaluate(() => window.navigateTo('pos'));
+  await new Promise(r => setTimeout(r, 400));
+  await page.evaluate(() => {
+    const phoneInput = document.getElementById('pos-walkin-phone');
+    if (phoneInput) {
+      phoneInput.value = '0803 999 1122';
+      window.lookupWalkinPhone(phoneInput.value);
+    }
+  });
+  await new Promise(r => setTimeout(r, 200));
+  const autoFilledName = await page.$eval('#pos-walkin-name', el => el.value);
+  const badgeText = await page.$eval('#pos-walkin-found-badge', el => el.innerText);
+  assert.strictEqual(autoFilledName, 'Alhaji Bello Kano', 'Buyer name must auto-populate on phone match');
+  assert.ok(badgeText.includes('Returning Buyer'), 'Returning Buyer badge must display');
+  console.log(` [PASS] POS Phone lookup auto-filled buyer: ${autoFilledName} (${badgeText})`);
+
   await browser.close();
   console.log('\n================================================================');
   console.log('ALL OPERATIONAL MODULE TESTS PASSED WITH 100% SUCCESS!');

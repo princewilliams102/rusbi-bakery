@@ -620,9 +620,12 @@ export function renderPosView(container, state, engine) {
           </select>
 
           <!-- Walk-in Customer Contact Capture -->
-          <div id="pos-walkin-data" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-            <input type="text" id="pos-walkin-name" class="input input--sm" placeholder="${isHa ? 'Suna (na zabi)' : 'Name (optional)'}" style="font-size: 12px; height: 34px;">
-            <input type="tel" id="pos-walkin-phone" class="input input--sm" placeholder="${isHa ? 'Lambar Waya' : 'Phone'}" maxlength="15" style="font-size: 12px; height: 34px;">
+          <div id="pos-walkin-data" style="display: flex; flex-direction: column; gap: 4px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+              <input type="text" id="pos-walkin-name" class="input input--sm" placeholder="${isHa ? 'Suna (na zabi)' : 'Name (optional)'}" style="font-size: 12px; height: 34px;">
+              <input type="tel" id="pos-walkin-phone" class="input input--sm" placeholder="${isHa ? 'Lambar Waya' : 'Phone'}" maxlength="15" oninput="window.lookupWalkinPhone(this.value)" style="font-size: 12px; height: 34px;">
+            </div>
+            <div id="pos-walkin-found-badge" style="display: none; font-size: 11px; color: var(--rusbi-green); font-weight: 700; background: rgba(0, 166, 81, 0.08); padding: 4px 8px; border-radius: 6px;"></div>
           </div>
 
           <!-- Registered Customer Badge -->
@@ -1042,11 +1045,19 @@ export function renderShiftsView(container, state) {
 // ----------------------------------------------------
 // 7. DISTRIBUTORS VIEW (MERGED CONTRACTS & WHOLESALERS)
 // ----------------------------------------------------
+export let activeDistributorsTab = 'bulk';
+
 export function renderDistributorsView(container, state) {
   const isHa = currentLang === 'ha';
   const entity = state.entities[0] || {};
   const bashiList = entity.bashiDistributors || [];
   const registeredCusts = entity.customers || [];
+  const retailCusts = entity.retailCustomers || [];
+
+  window.setDistributorsTab = function(tab) {
+    activeDistributorsTab = tab;
+    renderDistributorsView(container, state);
+  };
 
   const seen = new Set();
   const allDistributors = [];
@@ -1070,46 +1081,98 @@ export function renderDistributorsView(container, state) {
   container.innerHTML = `
     <div style="margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
       <h1 style="font-size: 22px; font-weight: 850; margin: 0;">${isHa ? 'Yan Sari' : 'Distributors'}</h1>
-      <button class="btn btn--ghost" onclick="window.navigateTo('dashboard')">← ${t('btn_back')}</button>
-    </div>
-
-    <div class="card">
-      <div class="table-wrap">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>${isHa ? 'Suna' : 'Name'}</th>
-              <th>${isHa ? 'Nau\'i' : 'Type'}</th>
-              <th>${isHa ? 'Iyakar Bashi' : 'Limit'}</th>
-              <th class="r">${isHa ? 'Bashi' : 'Owed'}</th>
-              <th>${isHa ? 'Aiki' : 'Action'}</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${allDistributors.map(d => `
-              <tr>
-                <td>
-                  <b>${d.name}</b>
-                  ${d.phone ? `<div style="font-size: 11px; color: var(--muted); font-family: monospace;">${d.phone}</div>` : ''}
-                </td>
-                <td>
-                  <span class="badge ${d.isInst ? 'badge--pine' : 'badge--butter'}">${d.type}</span>
-                </td>
-                <td>₦${d.creditLimit.toLocaleString()}</td>
-                <td class="r" style="color: ${d.balanceOwing > 0 ? '#d97706' : 'var(--text)'}; font-weight: 850;">
-                  ₦${d.balanceOwing.toLocaleString()}
-                </td>
-                <td>
-                  <button class="btn btn--sm btn--ink" onclick="window.openDeliverWaybillModal('${d.id}')" style="background: var(--rusbi-green); border-color: var(--rusbi-green); font-weight: 700;">
-                    ${isHa ? 'Aika' : 'Deliver'}
-                  </button>
-                </td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
+      <div style="display: flex; gap: 8px;">
+        <button class="btn btn--ink" onclick="window.openNewCustomerModal()" style="background: var(--rusbi-green); border-color: var(--rusbi-green); font-weight: 700;">
+          + ${isHa ? 'Sabo' : 'Customer'}
+        </button>
+        <button class="btn btn--ghost" onclick="window.navigateTo('dashboard')">← ${t('btn_back')}</button>
       </div>
     </div>
+
+    <!-- 1-2 Word Tabs -->
+    <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+      <button class="btn btn--sm ${activeDistributorsTab === 'bulk' ? 'btn--ink' : 'btn--ghost'}" onclick="window.setDistributorsTab('bulk')" style="font-weight: 800;">
+        ${isHa ? 'Yan Sari' : 'Bulk'} (${allDistributors.length})
+      </button>
+      <button class="btn btn--sm ${activeDistributorsTab === 'retail' ? 'btn--ink' : 'btn--ghost'}" onclick="window.setDistributorsTab('retail')" style="font-weight: 800;">
+        ${isHa ? 'Masu Saye' : 'Retail'} (${retailCusts.length})
+      </button>
+    </div>
+
+    ${activeDistributorsTab === 'bulk' ? `
+      <!-- Bulk Wholesale / Institutional Table -->
+      <div class="card">
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>${isHa ? 'Suna' : 'Name'}</th>
+                <th>${isHa ? 'Nau\'i' : 'Type'}</th>
+                <th>${isHa ? 'Iyakar Bashi' : 'Limit'}</th>
+                <th class="r">${isHa ? 'Bashi' : 'Owed'}</th>
+                <th>${isHa ? 'Aiki' : 'Action'}</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${allDistributors.map(d => `
+                <tr>
+                  <td>
+                    <b>${d.name}</b>
+                    ${d.phone ? `<div style="font-size: 11px; color: var(--muted); font-family: monospace;">${d.phone}</div>` : ''}
+                  </td>
+                  <td>
+                    <span class="badge ${d.isInst ? 'badge--pine' : 'badge--butter'}">${d.type}</span>
+                  </td>
+                  <td>₦${d.creditLimit.toLocaleString()}</td>
+                  <td class="r" style="color: ${d.balanceOwing > 0 ? '#d97706' : 'var(--text)'}; font-weight: 850;">
+                    ₦${d.balanceOwing.toLocaleString()}
+                  </td>
+                  <td>
+                    <button class="btn btn--sm btn--ink" onclick="window.openDeliverWaybillModal('${d.id}')" style="background: var(--rusbi-green); border-color: var(--rusbi-green); font-weight: 700;">
+                      ${isHa ? 'Aika' : 'Deliver'}
+                    </button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    ` : `
+      <!-- Retail Counter Buyers Table -->
+      <div class="card">
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>${isHa ? 'Suna' : 'Name'}</th>
+                <th>${isHa ? 'Lambar Waya' : 'Phone'}</th>
+                <th>${isHa ? 'Ziyara' : 'Visits'}</th>
+                <th class="r">${isHa ? 'Jimlar Saye' : 'Total Spent'}</th>
+                <th>${isHa ? 'Kwana' : 'Last Visit'}</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${retailCusts.length === 0 ? `
+                <tr>
+                  <td colspan="5" style="text-align: center; color: var(--muted); padding: 24px;">
+                    ${isHa ? 'Babu masu sayen shago tukuna' : 'No retail buyers recorded yet'}
+                  </td>
+                </tr>
+              ` : retailCusts.map(r => `
+                <tr>
+                  <td><b>${r.name}</b></td>
+                  <td style="font-family: monospace; font-size: 13px;">${r.phone || '—'}</td>
+                  <td><span class="badge badge--pine">${r.visitsCount || 1}</span></td>
+                  <td class="r" style="font-weight: 850; color: var(--rusbi-green);">₦${(r.totalPurchases || 0).toLocaleString()}</td>
+                  <td style="color: var(--muted); font-size: 12.5px;">${r.lastVisit ? new Date(r.lastVisit).toLocaleDateString() : 'Today'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `}
   `;
 }
 
