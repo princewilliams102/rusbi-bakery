@@ -22,6 +22,7 @@ import {
   renderBashiView,
   renderShiftsView,
   renderEnergyView,
+  renderDistributorsView,
   renderInstitutionalView,
   renderNoLiesSheetView,
   renderDevicesView,
@@ -225,6 +226,26 @@ function purgePoultryAndEggItems(targetState) {
   targetState.entities = targetState.entities.filter(e => e.id === 'bakery');
 }
 
+function ensureRolePermissionsUpdated(targetState) {
+  if (!targetState) return;
+  if (!targetState.rolePermissions) {
+    targetState.rolePermissions = JSON.parse(JSON.stringify(INITIAL_DATA.rolePermissions));
+    return;
+  }
+  Object.keys(INITIAL_DATA.rolePermissions).forEach(role => {
+    if (!targetState.rolePermissions[role]) {
+      targetState.rolePermissions[role] = JSON.parse(JSON.stringify(INITIAL_DATA.rolePermissions[role]));
+    } else {
+      const initRoutes = INITIAL_DATA.rolePermissions[role]?.allowedRoutes || [];
+      initRoutes.forEach(rt => {
+        if (!targetState.rolePermissions[role].allowedRoutes.includes(rt)) {
+          targetState.rolePermissions[role].allowedRoutes.push(rt);
+        }
+      });
+    }
+  });
+}
+
 function loadInitialState() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -300,22 +321,14 @@ function loadInitialState() {
         }
       });
       if (parsed.rolePermissions) {
-        ['master', 'branch_admin', 'accountant', 'storekeeper'].forEach(role => {
+        ['master', 'branch_admin', 'accountant', 'sales_rep', 'storekeeper', 'production_staff'].forEach(role => {
           if (parsed.rolePermissions[role]) {
-            if (!parsed.rolePermissions[role].allowedRoutes.includes('suppliers')) {
-              parsed.rolePermissions[role].allowedRoutes.push('suppliers');
-            }
-            if (!parsed.rolePermissions[role].allowedRoutes.includes('expenses')) {
-              parsed.rolePermissions[role].allowedRoutes.push('expenses');
-            }
-          }
-        });
-        if (parsed.rolePermissions.branch_admin && !parsed.rolePermissions.branch_admin.allowedRoutes.includes('admin')) {
-          parsed.rolePermissions.branch_admin.allowedRoutes.push('admin');
-        }
-        ['master', 'branch_admin'].forEach(r => {
-          if (parsed.rolePermissions[r] && !parsed.rolePermissions[r].allowedRoutes.includes('devices')) {
-            parsed.rolePermissions[r].allowedRoutes.push('devices');
+            const initRoutes = INITIAL_DATA.rolePermissions[role]?.allowedRoutes || [];
+            initRoutes.forEach(rt => {
+              if (!parsed.rolePermissions[role].allowedRoutes.includes(rt)) {
+                parsed.rolePermissions[role].allowedRoutes.push(rt);
+              }
+            });
           }
         });
       }
@@ -325,6 +338,7 @@ function loadInitialState() {
     applyCredentialsVault(parsed.users);
     purgePoultryAndEggItems(parsed);
     repairCorruptedEmojis(parsed);
+    ensureRolePermissionsUpdated(parsed);
     return parsed;
   } catch {
     const fresh = JSON.parse(JSON.stringify(INITIAL_DATA));
@@ -332,6 +346,7 @@ function loadInitialState() {
     applyCredentialsVault(fresh.users);
     purgePoultryAndEggItems(fresh);
     repairCorruptedEmojis(fresh);
+    ensureRolePermissionsUpdated(fresh);
     return fresh;
   }
 }
@@ -396,6 +411,7 @@ export async function syncStateFromServer() {
       applyCredentialsVault(serverState.users);
       purgePoultryAndEggItems(serverState);
       repairCorruptedEmojis(serverState);
+      ensureRolePermissionsUpdated(serverState);
       state = serverState;
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       engine = new AccountingEngine(state);
@@ -1583,8 +1599,11 @@ function renderCurrentView() {
     case 'energy':
       renderEnergyView(container, state, engine);
       break;
+    case 'distributors':
+      renderDistributorsView(container, state, engine);
+      break;
     case 'institutional':
-      renderInstitutionalView(container, state, engine);
+      renderDistributorsView(container, state, engine);
       break;
     case 'nolies':
       renderNoLiesSheetView(container, state, engine);
@@ -2748,6 +2767,9 @@ function renderBillsView(container) {
       <button class="filter-pill ${billsTabFilter === 'pos' ? 'active' : ''}" onclick="window.setBillsTab('pos')">
         📝 Purchase Orders (${pos.length})
       </button>
+      <button class="filter-pill ${billsTabFilter === 'power_fuel' ? 'active' : ''}" onclick="window.setBillsTab('power_fuel')">
+        ⛽ Power &amp; Fuel
+      </button>
       <button class="filter-pill ${billsTabFilter === 'credits' ? 'active' : ''}" onclick="window.setBillsTab('credits')">
         ↩️ Supplier Credits (${credits.length})
       </button>
@@ -2857,7 +2879,67 @@ function renderBillsView(container) {
           <span><b>Filtered Total:</b> <span style="font-size: 16px; font-weight: 850; color: var(--rusbi-green); margin-left: 6px;">${engine.formatCurrency(activeFilteredTotal)}</span></span>
         </div>
       </div>
-    ` : billsTabFilter === 'bills' ? `
+    ` : billsTabFilter === 'power_fuel' ? `
+      <!-- Power & Fuel (Merged Energy) Sub-Tab -->
+      <div class="card" style="padding: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <b style="font-size: 16px;">Lister 60kVA Plant Generator</b>
+          <button class="btn btn--ink" onclick="window.openLogFuelModal()" style="background: #ef4444; border-color: #ef4444; font-weight: 800;">
+            + Fuel
+          </button>
+        </div>
+
+        <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 20px;">
+          <div style="background: var(--well); padding: 14px; border-radius: 10px;">
+            <div style="font-size: 11px; color: var(--muted); font-weight: 700; text-transform: uppercase;">Run Time</div>
+            <b style="font-size: 20px;">${entity.energyStats?.generatorRunHours || 6.5} Hours</b>
+          </div>
+          <div style="background: var(--well); padding: 14px; border-radius: 10px;">
+            <div style="font-size: 11px; color: var(--muted); font-weight: 700; text-transform: uppercase;">Diesel Consumed</div>
+            <b style="font-size: 20px;">${entity.energyStats?.dieselLitresConsumed || 45} Litres</b>
+          </div>
+          <div style="background: var(--well); padding: 14px; border-radius: 10px;">
+            <div style="font-size: 11px; color: var(--muted); font-weight: 700; text-transform: uppercase;">Cost / Loaf</div>
+            <b style="font-size: 20px; color: var(--rusbi-green);">₦${Number(entity.energyStats?.energyCostPerLoaf || 16.76).toFixed(2)}</b>
+          </div>
+          <div style="background: var(--well); padding: 14px; border-radius: 10px;">
+            <div style="font-size: 11px; color: var(--muted); font-weight: 700; text-transform: uppercase;">Next Service</div>
+            <b style="font-size: 20px; color: #2563eb;">78 Hours</b>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Litres</th>
+                <th>Price / L</th>
+                <th class="r">Total (₦)</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>${todayStr}</td>
+                <td><b>45 Litres</b></td>
+                <td>₦1,100</td>
+                <td class="r num font-bold" style="color: #ef4444;">₦49,500</td>
+                <td><span class="badge badge--pine">Logged</span></td>
+              </tr>
+              <tr>
+                <td>2026-10-26</td>
+                <td><b>50 Litres</b></td>
+                <td>₦1,100</td>
+                <td class="r num font-bold" style="color: #ef4444;">₦55,000</td>
+                <td><span class="badge badge--pine">Logged</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `
+    : billsTabFilter === 'bills' ? `
       <!-- VENDOR BILLS & RAW MATERIAL RESTOCK REGISTER -->
       <div class="card">
         <div class="card__head">
@@ -9268,67 +9350,145 @@ if (document.readyState === 'loading') {
 // ====================================================
 // BAKERY OPERATIONS INTERACTIVE CONTROLLERS
 // ====================================================
+// ----------------------------------------------------
+// OPERATIONAL LOGIC: SALES POS
+// ----------------------------------------------------
+window.adjustPosQty = function(prodId, delta) {
+  const input = document.getElementById(`pos-qty-${prodId}`);
+  if (!input) return;
+  const current = Math.max(0, Number(input.value || 0) + delta);
+  input.value = current;
+  window.calcPosTotal();
+};
+
 window.calcPosTotal = function() {
-  const entity = state.entities[0];
-  const products = (entity.inventory || []).filter(i => i.type === 'product');
+  const inputs = document.querySelectorAll('.pos-bread-qty');
   let total = 0;
-  products.forEach(p => {
-    const input = document.getElementById(`pos-qty-${p.id}`);
-    const qty = Number(input?.value || 0);
-    const unitPrice = Number(p.salesPrice || p.sellingPrice || p.price || 850);
-    total += qty * unitPrice;
+  inputs.forEach(inp => {
+    const qty = Number(inp.value || 0);
+    const price = Number(inp.dataset.price || 850);
+    total += qty * price;
   });
+  window.posCalculatedTotal = total;
   const display = document.getElementById('pos-total-display');
   if (display) display.innerText = `₦${total.toLocaleString()}`;
-  window.posCalculatedTotal = total;
-  window.calcCashChange();
+  window.calcLiveTenders();
 };
 
-window.calcCashChange = function() {
-  const total = window.posCalculatedTotal || 0;
-  const cash = Number(document.getElementById('tender-cash')?.value || 0);
-  const change = Math.max(0, cash - total);
-  const changeEl = document.getElementById('pos-change-display');
-  if (changeEl) {
-    changeEl.innerText = `₦${change.toLocaleString()}`;
-  }
+window.getPosTotal = function() {
+  return window.posCalculatedTotal || 0;
 };
 
-window.posSplitActive = false;
-window.toggleSplitTender = function() {
-  window.posSplitActive = !window.posSplitActive;
-  const splitBox = document.getElementById('pos-split-container');
-  const btn = document.getElementById('btn-toggle-split');
-  const badge = document.getElementById('pos-badge-tender');
-  if (splitBox) {
-    splitBox.style.display = window.posSplitActive ? 'flex' : 'none';
-  }
-  if (badge) {
-    badge.innerText = window.posSplitActive ? 'Split Tender' : 'Cash';
-  }
-  if (btn) {
-    btn.classList.toggle('active', window.posSplitActive);
-  }
-};
-
-window.onBashiInputChanged = function(val) {
-  const bashi = Number(val || 0);
-  const custSelect = document.getElementById('pos-customer');
-  if (bashi > 0 && custSelect && custSelect.value === 'walkin') {
-    alert("Bashi credit cannot be issued to Walk-in customer. Please select a registered distributor.");
-    custSelect.focus();
-  }
-  window.calcTenderSum();
-};
-
-window.calcTenderSum = function() {
+window.calcLiveTenders = function() {
+  const targetTotal = window.posCalculatedTotal || 0;
   const cash = Number(document.getElementById('tender-cash')?.value || 0);
   const pos = Number(document.getElementById('tender-pos')?.value || 0);
-  const xfer = Number(document.getElementById('tender-transfer')?.value || 0);
+  const transfer = Number(document.getElementById('tender-transfer')?.value || 0);
   const bashi = Number(document.getElementById('tender-bashi')?.value || 0);
-  const tenderSum = cash + pos + xfer + bashi;
-  const targetTotal = window.posCalculatedTotal || 0;
-  return { cash, pos, xfer, bashi, tenderSum, targetTotal };
+
+  // Auto-show/hide transfer bank dropdown
+  const bankBox = document.getElementById('pos-transfer-bank-box');
+  if (bankBox) {
+    bankBox.style.display = transfer > 0 ? 'flex' : 'none';
+  }
+
+  // Credit Rule: If bashi > 0, Walk-in is strictly forbidden!
+  const custSelect = document.getElementById('pos-customer');
+  const walkinOpt = document.getElementById('opt-customer-walkin');
+  if (bashi > 0) {
+    if (walkinOpt) walkinOpt.disabled = true;
+    if (custSelect && custSelect.value === 'walkin') {
+      if (custSelect.options.length > 1) {
+        custSelect.selectedIndex = 1;
+        window.handlePosCustomerChange();
+      }
+    }
+  } else {
+    if (walkinOpt) walkinOpt.disabled = false;
+  }
+
+  const sum = cash + pos + transfer + bashi;
+  const isHa = localStorage.getItem('rusbi_lang') === 'ha';
+  const labelEl = document.getElementById('pos-balance-label');
+  const valEl = document.getElementById('pos-balance-value');
+  const btn = document.getElementById('btn-complete-sale');
+
+  if (targetTotal <= 0) {
+    if (labelEl) labelEl.innerText = isHa ? 'Ragewa:' : 'Remaining:';
+    if (valEl) {
+      valEl.innerText = '₦0.00';
+      valEl.style.color = 'var(--muted)';
+    }
+    if (btn) {
+      btn.disabled = true;
+      btn.style.background = '#64748b';
+      btn.style.borderColor = '#64748b';
+      btn.style.cursor = 'not-allowed';
+      btn.style.opacity = '0.6';
+    }
+    return;
+  }
+
+  // Exact Match
+  if (sum === targetTotal) {
+    if (labelEl) labelEl.innerText = isHa ? 'Ragewa:' : 'Remaining:';
+    if (valEl) {
+      valEl.innerText = '₦0.00';
+      valEl.style.color = 'var(--rusbi-green)';
+    }
+    if (btn) {
+      btn.disabled = false;
+      btn.style.background = 'var(--rusbi-green)';
+      btn.style.borderColor = 'var(--rusbi-green)';
+      btn.style.cursor = 'pointer';
+      btn.style.opacity = '1';
+    }
+  } else if (sum < targetTotal) {
+    const diff = targetTotal - sum;
+    if (labelEl) labelEl.innerText = isHa ? 'Ragewa:' : 'Remaining:';
+    if (valEl) {
+      valEl.innerText = `₦${diff.toLocaleString()}`;
+      valEl.style.color = 'var(--bad)';
+    }
+    if (btn) {
+      btn.disabled = true;
+      btn.style.background = '#64748b';
+      btn.style.borderColor = '#64748b';
+      btn.style.cursor = 'not-allowed';
+      btn.style.opacity = '0.6';
+    }
+  } else {
+    // If only cash paid and cash > targetTotal, it is Change!
+    if (cash >= targetTotal && pos === 0 && transfer === 0 && bashi === 0) {
+      const change = cash - targetTotal;
+      if (labelEl) labelEl.innerText = isHa ? 'Canji:' : 'Change:';
+      if (valEl) {
+        valEl.innerText = `₦${change.toLocaleString()}`;
+        valEl.style.color = 'var(--rusbi-green)';
+      }
+      if (btn) {
+        btn.disabled = false;
+        btn.style.background = 'var(--rusbi-green)';
+        btn.style.borderColor = 'var(--rusbi-green)';
+        btn.style.cursor = 'pointer';
+        btn.style.opacity = '1';
+      }
+    } else {
+      const excess = sum - targetTotal;
+      if (labelEl) labelEl.innerText = isHa ? 'Kari:' : 'Over:';
+      if (valEl) {
+        valEl.innerText = `+₦${excess.toLocaleString()}`;
+        valEl.style.color = '#ef4444';
+      }
+      if (btn) {
+        btn.disabled = true;
+        btn.style.background = '#64748b';
+        btn.style.borderColor = '#64748b';
+        btn.style.cursor = 'not-allowed';
+        btn.style.opacity = '0.6';
+      }
+    }
+  }
 };
 
 window.handlePosCustomerChange = function() {
@@ -9344,8 +9504,8 @@ window.handlePosCustomerChange = function() {
     if (walkinBox) walkinBox.style.display = 'grid';
     if (regInfo) regInfo.style.display = 'none';
     if (bashiInput && Number(bashiInput.value) > 0) {
-      alert("Cannot issue credit to Walk-in retail customer. Bashi reset to 0.");
       bashiInput.value = '';
+      window.calcLiveTenders();
     }
   } else {
     if (walkinBox) walkinBox.style.display = 'none';
@@ -9378,10 +9538,10 @@ window.savePosNewCustomer = function() {
   const typeSelect = document.getElementById('pos-new-cust-type');
   const name = (nameInput?.value || '').trim();
   const phone = (phoneInput?.value || '').trim();
-  const role = typeSelect?.value || 'Wholesale Distributor (Mai Sari)';
+  const role = typeSelect?.value || 'Wholesale Distributor';
 
   if (!name) {
-    alert("Please enter customer name.");
+    showToast("Please enter customer name", true);
     nameInput?.focus();
     return;
   }
@@ -9395,7 +9555,7 @@ window.savePosNewCustomer = function() {
     phone: phone || '+234 800 000 0000',
     role: role,
     dailyAllocation: 50,
-    creditLimit: 200000,
+    creditLimit: 250000,
     balanceOwing: 0,
     overdueDays: 0,
     status: 'active'
@@ -9414,40 +9574,55 @@ window.savePosNewCustomer = function() {
 
   saveState();
 
-  // Add option to select and select it
   const select = document.getElementById('pos-customer');
   if (select) {
     const opt = document.createElement('option');
     opt.value = newCust.id;
-    opt.text = `${newCust.name} (${newCust.phone}) — Owing: ₦0`;
+    opt.text = `${newCust.name} — Owing: ₦0`;
     opt.dataset.phone = newCust.phone;
     opt.dataset.role = newCust.role;
     opt.dataset.owing = 0;
-    opt.dataset.limit = 200000;
+    opt.dataset.limit = 250000;
     select.appendChild(opt);
     select.value = newCust.id;
   }
 
-  // Hide form & reset
   if (nameInput) nameInput.value = '';
   if (phoneInput) phoneInput.value = '';
   const form = document.getElementById('pos-new-cust-form');
   if (form) form.style.display = 'none';
 
   window.handlePosCustomerChange();
-  showToast(`✓ Added ${name} (${phone}) to customer directory!`);
+  showToast(`✓ Added ${name} to customer directory!`);
 };
 
 window.submitPosCheckout = function() {
   const targetTotal = window.posCalculatedTotal || 0;
   if (targetTotal <= 0) {
-    alert("Please select at least one bread quantity.");
+    showToast("Please select at least 1 loaf of bread.", true);
     return;
   }
+
   const cash = Number(document.getElementById('tender-cash')?.value || 0);
-  const isSplit = !!window.posSplitActive;
+  const pos = Number(document.getElementById('tender-pos')?.value || 0);
+  const transfer = Number(document.getElementById('tender-transfer')?.value || 0);
+  const bashi = Number(document.getElementById('tender-bashi')?.value || 0);
+  const transferBank = document.getElementById('tender-transfer-bank')?.value || 'Zenith Bank';
+
+  const sum = cash + pos + transfer + bashi;
+  if (sum < targetTotal) {
+    showToast(`Payment incomplete: ₦${(targetTotal - sum).toLocaleString()} remaining.`, true);
+    return;
+  }
+
   const custSelect = document.getElementById('pos-customer');
   const isWalkin = !custSelect || custSelect.value === 'walkin';
+
+  if (bashi > 0 && isWalkin) {
+    showToast("Credit cannot be issued to Walk-in retail. Select a registered customer.", true);
+    custSelect?.focus();
+    return;
+  }
 
   let custName = 'Walk-in Retail';
   let custPhone = '';
@@ -9459,40 +9634,19 @@ window.submitPosCheckout = function() {
     if (phoneVal) custPhone = phoneVal;
   } else {
     const opt = custSelect.options[custSelect.selectedIndex];
-    custName = opt?.text?.split('(')[0]?.trim() || 'Customer';
+    custName = opt?.text?.split('—')[0]?.split('(')[0]?.trim() || 'Customer';
     custPhone = opt?.dataset.phone || '';
   }
 
-  if (!isSplit) {
-    if (cash < targetTotal) {
-      alert(`Cash tendered (₦${cash.toLocaleString()}) is less than total sale (₦${targetTotal.toLocaleString()}).`);
-      return;
-    }
-  } else {
-    const pos = Number(document.getElementById('tender-pos')?.value || 0);
-    const xfer = Number(document.getElementById('tender-transfer')?.value || 0);
-    const bashi = Number(document.getElementById('tender-bashi')?.value || 0);
-    const totalTender = cash + pos + xfer + bashi;
+  const entity = state.entities[0];
 
-    if (totalTender < targetTotal) {
-      alert(`Total payment (₦${totalTender.toLocaleString()}) does not cover sale (₦${targetTotal.toLocaleString()}).`);
-      return;
-    }
-
-    if (bashi > 0 && isWalkin) {
-      alert("Cannot issue Bashi credit to Walk-in retail. Please select or register a customer.");
-      custSelect?.focus();
-      return;
-    }
-
-    if (bashi > 0 && !isWalkin) {
-      const debtor = (state.entities[0].bashiDistributors || []).find(d => d.id === custSelect.value);
-      if (debtor) debtor.balanceOwing = (debtor.balanceOwing || 0) + bashi;
-    }
+  // If credit, add to debtor's balance
+  if (bashi > 0 && !isWalkin) {
+    const debtor = (entity.bashiDistributors || []).find(d => d.id === custSelect.value);
+    if (debtor) debtor.balanceOwing = (debtor.balanceOwing || 0) + bashi;
   }
 
   // Deduct inventory
-  const entity = state.entities[0];
   const products = (entity.inventory || []).filter(i => i.type === 'product');
   const soldItems = [];
   products.forEach(p => {
@@ -9504,14 +9658,14 @@ window.submitPosCheckout = function() {
     }
   });
 
-  // Update till cash
-  const cashAdded = isSplit ? Math.min(cash, targetTotal) : targetTotal;
+  // Till cash: cash portion up to total
+  const cashAdded = Math.min(cash, targetTotal);
   if (cashAdded > 0 && entity.cashShift) {
     entity.cashShift.expectedInDrawer = (entity.cashShift.expectedInDrawer || 0) + cashAdded;
     entity.cashShift.cashCollectedSales = (entity.cashShift.cashCollectedSales || 0) + cashAdded;
   }
 
-  // Record permanent sales log with customer data
+  // Permanent sales record
   if (!entity.salesLog) entity.salesLog = [];
   entity.salesLog.unshift({
     id: `sale-${Date.now()}`,
@@ -9523,16 +9677,15 @@ window.submitPosCheckout = function() {
     total: targetTotal,
     cashTendered: cash,
     items: soldItems,
-    isSplit: isSplit,
     tenders: {
       cash: cashAdded,
-      pos: isSplit ? Number(document.getElementById('tender-pos')?.value || 0) : 0,
-      transfer: isSplit ? Number(document.getElementById('tender-transfer')?.value || 0) : 0,
-      bashi: isSplit ? Number(document.getElementById('tender-bashi')?.value || 0) : 0
+      pos: pos,
+      transfer: transfer,
+      transferBank: transfer > 0 ? transferBank : null,
+      bashi: bashi
     }
   });
 
-  // If phone was provided for walkin, save to retail customer directory for retention
   if (isWalkin && custPhone) {
     if (!entity.retailCustomers) entity.retailCustomers = [];
     const exists = entity.retailCustomers.find(r => r.phone === custPhone);
@@ -9556,127 +9709,289 @@ window.submitPosCheckout = function() {
   window.navigateTo('dashboard');
 };
 
-window.recordBashiSettlement = function(bashiId) {
-  const entity = state.entities[0];
-  const debtor = (entity.bashiDistributors || []).find(d => d.id === bashiId);
-  if (!debtor) return;
-  const amtStr = prompt(`Enter debt payment amount for ${debtor.name} (Current Owing: ₦${debtor.balanceOwing.toLocaleString()}):`, debtor.balanceOwing);
-  if (!amtStr) return;
-  const amt = Number(amtStr);
-  if (isNaN(amt) || amt <= 0) {
-    alert("Invalid payment amount");
-    return;
+// ----------------------------------------------------
+// OPERATIONAL LOGIC: PRODUCTION DRAWER & MODAL
+// ----------------------------------------------------
+window.openNewBatchDrawer = function() {
+  const dtInput = document.getElementById('batch-input-datetime');
+  if (dtInput) {
+    const now = new Date();
+    dtInput.value = now.toISOString().slice(0, 16).replace('T', ' ');
   }
-  debtor.balanceOwing = Math.max(0, debtor.balanceOwing - amt);
-  if (debtor.balanceOwing === 0) debtor.overdueDays = 0;
-  if (entity.cashShift) {
-    entity.cashShift.expectedInDrawer += amt;
-    entity.cashShift.cashCollectedBashi = (entity.cashShift.cashCollectedBashi || 0) + amt;
-  }
-  saveState();
-  showToast(`✓ Received ₦${amt.toLocaleString()} payment from ${debtor.name}`);
-  window.navigateTo('bashi');
+  const drawer = document.getElementById('drawer-new-batch');
+  if (drawer) drawer.classList.add('open');
 };
 
-window.recordCrateReturn = function(distName) {
-  const entity = state.entities[0];
-  const crates = entity.cratesSummary;
-  if (!crates) return;
-  const holder = crates.holders.find(h => h.distributor === distName);
-  if (!holder) return;
-  const qtyStr = prompt(`Enter number of empty crates returned by ${distName} (Deficit: ${holder.deficit}):`, holder.deficit);
-  if (!qtyStr) return;
-  const qty = Number(qtyStr);
-  if (isNaN(qty) || qty <= 0) return;
-  const actualReturned = Math.min(qty, holder.deficit);
-  holder.cratesReturned += actualReturned;
-  holder.deficit -= actualReturned;
-  holder.depositHeld = Math.max(0, holder.deficit * 4000);
-  crates.inYard += actualReturned;
-  crates.inTransit = Math.max(0, crates.inTransit - actualReturned);
-  crates.unreturnedDeficit = Math.max(0, crates.unreturnedDeficit - actualReturned);
-  crates.refundableDepositsHeld = crates.unreturnedDeficit * 4000;
-  saveState();
-  showToast(`✓ Returned ${actualReturned} crates from ${distName}`);
-  window.navigateTo('crates');
-};
-
-window.executeBlindBalancing = function(e) {
+window.executeStartBatch = function(e) {
   if (e) e.preventDefault();
-  const countInput = document.getElementById('blind-physical-count');
-  const count = Number(countInput?.value || 0);
-  const entity = state.entities[0];
-  const shift = entity.cashShift || { expectedInDrawer: 420000 };
-  const expected = shift.expectedInDrawer;
-  const variance = count - expected;
-  const resultDiv = document.getElementById('blind-balance-result');
-  if (resultDiv) {
-    resultDiv.style.display = 'block';
-    resultDiv.innerHTML = `
-      <div style="font-size: 14px; font-weight: 800; margin-bottom: 8px;">Blind Balancing Result:</div>
-      <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-        <span>Physical Notes Counted:</span> <b>₦${count.toLocaleString()}</b>
-      </div>
-      <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-        <span>Expected Till Balance:</span> <b>₦${expected.toLocaleString()}</b>
-      </div>
-      <div style="display: flex; justify-content: space-between; padding-top: 6px; border-top: 1px dashed var(--line); font-size: 15px;">
-        <span><b>Till Variance:</b></span>
-        <b style="color: ${variance === 0 ? 'var(--rusbi-green)' : (variance < 0 ? 'var(--bad)' : 'var(--rusbi-green)')};">
-          ${variance === 0 ? '✓ Balanced (₦0.00 Over/Short)' : (variance < 0 ? `⚠️ Shortage: -₦${Math.abs(variance).toLocaleString()}` : `Over: +₦${variance.toLocaleString()}`)}
-        </b>
-      </div>
-    `;
-  }
-};
+  const dt = document.getElementById('batch-input-datetime')?.value || new Date().toISOString();
+  const shift = document.getElementById('batch-input-shift')?.value || 'Morning Shift';
+  const baker = document.getElementById('batch-input-baker')?.value || 'Aliyu Danladi (Head Baker)';
+  const recipe = document.getElementById('batch-input-recipe')?.value || 'Rusbi Special Jumbo Loaf (₦850)';
+  const bags = Number(document.getElementById('batch-input-bags')?.value || 15);
 
-window.openNewBatchModal = function() {
-  const flourBagsStr = prompt("Enter number of 50kg flour bags for this batch (e.g. 15):", "15");
-  if (!flourBagsStr) return;
-  const bags = Number(flourBagsStr);
-  if (isNaN(bags) || bags <= 0) return;
-  const targetLoaves = bags * 125;
-  const actualStr = prompt(`${bags} bags @ 125 loaves/bag = ${targetLoaves} target loaves.\n\nEnter actual good loaves bagged:`, targetLoaves - 20);
-  if (!actualStr) return;
-  const actual = Number(actualStr);
   const entity = state.entities[0];
   if (!Array.isArray(entity.flourBatches)) entity.flourBatches = [];
+
+  // Deduct inventory raw materials
+  const inv = entity.inventory || [];
+  const flourItem = inv.find(i => (i.name || '').toLowerCase().includes('flour'));
+  if (flourItem) flourItem.qtyOnHand = Math.max(0, (Number(flourItem.qtyOnHand) || 120) - bags);
+
+  const sugarItem = inv.find(i => (i.name || '').toLowerCase().includes('sugar'));
+  if (sugarItem) sugarItem.qtyOnHand = Math.max(0, (Number(sugarItem.qtyOnHand) || 50) - 1);
+
+  const margItem = inv.find(i => (i.name || '').toLowerCase().includes('margarine'));
+  if (margItem) margItem.qtyOnHand = Math.max(0, (Number(margItem.qtyOnHand) || 40) - 5);
+
+  const targetLoaves = bags * 125;
   const newBatch = {
-    id: `BAT-2026-1027-${entity.flourBatches.length + 1}`,
-    shift: "Afternoon Shift",
-    recipe: "Rusbi Special Jumbo & Medium Loaves",
+    id: `BAT-2026-${Date.now().toString().slice(-4)}`,
+    datetime: dt,
+    shift: shift,
+    recipe: recipe,
     flourBags50kg: bags,
-    flourBrand: "Golden Penny Special Flour (50kg)",
     targetLoaves: targetLoaves,
-    actualLoaves: actual,
-    burntLoaves: 10,
-    fallenLoaves: 5,
-    unaccountedTheft: Math.max(0, targetLoaves - actual - 15),
-    varianceLoaves: actual - targetLoaves,
-    variancePct: Math.round(((actual - targetLoaves) / targetLoaves) * 1000) / 10,
-    chiefBaker: "Aliyu Danladi (Head Baker)",
-    costPerLoaf: 470.00,
-    sellingPrice: 850.00
+    actualLoaves: 0,
+    burntLoaves: 0,
+    fallenLoaves: 0,
+    variancePct: 0,
+    chiefBaker: baker,
+    status: 'in_progress'
   };
+
   entity.flourBatches.unshift(newBatch);
   saveState();
-  showToast(`✓ Batch ${newBatch.id} recorded: ${actual} loaves bagged!`);
+  window.closeModal('drawer-new-batch');
+  showToast(`✓ Batch started: ${bags} bags flour deducted from inventory!`);
   window.navigateTo('batches');
 };
 
-window.openCrateMovementModal = function() {
-  alert("Crate Movement Quick Entry:\n\nUse the 'Return Empty Crates' button next to each distributor in the Crate Registry table, or use the Crate Swap inputs on the Sales POS checkout screen.");
+window.openEndBatchModal = function(batchId, targetLoaves) {
+  const idInput = document.getElementById('end-batch-id');
+  const targetDisplay = document.getElementById('end-batch-target-display');
+  const baggedInput = document.getElementById('end-batch-bagged');
+  const burntInput = document.getElementById('end-batch-burnt');
+  const fallenInput = document.getElementById('end-batch-fallen');
+
+  if (idInput) idInput.value = batchId;
+  if (targetDisplay) targetDisplay.innerText = Number(targetLoaves).toLocaleString();
+  if (baggedInput) baggedInput.value = targetLoaves - 20;
+  if (burntInput) burntInput.value = 15;
+  if (fallenInput) fallenInput.value = 5;
+
+  window.calcBatchEndYield();
+  const modal = document.getElementById('modal-end-batch');
+  if (modal) modal.classList.add('open');
 };
 
-window.openNewBashiModal = function() {
+window.calcBatchEndYield = function() {
+  const targetDisplay = document.getElementById('end-batch-target-display');
+  const target = Number((targetDisplay?.innerText || '1875').replace(/,/g, '')) || 1875;
+  const bagged = Number(document.getElementById('end-batch-bagged')?.value || 0);
+  const burnt = Number(document.getElementById('end-batch-burnt')?.value || 0);
+  const fallen = Number(document.getElementById('end-batch-fallen')?.value || 0);
+  const yieldPct = ((bagged + burnt + fallen) / target) * 100;
+
+  const display = document.getElementById('end-batch-yield-display');
+  if (display) {
+    display.innerText = `${yieldPct.toFixed(1)}%`;
+    display.style.color = Math.abs(yieldPct - 100) <= 2.5 ? 'var(--rusbi-green)' : 'var(--bad)';
+  }
+};
+
+window.executeEndBatch = function(e) {
+  if (e) e.preventDefault();
+  const batchId = document.getElementById('end-batch-id')?.value;
+  const bagged = Number(document.getElementById('end-batch-bagged')?.value || 0);
+  const burnt = Number(document.getElementById('end-batch-burnt')?.value || 0);
+  const fallen = Number(document.getElementById('end-batch-fallen')?.value || 0);
+
+  const entity = state.entities[0];
+  const batch = (entity.flourBatches || []).find(b => b.id === batchId);
+  if (!batch) return;
+
+  const target = batch.targetLoaves || (batch.flourBags50kg * 125);
+  batch.actualLoaves = bagged;
+  batch.burntLoaves = burnt;
+  batch.fallenLoaves = fallen;
+  batch.status = 'completed';
+  batch.variancePct = Math.round(((bagged - target) / target) * 1000) / 10;
+
+  // Add bagged loaves to finished inventory
+  const products = (entity.inventory || []).filter(i => i.type === 'product');
+  if (products.length > 0) {
+    products[0].qtyOnHand = (Number(products[0].qtyOnHand) || 0) + bagged;
+  }
+
+  saveState();
+  window.closeModal('modal-end-batch');
+  showToast(`✓ Batch completed: ${bagged.toLocaleString()} loaves added to finished inventory!`);
+  window.navigateTo('batches');
+};
+
+// ----------------------------------------------------
+// OPERATIONAL LOGIC: CRATES (SECURITY GUARD)
+// ----------------------------------------------------
+window.openCrateActionModal = function(mode, distributor, holding) {
+  const modeInput = document.getElementById('crate-action-mode');
+  const distInput = document.getElementById('crate-action-distributor');
+  const distNameEl = document.getElementById('crate-action-dist-name');
+  const holdCountEl = document.getElementById('crate-action-holding-count');
+  const holdValEl = document.getElementById('crate-action-holding-value');
+  const titleEl = document.getElementById('crate-action-modal-title');
+  const qtyLabel = document.getElementById('crate-action-qty-label');
+  const qtyInput = document.getElementById('crate-action-qty');
+  const btn = document.getElementById('btn-submit-crate-action');
+  const previewBox = document.getElementById('crate-action-charge-preview');
+
+  if (modeInput) modeInput.value = mode;
+  if (distInput) distInput.value = distributor;
+  if (distNameEl) distNameEl.innerText = distributor;
+  if (holdCountEl) holdCountEl.innerText = holding;
+  if (holdValEl) holdValEl.innerText = `₦${(holding * 6000).toLocaleString()}`;
+  if (qtyInput) qtyInput.value = mode === 'charge' ? Math.min(2, holding) : Math.min(5, holding);
+
+  const isHa = localStorage.getItem('rusbi_lang') === 'ha';
+  if (mode === 'charge') {
+    if (titleEl) titleEl.innerText = isHa ? 'Dora Bashi (Kwano da aka Rasa)' : 'Charge Lost Crates';
+    if (qtyLabel) qtyLabel.innerText = isHa ? 'Kwano da aka Rasa' : 'Crates Lost Count';
+    if (btn) {
+      btn.innerText = isHa ? 'Dora a Bashi' : 'Charge to Debt';
+      btn.style.background = '#d97706';
+      btn.style.borderColor = '#d97706';
+    }
+    if (previewBox) previewBox.style.display = 'block';
+  } else {
+    if (titleEl) titleEl.innerText = isHa ? 'Mayar da Kwano' : 'Return Crates';
+    if (qtyLabel) qtyLabel.innerText = isHa ? 'Adadin Kwano da aka Mayar' : 'Crates Returned Count';
+    if (btn) {
+      btn.innerText = isHa ? 'Mayar' : 'Confirm Return';
+      btn.style.background = 'var(--rusbi-green)';
+      btn.style.borderColor = 'var(--rusbi-green)';
+    }
+    if (previewBox) previewBox.style.display = 'none';
+  }
+
+  window.calcCrateActionPreview();
+  const modal = document.getElementById('modal-crate-action');
+  if (modal) modal.classList.add('open');
+};
+
+window.calcCrateActionPreview = function() {
+  const mode = document.getElementById('crate-action-mode')?.value;
+  const qty = Number(document.getElementById('crate-action-qty')?.value || 0);
+  const amtEl = document.getElementById('crate-action-charge-amt');
+  if (amtEl && mode === 'charge') {
+    amtEl.innerText = `₦${(qty * 6000).toLocaleString()}`;
+  }
+};
+
+window.executeCrateAction = function(e) {
+  if (e) e.preventDefault();
+  const mode = document.getElementById('crate-action-mode')?.value;
+  const distributor = document.getElementById('crate-action-distributor')?.value;
+  const qty = Number(document.getElementById('crate-action-qty')?.value || 0);
+
+  const entity = state.entities[0];
+  const crates = entity.cratesSummary;
+  if (!crates) return;
+  const holder = (crates.holders || []).find(h => h.distributor === distributor);
+
+  if (mode === 'return') {
+    if (holder) {
+      holder.cratesReturned = (holder.cratesReturned || 0) + qty;
+      holder.deficit = Math.max(0, (holder.deficit || 0) - qty);
+    }
+    crates.inYard = (crates.inYard || 750) + qty;
+    crates.inTransit = Math.max(0, (crates.inTransit || 450) - qty);
+    crates.unreturnedDeficit = Math.max(0, (crates.unreturnedDeficit || 42) - qty);
+    showToast(`✓ Returned ${qty} crates from ${distributor}!`);
+  } else {
+    // Charge lost crates to Credit (Bashi) at ₦6,000 each!
+    const chargeAmt = qty * 6000;
+    if (holder) {
+      holder.deficit = Math.max(0, (holder.deficit || 0) - qty);
+    }
+    crates.inTransit = Math.max(0, (crates.inTransit || 450) - qty);
+    crates.unreturnedDeficit = Math.max(0, (crates.unreturnedDeficit || 42) - qty);
+
+    const debtor = (entity.bashiDistributors || []).find(d => distributor.includes(d.name) || d.name.includes(distributor.split('(')[0].trim()));
+    if (debtor) {
+      debtor.balanceOwing = (debtor.balanceOwing || 0) + chargeAmt;
+    }
+    showToast(`✓ Charged ₦${chargeAmt.toLocaleString()} to ${distributor} debt (${qty} crates written off)!`);
+  }
+
+  saveState();
+  window.closeModal('modal-crate-action');
+  window.navigateTo('crates');
+};
+
+// ----------------------------------------------------
+// OPERATIONAL LOGIC: CREDIT (BASHI) PAY MODAL
+// ----------------------------------------------------
+window.openPayCreditModal = function(debtorId) {
+  const entity = state.entities[0];
+  const debtor = (entity.bashiDistributors || []).find(d => d.id === debtorId);
+  if (!debtor) return;
+
+  const idInput = document.getElementById('pay-credit-debtor-id');
+  const nameEl = document.getElementById('pay-credit-debtor-name');
+  const owingEl = document.getElementById('pay-credit-owing-amt');
+  const amtInput = document.getElementById('pay-credit-amount');
+
+  if (idInput) idInput.value = debtor.id;
+  if (nameEl) nameEl.innerText = debtor.name;
+  if (owingEl) owingEl.innerText = `₦${debtor.balanceOwing.toLocaleString()}`;
+  if (amtInput) amtInput.value = debtor.balanceOwing;
+
+  const modal = document.getElementById('modal-pay-credit');
+  if (modal) modal.classList.add('open');
+};
+
+window.executePayCredit = function(e) {
+  if (e) e.preventDefault();
+  const debtorId = document.getElementById('pay-credit-debtor-id')?.value;
+  const amt = Number(document.getElementById('pay-credit-amount')?.value || 0);
+  const method = document.getElementById('pay-credit-method')?.value || 'Cash';
+
+  const entity = state.entities[0];
+  const debtor = (entity.bashiDistributors || []).find(d => d.id === debtorId);
+  if (!debtor) return;
+
+  debtor.balanceOwing = Math.max(0, debtor.balanceOwing - amt);
+  if (debtor.balanceOwing === 0) debtor.overdueDays = 0;
+
+  if (method === 'Cash' && entity.cashShift) {
+    entity.cashShift.expectedInDrawer = (entity.cashShift.expectedInDrawer || 0) + amt;
+    entity.cashShift.cashCollectedBashi = (entity.cashShift.cashCollectedBashi || 0) + amt;
+  }
+
+  saveState();
+  window.closeModal('modal-pay-credit');
+  showToast(`✓ Received ₦${amt.toLocaleString()} payment from ${debtor.name}!`);
   window.navigateTo('bashi');
 };
 
+// ----------------------------------------------------
+// OPERATIONAL LOGIC: SAFE DROP MODAL
+// ----------------------------------------------------
 window.openSafeDropModal = function() {
-  const amtStr = prompt("Enter Cash Drop Amount to transfer from Till Drawer to Safe Vault (₦):", "500000");
-  if (!amtStr) return;
-  const amt = Number(amtStr);
-  if (isNaN(amt) || amt <= 0) return;
+  const entity = state.entities[0];
+  const shift = entity.cashShift || { expectedInDrawer: 420000 };
+  const tillDisplay = document.getElementById('safe-drop-till-display');
+  if (tillDisplay) tillDisplay.innerText = `₦${shift.expectedInDrawer.toLocaleString()}`;
+  const amtInput = document.getElementById('safe-drop-amount');
+  if (amtInput) amtInput.value = Math.min(200000, shift.expectedInDrawer);
+
+  const modal = document.getElementById('modal-safe-drop');
+  if (modal) modal.classList.add('open');
+};
+
+window.executeSafeDropModal = function(e) {
+  if (e) e.preventDefault();
+  const amt = Number(document.getElementById('safe-drop-amount')?.value || 0);
   const entity = state.entities[0];
   if (entity.cashShift) {
     entity.cashShift.expectedInDrawer = Math.max(0, entity.cashShift.expectedInDrawer - amt);
@@ -9684,33 +9999,125 @@ window.openSafeDropModal = function() {
     entity.cashShift.safeDrops = (entity.cashShift.safeDrops || 0) + amt;
   }
   saveState();
-  showToast(`✓ Transferred ₦${amt.toLocaleString()} to Safe Vault (Drop verified by Ahmad Rufai)`);
+  window.closeModal('modal-safe-drop');
+  showToast(`✓ Transferred ₦${amt.toLocaleString()} to Safe Vault!`);
   window.navigateTo('shifts');
 };
 
-window.openLogDieselModal = function() {
-  const litresStr = prompt("Enter Litres of Diesel added to Lister 60kVA Generator:", "50");
-  if (!litresStr) return;
-  const litres = Number(litresStr);
-  if (isNaN(litres) || litres <= 0) return;
-  const cost = litres * 1100;
+// ----------------------------------------------------
+// OPERATIONAL LOGIC: POWER & FUEL (MERGED EXPENSES)
+// ----------------------------------------------------
+window.openLogFuelModal = function() {
+  window.calcFuelTotal();
+  const modal = document.getElementById('modal-log-fuel');
+  if (modal) modal.classList.add('open');
+};
+
+window.openLogDieselModal = window.openLogFuelModal;
+
+window.calcFuelTotal = function() {
+  const litres = Number(document.getElementById('fuel-input-litres')?.value || 0);
+  const rate = Number(document.getElementById('fuel-input-rate')?.value || 1000);
+  const display = document.getElementById('fuel-total-display');
+  if (display) display.innerText = `₦${(litres * rate).toLocaleString()}`;
+};
+
+window.executeLogFuel = function(e) {
+  if (e) e.preventDefault();
+  const litres = Number(document.getElementById('fuel-input-litres')?.value || 0);
+  const rate = Number(document.getElementById('fuel-input-rate')?.value || 1000);
+  const cost = litres * rate;
+
   const entity = state.entities[0];
   if (entity.energyStats) {
-    entity.energyStats.dieselLitresConsumed += litres;
-    entity.energyStats.totalDieselCost += cost;
-    entity.energyStats.totalEnergyCostToday += cost;
+    entity.energyStats.dieselLitresConsumed = (entity.energyStats.dieselLitresConsumed || 0) + litres;
+    entity.energyStats.totalDieselCost = (entity.energyStats.totalDieselCost || 0) + cost;
+    entity.energyStats.totalEnergyCostToday = (entity.energyStats.totalEnergyCostToday || 0) + cost;
   }
+
+  // Automatically write into financial expenses ledger!
+  if (!entity.expenses) entity.expenses = [];
+  entity.expenses.unshift({
+    id: `exp-${Date.now()}`,
+    date: new Date().toISOString().split('T')[0],
+    categoryName: "Fuel & Power",
+    categoryAccount: "5030",
+    payee: "NNPC Mega Station (Diesel)",
+    paymentAccountCode: "1010",
+    amount: cost,
+    paymentMethod: "Bank Transfer",
+    notes: `${litres}L Lister 60kVA generator diesel (@ ₦${rate}/L)`,
+    status: "Paid"
+  });
+
   saveState();
-  showToast(`✓ Logged ${litres}L diesel (₦${cost.toLocaleString()})`);
-  window.navigateTo('energy');
+  window.closeModal('modal-log-fuel');
+  showToast(`✓ Logged ${litres}L diesel (₦${cost.toLocaleString()}) to Expenses!`);
+  window.navigateTo('expenses');
 };
 
-window.openNewDeliveryNoteModal = function() {
-  const loavesStr = prompt("Enter Loaves to deliver for Command Secondary School Kaduna:", "650");
-  if (!loavesStr) return;
-  showToast(`✓ Delivery Note #DN-2026-881 issued for ${loavesStr} loaves (Major T.A. Bello)`);
+// ----------------------------------------------------
+// OPERATIONAL LOGIC: DISTRIBUTORS WAYBILL DELIVERY
+// ----------------------------------------------------
+window.openDeliverWaybillModal = function(clientId) {
+  const entity = state.entities[0];
+  const bashiList = entity.bashiDistributors || [];
+  const registeredCusts = entity.customers || [];
+  const client = [...bashiList, ...registeredCusts].find(c => c.id === clientId) || { name: 'Command Secondary School', role: 'Institutional' };
+
+  const idInput = document.getElementById('deliver-client-id');
+  const nameEl = document.getElementById('deliver-client-name');
+  const typeEl = document.getElementById('deliver-client-type');
+
+  if (idInput) idInput.value = clientId;
+  if (nameEl) nameEl.innerText = client.name;
+  if (typeEl) typeEl.innerText = (client.role || '').toLowerCase().includes('institutional') ? 'Institutional Account' : 'Wholesale Depot';
+
+  window.calcDeliverTotal();
+  const modal = document.getElementById('modal-deliver-waybill');
+  if (modal) modal.classList.add('open');
 };
 
+window.calcDeliverTotal = function() {
+  const select = document.getElementById('deliver-bread-type');
+  const opt = select?.options[select.selectedIndex];
+  const price = Number(opt?.dataset.price || 850);
+  const count = Number(document.getElementById('deliver-loaves-count')?.value || 0);
+  const display = document.getElementById('deliver-total-display');
+  if (display) display.innerText = `₦${(count * price).toLocaleString()}`;
+};
+
+window.executeDeliverWaybill = function(e) {
+  if (e) e.preventDefault();
+  const clientId = document.getElementById('deliver-client-id')?.value;
+  const select = document.getElementById('deliver-bread-type');
+  const breadType = select?.value || 'Jumbo Bread';
+  const opt = select?.options[select.selectedIndex];
+  const price = Number(opt?.dataset.price || 850);
+  const count = Number(document.getElementById('deliver-loaves-count')?.value || 0);
+  const total = count * price;
+
+  const entity = state.entities[0];
+  const client = (entity.bashiDistributors || []).find(c => c.id === clientId);
+  if (client) {
+    client.balanceOwing = (client.balanceOwing || 0) + total;
+  }
+
+  // Deduct bread from inventory
+  const products = (entity.inventory || []).filter(i => i.type === 'product');
+  if (products.length > 0) {
+    products[0].qtyOnHand = Math.max(0, (Number(products[0].qtyOnHand) || 0) - count);
+  }
+
+  saveState();
+  window.closeModal('modal-deliver-waybill');
+  showToast(`✓ Waybill issued: ${count} loaves dispatched to ${client ? client.name : 'Client'}!`);
+  window.navigateTo('distributors');
+};
+
+// ----------------------------------------------------
+// BLIND BALANCING CLOSE SHIFT
+// ----------------------------------------------------
 window.openCloseShiftModal = function() {
   const modal = document.getElementById('modal-close-shift');
   if (!modal) return;
@@ -9761,6 +10168,16 @@ window.executeModalCloseShift = function(e) {
   entity.cashShift.closed = true;
   entity.cashShift.closingCashCounted = count;
   entity.cashShift.discrepancy = variance;
+
+  if (!entity.pastShifts) entity.pastShifts = [];
+  entity.pastShifts.unshift({
+    date: new Date().toISOString().split('T')[0],
+    cashier: "Usman Bello",
+    expected: expected,
+    counted: count,
+    diff: variance
+  });
+
   saveState();
 
   setTimeout(() => {

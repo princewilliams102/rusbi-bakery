@@ -1067,6 +1067,30 @@ html, body {
   background: var(--well);
 }
 
+.apex-drawer-card {
+  background: var(--solid);
+  border-left: 1px solid var(--rim);
+  box-shadow: var(--shadow-pop);
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 440px;
+  max-width: 95vw;
+  height: 100vh;
+  max-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform: translateX(100%);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 1005;
+}
+
+.apex-modal-overlay.open .apex-drawer-card {
+  transform: translateX(0);
+}
+
 /* ============================================================
    TYPE P & ACCESS-BASED RESTRICTIONS STYLING
    ============================================================ */

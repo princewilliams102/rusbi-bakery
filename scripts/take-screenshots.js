@@ -10,20 +10,20 @@ const CHROME_PATH = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
 
 const routes = [
   { file: '02_dashboard_control_room.png', route: 'dashboard', name: 'Bakery Control Room Dashboard' },
-  { file: '03_sales_pos.png', route: 'pos', name: 'Sales POS & Split Tenders' },
+  { file: '03_sales_pos.png', route: 'pos', name: 'Sales POS Live Tenders' },
   { file: '04_production_batches.png', route: 'batches', name: 'Production & Flour Batches' },
-  { file: '05_crates_tracker.png', route: 'crates', name: 'Crates Tracker (Kayan Saka)' },
-  { file: '06_credit_bashi.png', route: 'bashi', name: 'Distributor Credit Ledger (Bashi)' },
-  { file: '07_cashier_shifts.png', route: 'shifts', name: 'Cashier & Safe Vault Drops' },
-  { file: '08_energy_generator.png', route: 'energy', name: 'Energy & Diesel Generator CPL' },
+  { file: '05_crates_tracker.png', route: 'crates', name: 'Crates Tracker (Security Guard)' },
+  { file: '06_credit_bashi.png', route: 'bashi', name: 'Credit Ledger (Who Owes Me Money)' },
+  { file: '07_cashier_shifts.png', route: 'shifts', name: 'Cashier Active Shift & Vault' },
+  { file: '08_energy_generator.png', route: 'energy', name: 'Power & Fuel (Merged Energy)' },
   { file: '09_inventory.png', route: 'inventory', name: 'Inventory & Items' },
-  { file: '10_contracts_institutional.png', route: 'institutional', name: 'Institutional Contracts (BNPL)' },
+  { file: '10_contracts_institutional.png', route: 'distributors', name: 'Distributors & Bulk Buyers' },
   { file: '11_staff_users.png', route: 'users', name: 'Staff Management' },
   { file: '12_devices_network.png', route: 'devices', name: 'Plant Devices & Offline PWA Network' },
-  { file: '13_audit_nolies_sheet.png', route: 'nolies', name: 'Plant Audit "No-Lies" Sheet' },
+  { file: '13_audit_nolies_sheet.png', route: 'nolies', name: 'Plant Audit No-Lies Sheet' },
   { file: '14_system_settings.png', route: 'admin', name: 'Settings' },
   { file: '15_invoices.png', route: 'invoices', name: 'Invoices & Sales (A/R)' },
-  { file: '16_expenses.png', route: 'expenses', name: 'Expenses' },
+  { file: '16_expenses.png', route: 'expenses', name: 'Expenses & Power Fuel' },
   { file: '17_suppliers.png', route: 'suppliers', name: 'Suppliers' },
   { file: '18_banking.png', route: 'banking', name: 'Banking' },
   { file: '19_chart_of_accounts.png', route: 'accounts', name: 'Accounts (COA)' },
@@ -51,7 +51,7 @@ async function captureAll() {
 
   console.log('1. Capturing Login Portal...');
   await page.goto('http://localhost:3000', { waitUntil: 'networkidle2' });
-  await page.waitForTimeout ? page.waitForTimeout(1000) : new Promise(r => setTimeout(r, 1000));
+  await new Promise(r => setTimeout(r, 1000));
 
   // Dismiss splash screen if visible
   await page.evaluate(() => {
@@ -102,27 +102,86 @@ async function captureAll() {
 
     await new Promise(r => setTimeout(r, 600));
 
+    // Special interaction for POS
+    if (item.route === 'pos') {
+      await page.evaluate(() => {
+        // Select 10 loaves of Jumbo Bread
+        const firstQty = document.querySelector('.pos-bread-qty');
+        if (firstQty) {
+          firstQty.value = '10';
+          window.calcPosTotal();
+        }
+      });
+      await new Promise(r => setTimeout(r, 300));
+    }
+
     const outPath = path.join(pagesDir, item.file);
     await page.screenshot({ path: outPath, fullPage: false });
     console.log(`Saved: ${outPath}`);
 
-    // If POS, also capture progressive disclosure split tender state
+    // If POS, also capture live balanced state with Complete Sale active
     if (item.route === 'pos') {
-      console.log('Capturing: Sales POS with Split Tender Revealed...');
+      console.log('Capturing: Sales POS Balanced State...');
       await page.evaluate(() => {
-        if (!window.posSplitActive && typeof window.toggleSplitTender === 'function') {
-          window.toggleSplitTender();
+        const cashInput = document.getElementById('tender-cash');
+        const target = window.posCalculatedTotal || 8500;
+        if (cashInput) {
+          cashInput.value = target;
+          window.calcLiveTenders();
         }
       });
       await new Promise(r => setTimeout(r, 400));
-      const splitPath = path.join(pagesDir, '03b_sales_pos_split_revealed.png');
-      await page.screenshot({ path: splitPath, fullPage: false });
-      console.log(`Saved: ${splitPath}`);
-      // Toggle back off
+      const paidPath = path.join(pagesDir, '03b_sales_pos_split_revealed.png');
+      await page.screenshot({ path: paidPath, fullPage: false });
+      console.log(`Saved: ${paidPath}`);
+    }
+
+    // If batches, capture slide-out drawer
+    if (item.route === 'batches') {
+      console.log('Capturing: Production + Batch Slide Drawer...');
       await page.evaluate(() => {
-        if (window.posSplitActive && typeof window.toggleSplitTender === 'function') {
-          window.toggleSplitTender();
+        if (typeof window.openNewBatchDrawer === 'function') window.openNewBatchDrawer();
+      });
+      await new Promise(r => setTimeout(r, 500));
+      const drawerPath = path.join(pagesDir, '04b_production_batch_drawer.png');
+      await page.screenshot({ path: drawerPath, fullPage: false });
+      console.log(`Saved: ${drawerPath}`);
+      await page.evaluate(() => {
+        if (typeof window.closeModal === 'function') window.closeModal('drawer-new-batch');
+      });
+    }
+
+    // If crates, capture return modal
+    if (item.route === 'crates') {
+      console.log('Capturing: Crates Return Modal...');
+      await page.evaluate(() => {
+        if (typeof window.openCrateActionModal === 'function') {
+          window.openCrateActionModal('return', 'Alhaji Garba Kano', 15);
         }
+      });
+      await new Promise(r => setTimeout(r, 500));
+      const crateModalPath = path.join(pagesDir, '05b_crate_return_modal.png');
+      await page.screenshot({ path: crateModalPath, fullPage: false });
+      console.log(`Saved: ${crateModalPath}`);
+      await page.evaluate(() => {
+        if (typeof window.closeModal === 'function') window.closeModal('modal-crate-action');
+      });
+    }
+
+    // If bashi, capture pay credit modal
+    if (item.route === 'bashi') {
+      console.log('Capturing: Pay Credit Modal...');
+      await page.evaluate(() => {
+        if (typeof window.openPayCreditModal === 'function') {
+          window.openPayCreditModal('bashi-1');
+        }
+      });
+      await new Promise(r => setTimeout(r, 500));
+      const creditModalPath = path.join(pagesDir, '06b_credit_pay_modal.png');
+      await page.screenshot({ path: creditModalPath, fullPage: false });
+      console.log(`Saved: ${creditModalPath}`);
+      await page.evaluate(() => {
+        if (typeof window.closeModal === 'function') window.closeModal('modal-pay-credit');
       });
     }
   }
@@ -143,7 +202,6 @@ async function captureAll() {
   await page.evaluate(() => {
     if (typeof window.closeModal === 'function') window.closeModal('modal-close-shift');
     if (typeof window.toggleLanguage === 'function') {
-      // Toggle to Hausa
       if (localStorage.getItem('rusbi_lang') !== 'ha') {
         window.toggleLanguage();
       }
@@ -165,7 +223,7 @@ async function captureAll() {
   });
 
   await browser.close();
-  console.log('All 23 screenshots captured successfully in:', pagesDir);
+  console.log('All screenshots captured successfully in:', pagesDir);
 }
 
 captureAll().catch(err => {

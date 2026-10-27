@@ -293,6 +293,279 @@
     </div>
   </div>
 
+  <!-- Drawer: New Production Batch -->
+  <div class="apex-modal-overlay" id="drawer-new-batch">
+    <div class="apex-drawer-card">
+      <div class="apex-modal-header">
+        <b style="font-size: 16px;">+ <span data-i18n="nav_batches">Batch</span></b>
+        <button type="button" class="ibtn ibtn--sm" onclick="window.closeModal('drawer-new-batch')">✕</button>
+      </div>
+      <div class="apex-modal-body">
+        <form onsubmit="window.executeStartBatch(event)" style="display: flex; flex-direction: column; gap: 14px;">
+          <div>
+            <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Date &amp; Time</label>
+            <input type="text" id="batch-input-datetime" class="input" required>
+          </div>
+          <div>
+            <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Shift</label>
+            <select id="batch-input-shift" class="input" style="font-weight: 700;">
+              <option value="Morning Shift (5:00 AM - 1:00 PM)">Morning Shift</option>
+              <option value="Afternoon Shift (1:00 PM - 9:00 PM)">Afternoon Shift</option>
+              <option value="Night Shift (9:00 PM - 5:00 AM)">Night Shift</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Baker</label>
+            <select id="batch-input-baker" class="input" style="font-weight: 700;">
+              <option value="Aliyu Danladi (Head Baker)">Aliyu Danladi</option>
+              <option value="Ibrahim Sani (Assistant Baker)">Ibrahim Sani</option>
+              <option value="Usman Bello (Shift Master)">Usman Bello</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Recipe</label>
+            <select id="batch-input-recipe" class="input" style="font-weight: 700;">
+              <option value="Rusbi Special Jumbo Loaf (₦850)">Jumbo Bread (₦850)</option>
+              <option value="Rusbi Special Family Loaf (₦600)">Family Bread (₦600)</option>
+              <option value="Rusbi Special Medium Loaf (₦450)">Medium Bread (₦450)</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Flour Bags Used</label>
+            <input type="number" id="batch-input-bags" class="input" min="1" value="15" required style="font-size: 20px; font-weight: 900; text-align: center;">
+          </div>
+          <div style="background: var(--well); border-radius: 8px; padding: 12px; font-size: 12px; color: var(--muted); border: 1px solid var(--line);">
+            <span>Ingredients automatically deducted on Start:</span><br>
+            <b>• 15 Bags Flour (50kg) • 1 Bag Sugar • 5 Cartons Margarine</b>
+          </div>
+          <button type="submit" class="btn btn--ink" style="width: 100%; height: 46px; font-weight: 850; background: var(--rusbi-green); border-color: var(--rusbi-green); justify-content: center; margin-top: 10px;">
+            Start Batch
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: End Production Batch -->
+  <div class="apex-modal-overlay" id="modal-end-batch">
+    <div class="apex-modal-card" style="max-width: 440px;">
+      <div class="apex-modal-header">
+        <b style="font-size: 16px;">End Batch</b>
+        <button type="button" class="ibtn ibtn--sm" onclick="window.closeModal('modal-end-batch')">✕</button>
+      </div>
+      <div class="apex-modal-body">
+        <form onsubmit="window.executeEndBatch(event)" style="display: flex; flex-direction: column; gap: 12px;">
+          <input type="hidden" id="end-batch-id">
+          <div style="background: var(--well); border-radius: 8px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 12px; color: var(--muted); font-weight: 700;">Target Loaves:</span>
+            <b id="end-batch-target-display" style="font-size: 16px;">1,875</b>
+          </div>
+          <div>
+            <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Bagged Loaves</label>
+            <input type="number" id="end-batch-bagged" class="input" min="0" required style="font-size: 18px; font-weight: 850;" oninput="window.calcBatchEndYield()">
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div>
+              <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px; color: var(--bad);">Burnt</label>
+              <input type="number" id="end-batch-burnt" class="input" min="0" value="0" style="font-size: 16px; font-weight: 850;" oninput="window.calcBatchEndYield()">
+            </div>
+            <div>
+              <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px; color: var(--bad);">Fallen</label>
+              <input type="number" id="end-batch-fallen" class="input" min="0" value="0" style="font-size: 16px; font-weight: 850;" oninput="window.calcBatchEndYield()">
+            </div>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: var(--well); border-radius: 8px; margin-top: 4px;">
+            <span style="font-size: 12px; font-weight: 700;">Yield Efficiency:</span>
+            <b id="end-batch-yield-display" style="font-size: 18px; color: var(--rusbi-green); font-weight: 900;">100.0%</b>
+          </div>
+          <button type="submit" class="btn btn--ink" style="width: 100%; height: 46px; font-weight: 850; background: var(--rusbi-green); border-color: var(--rusbi-green); justify-content: center; margin-top: 8px;">
+            Finish Batch
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Crates Return or Charge -->
+  <div class="apex-modal-overlay" id="modal-crate-action">
+    <div class="apex-modal-card" style="max-width: 420px;">
+      <div class="apex-modal-header">
+        <b style="font-size: 16px;" id="crate-action-modal-title">Return Crates</b>
+        <button type="button" class="ibtn ibtn--sm" onclick="window.closeModal('modal-crate-action')">✕</button>
+      </div>
+      <div class="apex-modal-body">
+        <form onsubmit="window.executeCrateAction(event)" style="display: flex; flex-direction: column; gap: 12px;">
+          <input type="hidden" id="crate-action-mode">
+          <input type="hidden" id="crate-action-distributor">
+          
+          <div style="background: var(--well); border-radius: 8px; padding: 12px;">
+            <div style="font-size: 14px; font-weight: 800; margin-bottom: 4px;" id="crate-action-dist-name">Alhaji Garba</div>
+            <div style="font-size: 12px; color: var(--muted);">Holding: <b id="crate-action-holding-count" style="color: var(--text);">15</b> Crates (Value: <b id="crate-action-holding-value" style="color: #8b5cf6;">₦90,000</b>)</div>
+          </div>
+
+          <div>
+            <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;" id="crate-action-qty-label">Crates Count</label>
+            <input type="number" id="crate-action-qty" class="input" min="1" required style="font-size: 20px; font-weight: 850; text-align: center;" oninput="window.calcCrateActionPreview()">
+          </div>
+
+          <div id="crate-action-charge-preview" style="display: none; padding: 10px 14px; background: rgba(217, 119, 6, 0.1); border-radius: 8px; border: 1px solid rgba(217, 119, 6, 0.25);">
+            <div style="font-size: 12px; color: #d97706; font-weight: 700;">Financial Recovery (Bashi Debt Added):</div>
+            <b id="crate-action-charge-amt" style="font-size: 18px; color: #d97706; font-weight: 900;">₦12,000</b>
+          </div>
+
+          <button type="submit" id="btn-submit-crate-action" class="btn btn--ink" style="width: 100%; height: 46px; font-weight: 850; justify-content: center; margin-top: 6px;">
+            Confirm
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Pay Bashi Credit -->
+  <div class="apex-modal-overlay" id="modal-pay-credit">
+    <div class="apex-modal-card" style="max-width: 420px;">
+      <div class="apex-modal-header">
+        <b style="font-size: 16px;">Pay Credit</b>
+        <button type="button" class="ibtn ibtn--sm" onclick="window.closeModal('modal-pay-credit')">✕</button>
+      </div>
+      <div class="apex-modal-body">
+        <form onsubmit="window.executePayCredit(event)" style="display: flex; flex-direction: column; gap: 12px;">
+          <input type="hidden" id="pay-credit-debtor-id">
+
+          <div style="background: var(--well); border-radius: 8px; padding: 12px;">
+            <div style="font-size: 14px; font-weight: 800; margin-bottom: 4px;" id="pay-credit-debtor-name">Alhaji Garba</div>
+            <div style="font-size: 12px; color: var(--muted);">Owed: <b id="pay-credit-owing-amt" style="color: #d97706; font-size: 16px;">₦120,000</b></div>
+          </div>
+
+          <div>
+            <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Amount (₦)</label>
+            <input type="number" id="pay-credit-amount" class="input" min="1" required style="font-size: 20px; font-weight: 850; text-align: center;">
+          </div>
+
+          <div>
+            <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Method</label>
+            <select id="pay-credit-method" class="input" style="font-weight: 700;">
+              <option value="Cash">Cash</option>
+              <option value="Transfer">Bank Transfer</option>
+              <option value="POS">POS Terminal</option>
+            </select>
+          </div>
+
+          <button type="submit" class="btn btn--ink" style="width: 100%; height: 46px; font-weight: 850; background: var(--rusbi-green); border-color: var(--rusbi-green); justify-content: center; margin-top: 6px;">
+            Save Payment
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Safe Drop -->
+  <div class="apex-modal-overlay" id="modal-safe-drop">
+    <div class="apex-modal-card" style="max-width: 420px;">
+      <div class="apex-modal-header">
+        <b style="font-size: 16px;">Safe Drop</b>
+        <button type="button" class="ibtn ibtn--sm" onclick="window.closeModal('modal-safe-drop')">✕</button>
+      </div>
+      <div class="apex-modal-body">
+        <form onsubmit="window.executeSafeDropModal(event)" style="display: flex; flex-direction: column; gap: 12px;">
+          <div style="background: var(--well); border-radius: 8px; padding: 12px; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 12px; color: var(--muted); font-weight: 700;">Current Till Cash:</span>
+            <b id="safe-drop-till-display" style="font-size: 16px; color: #2563eb;">₦420,000</b>
+          </div>
+
+          <div>
+            <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Drop Amount (₦)</label>
+            <input type="number" id="safe-drop-amount" class="input" min="1" value="200000" required style="font-size: 20px; font-weight: 850; text-align: center;">
+          </div>
+
+          <button type="submit" class="btn btn--ink" style="width: 100%; height: 46px; font-weight: 850; background: #2563eb; border-color: #2563eb; justify-content: center; margin-top: 6px;">
+            Transfer to Vault
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Log Fuel (Power & Fuel) -->
+  <div class="apex-modal-overlay" id="modal-log-fuel">
+    <div class="apex-modal-card" style="max-width: 420px;">
+      <div class="apex-modal-header">
+        <b style="font-size: 16px;">+ Fuel</b>
+        <button type="button" class="ibtn ibtn--sm" onclick="window.closeModal('modal-log-fuel')">✕</button>
+      </div>
+      <div class="apex-modal-body">
+        <form onsubmit="window.executeLogFuel(event)" style="display: flex; flex-direction: column; gap: 12px;">
+          <div style="background: var(--well); border-radius: 8px; padding: 10px 14px; font-size: 12px; font-weight: 700;">
+            Generator: <b>Lister 60kVA Plant Generator</b>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div>
+              <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Litres</label>
+              <input type="number" id="fuel-input-litres" class="input" min="1" value="50" required style="font-size: 18px; font-weight: 850;" oninput="window.calcFuelTotal()">
+            </div>
+            <div>
+              <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Price / L (₦)</label>
+              <input type="number" id="fuel-input-rate" class="input" min="1" value="1000" required style="font-size: 18px; font-weight: 850;" oninput="window.calcFuelTotal()">
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: var(--well); border-radius: 8px;">
+            <span style="font-size: 12px; font-weight: 700;">Total Expense:</span>
+            <b id="fuel-total-display" style="font-size: 20px; font-weight: 900; color: #ef4444;">₦50,000</b>
+          </div>
+
+          <button type="submit" class="btn btn--ink" style="width: 100%; height: 46px; font-weight: 850; background: #ef4444; border-color: #ef4444; justify-content: center; margin-top: 6px;">
+            Save Fuel
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Deliver Waybill (Distributors) -->
+  <div class="apex-modal-overlay" id="modal-deliver-waybill">
+    <div class="apex-modal-card" style="max-width: 440px;">
+      <div class="apex-modal-header">
+        <b style="font-size: 16px;">Waybill Delivery</b>
+        <button type="button" class="ibtn ibtn--sm" onclick="window.closeModal('modal-deliver-waybill')">✕</button>
+      </div>
+      <div class="apex-modal-body">
+        <form onsubmit="window.executeDeliverWaybill(event)" style="display: flex; flex-direction: column; gap: 12px;">
+          <input type="hidden" id="deliver-client-id">
+
+          <div style="background: var(--well); border-radius: 8px; padding: 12px;">
+            <div style="font-size: 14px; font-weight: 800; margin-bottom: 4px;" id="deliver-client-name">Command Secondary School</div>
+            <div style="font-size: 12px; color: var(--muted);">Type: <b id="deliver-client-type" style="color: var(--text);">Institutional</b></div>
+          </div>
+
+          <div>
+            <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Bread Type</label>
+            <select id="deliver-bread-type" class="input" style="font-weight: 700;" onchange="window.calcDeliverTotal()">
+              <option value="Jumbo Bread" data-price="850">Jumbo Bread (₦850)</option>
+              <option value="Family Bread" data-price="600">Family Bread (₦600)</option>
+              <option value="Medium Bread" data-price="450">Medium Bread (₦450)</option>
+            </select>
+          </div>
+
+          <div>
+            <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 4px;">Loaves Count</label>
+            <input type="number" id="deliver-loaves-count" class="input" min="1" value="650" required style="font-size: 20px; font-weight: 850; text-align: center;" oninput="window.calcDeliverTotal()">
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: var(--well); border-radius: 8px;">
+            <span style="font-size: 12px; font-weight: 700;">Waybill Total:</span>
+            <b id="deliver-total-display" style="font-size: 18px; font-weight: 900; color: var(--rusbi-green);">₦552,500</b>
+          </div>
+
+          <button type="submit" class="btn btn--ink" style="width: 100%; height: 46px; font-weight: 850; background: var(--rusbi-green); border-color: var(--rusbi-green); justify-content: center; margin-top: 6px;">
+            Issue Waybill
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal: Bakery End-of-Shift Blind Close -->
   <div class="apex-modal-overlay" id="modal-close-shift">
     <div class="apex-modal-card" style="max-width: 420px; text-align: center;">
@@ -352,15 +625,10 @@
 
       <!-- 4. Sidebar Navigation Links -->
       <nav class="sidebar__nav" id="sidebar-navigation">
-        <a class="sidebar__link active" data-route="dashboard" id="nav-link-dashboard">
-          <svg class="ico" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-          <span data-i18n="nav_dashboard">Dashboard</span>
-        </a>
-
         <!-- OPERATIONS SECTION (The core of the business) -->
         <div class="nav-section-title" id="nav-sec-operations" data-i18n="sec_operations">Operations</div>
 
-        <a class="sidebar__link" data-route="pos" id="nav-link-pos" style="color: var(--rusbi-green); font-weight: 700;">
+        <a class="sidebar__link active" data-route="pos" id="nav-link-pos" style="color: var(--rusbi-green); font-weight: 700;">
           <svg class="ico" viewBox="0 0 24 24" style="stroke: var(--rusbi-green);"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
           <span data-i18n="nav_pos">Sales</span>
         </a>
@@ -385,23 +653,23 @@
           <span data-i18n="nav_shifts">Cashier</span>
         </a>
 
-        <a class="sidebar__link" data-route="energy" id="nav-link-energy">
-          <svg class="ico" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-          <span data-i18n="nav_energy">Energy</span>
-        </a>
-
         <a class="sidebar__link" data-route="inventory" id="nav-link-inventory">
           <svg class="ico" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
           <span data-i18n="nav_inventory">Inventory</span>
         </a>
 
-        <a class="sidebar__link" data-route="institutional" id="nav-link-institutional">
-          <svg class="ico" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-          <span data-i18n="nav_institutional">Contracts</span>
+        <a class="sidebar__link" data-route="distributors" id="nav-link-distributors">
+          <svg class="ico" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span data-i18n="nav_distributors">Distributors</span>
         </a>
 
-        <!-- SYSTEM SECTION (Where system management lives) -->
-        <div class="nav-section-title" id="nav-sec-system" data-i18n="sec_system">System</div>
+        <!-- MANAGEMENT SECTION -->
+        <div class="nav-section-title" id="nav-sec-management" data-i18n="sec_management">Management</div>
+
+        <a class="sidebar__link" data-route="dashboard" id="nav-link-dashboard">
+          <svg class="ico" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+          <span data-i18n="nav_dashboard">Dashboard</span>
+        </a>
 
         <a class="sidebar__link" data-route="nolies" id="nav-link-nolies" style="color: #b45309; font-weight: 700;">
           <svg class="ico" viewBox="0 0 24 24" style="stroke: #b45309;"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
@@ -409,8 +677,13 @@
         </a>
 
         <a class="sidebar__link" data-route="staff" id="nav-link-staff">
-          <svg class="ico" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <svg class="ico" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           <span data-i18n="nav_staff">Staff</span>
+        </a>
+
+        <a class="sidebar__link" data-route="expenses" id="nav-link-expenses">
+          <svg class="ico" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 15h0M2 10h20"/></svg>
+          <span data-i18n="nav_expenses">Expenses</span>
         </a>
 
         <a class="sidebar__link" data-route="admin" id="nav-link-admin">

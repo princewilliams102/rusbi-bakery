@@ -13,6 +13,7 @@ export const TRANSLATIONS = {
     // Sidebar (Law 1: 1-2 words only)
     "nav_dashboard": "Dashboard",
     "sec_operations": "Operations",
+    "sec_management": "Management",
     "nav_pos": "Sales",
     "nav_batches": "Production",
     "nav_crates": "Crates",
@@ -21,6 +22,7 @@ export const TRANSLATIONS = {
     "nav_energy": "Energy",
     "nav_inventory": "Inventory",
     "nav_institutional": "Contracts",
+    "nav_distributors": "Distributors",
     "sec_system": "System",
     "nav_staff": "Staff",
     "nav_devices": "Devices",
@@ -107,6 +109,7 @@ export const TRANSLATIONS = {
     // Sidebar (Law 1: 1-2 words only)
     "nav_dashboard": "Teburi",
     "sec_operations": "Ayyuka",
+    "sec_management": "Gudanarwa",
     "nav_pos": "Sayarwa",
     "nav_batches": "Yini",
     "nav_crates": "Kwano",
@@ -115,6 +118,7 @@ export const TRANSLATIONS = {
     "nav_energy": "Man Fetur",
     "nav_inventory": "Kayan Kaya",
     "nav_institutional": "Kwangila",
+    "nav_distributors": "Yan Sari",
     "sec_system": "Tsari",
     "nav_staff": "Ma'aikata",
     "nav_devices": "Na'urori",
@@ -533,7 +537,7 @@ export function renderBakeryMasterDashboard(container, state, engine) {
 }
 
 // ----------------------------------------------------
-// 2. BAKERY POS / SPLIT PAYMENT CHECKOUT VIEW
+// 2. BAKERY POS / DUMMY-PROOF VISUAL SALES CHECKOUT
 // ----------------------------------------------------
 export function renderPosView(container, state, engine) {
   const isHa = currentLang === 'ha';
@@ -571,30 +575,32 @@ export function renderPosView(container, state, engine) {
           ${products.map(p => {
             const unitPrice = Number(p.salesPrice || p.sellingPrice || p.price || 850);
             return `
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--well);">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--well);">
               <div>
-                <b style="font-size: 14px;">${p.name}</b>
-                <div style="font-size: 12px; color: var(--muted);">₦${unitPrice.toLocaleString()}</div>
+                <b style="font-size: 14.5px;">${p.name}</b>
+                <div style="font-size: 12.5px; color: var(--muted); font-weight: 700;">₦${unitPrice.toLocaleString()}</div>
               </div>
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <input type="number" id="pos-qty-${p.id}" class="input" min="0" value="0" style="width: 75px; text-align: center; font-weight: 800;" oninput="window.calcPosTotal()">
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <button type="button" class="btn btn--sm btn--ghost" style="width: 32px; height: 32px; padding: 0; font-size: 16px; font-weight: 900;" onclick="window.adjustPosQty('${p.id}', -1)">-</button>
+                <input type="number" id="pos-qty-${p.id}" data-price="${unitPrice}" class="input pos-bread-qty" min="0" value="0" style="width: 68px; text-align: center; font-size: 15px; font-weight: 850; height: 36px;" oninput="window.calcPosTotal()">
+                <button type="button" class="btn btn--sm btn--ghost" style="width: 32px; height: 32px; padding: 0; font-size: 16px; font-weight: 900;" onclick="window.adjustPosQty('${p.id}', 1)">+</button>
               </div>
             </div>`;
           }).join('')}
         </div>
       </div>
 
-      <!-- Right: Customer Data Capture & Payment Settlement -->
+      <!-- Right: Visual Payment & Customer Settlement (NO Split Button!) -->
       <div class="card" style="border: 2px solid var(--rusbi-green);">
         <div class="card__head">
           <b style="font-size: 15px;">${isHa ? 'Biya' : 'Payment'}</b>
-          <span class="badge badge--pine" id="pos-badge-tender">${isHa ? 'Kudi' : 'Cash'}</span>
+          <span class="badge badge--pine" id="pos-badge-status">${isHa ? 'Akwati' : 'Counter'}</span>
         </div>
 
-        <!-- Customer Identification & Data Collection -->
+        <!-- 1. Customer Dropdown & Data Collection -->
         <div style="background: var(--well); border-radius: 10px; padding: 12px; margin-bottom: 12px; border: 1px solid var(--line);">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <label style="font-size: 12px; font-weight: 800; text-transform: uppercase; color: var(--muted); letter-spacing: 0.03em;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <label style="font-size: 11.5px; font-weight: 800; text-transform: uppercase; color: var(--muted); letter-spacing: 0.03em;">
               ${isHa ? 'Mai Saye' : 'Customer'}
             </label>
             <button type="button" class="btn btn--sm btn--ghost" id="btn-toggle-new-cust" onclick="window.togglePosNewCustomer()" style="padding: 2px 8px; font-size: 11px; font-weight: 700; color: var(--rusbi-green);">
@@ -602,115 +608,106 @@ export function renderPosView(container, state, engine) {
             </button>
           </div>
 
-          <!-- Main Customer Dropdown -->
-          <select id="pos-customer" class="input" style="font-weight: 700; margin-bottom: 8px;" onchange="window.handlePosCustomerChange()">
-            <option value="walkin" selected>${isHa ? 'Kudin Hannu (Walk-in)' : 'Walk-in'}</option>
-            <optgroup label="${isHa ? 'Masu Sari & Kwangila' : 'Distributors & Regulars'}">
+          <select id="pos-customer" class="input" style="font-weight: 700; margin-bottom: 6px;" onchange="window.handlePosCustomerChange()">
+            <option value="walkin" id="opt-customer-walkin" selected>${isHa ? 'Kudin Hannu (Walk-in)' : 'Walk-in'}</option>
+            <optgroup label="${isHa ? 'Yan Sari' : 'Distributors'}">
               ${allCustomers.map(c => `
-                <option value="${c.id}" data-phone="${c.phone || ''}" data-role="${c.role || 'Wholesale'}" data-owing="${c.balanceOwing || c.balance || 0}" data-limit="${c.creditLimit || 0}">
-                  ${c.name} (${c.phone ? c.phone.replace('+234', '0') : ''}) — ${isHa ? 'Bashi' : 'Owing'}: ₦${(c.balanceOwing || c.balance || 0).toLocaleString()}
+                <option value="${c.id}" data-phone="${c.phone || ''}" data-role="${c.role || 'Wholesale'}" data-owing="${c.balanceOwing || c.balance || 0}">
+                  ${c.name} — ${isHa ? 'Bashi' : 'Owing'}: ₦${(c.balanceOwing || c.balance || 0).toLocaleString()}
                 </option>
               `).join('')}
             </optgroup>
           </select>
 
-          <!-- Walk-in Customer Data Capture (Visible by default for Walk-in) -->
+          <!-- Walk-in Customer Contact Capture -->
           <div id="pos-walkin-data" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-            <div>
-              <input type="text" id="pos-walkin-name" class="input input--sm" placeholder="${isHa ? 'Suna (na zabi)' : 'Name (optional)'}" style="font-size: 12.5px; height: 36px;">
-            </div>
-            <div>
-              <input type="tel" id="pos-walkin-phone" class="input input--sm" placeholder="${isHa ? 'Lambar Waya' : 'Phone'}" maxlength="15" style="font-size: 12.5px; height: 36px;">
-            </div>
+            <input type="text" id="pos-walkin-name" class="input input--sm" placeholder="${isHa ? 'Suna (na zabi)' : 'Name (optional)'}" style="font-size: 12px; height: 34px;">
+            <input type="tel" id="pos-walkin-phone" class="input input--sm" placeholder="${isHa ? 'Lambar Waya' : 'Phone'}" maxlength="15" style="font-size: 12px; height: 34px;">
           </div>
 
-          <!-- Registered Customer Details Badge (Visible when registered distributor/buyer is picked) -->
-          <div id="pos-registered-info" style="display: none; padding: 8px 10px; background: rgba(0, 166, 81, 0.08); border-radius: 6px; font-size: 12px; border: 1px solid rgba(0, 166, 81, 0.2);">
+          <!-- Registered Customer Badge -->
+          <div id="pos-registered-info" style="display: none; padding: 6px 10px; background: rgba(0, 166, 81, 0.08); border-radius: 6px; font-size: 12px; border: 1px solid rgba(0, 166, 81, 0.2);">
             <div style="display: flex; justify-content: space-between; font-weight: 700;">
               <span id="pos-cust-role-badge">Wholesale</span>
               <span id="pos-cust-phone-disp" style="color: var(--muted); font-family: monospace;"></span>
             </div>
-            <div style="display: flex; justify-content: space-between; margin-top: 3px;">
+            <div style="display: flex; justify-content: space-between; margin-top: 2px;">
               <span style="color: var(--muted);">${isHa ? 'Bashi' : 'Owing'}:</span>
               <b id="pos-cust-balance-disp" style="color: #d97706; font-weight: 800;">₦0</b>
             </div>
           </div>
 
-          <!-- Quick Add New Customer Form (Toggled by + New) -->
+          <!-- Inline Quick Add Customer Form -->
           <div id="pos-new-cust-form" style="display: none; flex-direction: column; gap: 6px; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line);">
             <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 6px;">
               <input type="text" id="pos-new-cust-name" class="input input--sm" placeholder="${isHa ? 'Cikakken Suna' : 'Full Name'}" style="font-size: 12px; height: 34px;">
               <input type="tel" id="pos-new-cust-phone" class="input input--sm" placeholder="${isHa ? 'Waya' : 'Phone'}" style="font-size: 12px; height: 34px;">
             </div>
-            <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 6px;">
-              <select id="pos-new-cust-type" class="input input--sm" style="font-size: 11.5px; font-weight: 700; height: 34px;">
-                <option value="Wholesale Distributor (Mai Sari)">${isHa ? 'Mai Sari' : 'Wholesale'}</option>
-                <option value="Tea Vendor (Mai Shayi)">${isHa ? 'Mai Shayi' : 'Tea Vendor'}</option>
-                <option value="Retail Regular">${isHa ? 'Abokin Ciniki' : 'Retail Regular'}</option>
-                <option value="Institutional Account">${isHa ? 'Kwangila' : 'Institutional'}</option>
+            <div style="display: flex; gap: 6px;">
+              <select id="pos-new-cust-type" class="input input--sm" style="font-size: 12px; font-weight: 700; height: 34px; flex: 1;">
+                <option value="Wholesale Distributor">${isHa ? 'Mai Sari' : 'Wholesale'}</option>
+                <option value="Tea Vendor">${isHa ? 'Mai Shayi' : 'Tea Vendor'}</option>
+                <option value="Institutional">${isHa ? 'Kwangila' : 'Institutional'}</option>
               </select>
-              <button type="button" class="btn btn--ink btn--sm" onclick="window.savePosNewCustomer()" style="background: var(--rusbi-green); border-color: var(--rusbi-green); font-weight: 700; justify-content: center; height: 34px;">
+              <button type="button" class="btn btn--ink btn--sm" onclick="window.savePosNewCustomer()" style="background: var(--rusbi-green); border-color: var(--rusbi-green); font-weight: 700; height: 34px; padding: 0 16px;">
                 ${isHa ? 'Ajiye' : 'Save'}
               </button>
             </div>
           </div>
         </div>
 
-        <div style="background: var(--well); border-radius: 10px; padding: 14px; text-align: center; margin-bottom: 12px;">
+        <!-- 2. Live Total Display -->
+        <div style="background: var(--well); border-radius: 10px; padding: 12px; text-align: center; margin-bottom: 12px;">
           <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; font-weight: 800;">${isHa ? 'Jimlar Kudi' : 'Total'}</div>
-          <div id="pos-total-display" style="font-size: 32px; font-weight: 900; color: var(--rusbi-green);">₦0.00</div>
+          <div id="pos-total-display" style="font-size: 30px; font-weight: 900; color: var(--rusbi-green);">₦0.00</div>
         </div>
 
-        <!-- Default: Cash Tendered & Change -->
-        <div id="pos-cash-container" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px;">
-          <div>
-            <label style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 3px;">${isHa ? 'Kudin da aka Bayar' : 'Cash Tendered'}</label>
-            <input type="number" id="tender-cash" class="input" placeholder="0.00" style="font-size: 16px; font-weight: 800;" oninput="window.calcCashChange()">
+        <!-- 3. Four Simple Visual Payment Rows -->
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
+          <!-- Cash -->
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+            <label style="font-size: 13px; font-weight: 800; min-width: 60px;">${isHa ? 'Kudi' : 'Cash'}</label>
+            <input type="number" id="tender-cash" class="input" placeholder="0.00" style="font-size: 15px; font-weight: 800; text-align: right; height: 38px;" oninput="window.calcLiveTenders()">
           </div>
 
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: var(--well); border-radius: 8px;">
-            <span style="font-size: 13px; font-weight: 700;">${isHa ? 'Canji' : 'Change'}</span>
-            <b id="pos-change-display" style="font-size: 18px; color: var(--rusbi-green); font-weight: 900;">₦0.00</b>
-          </div>
-        </div>
-
-        <!-- Split Tender Progressive Toggle -->
-        <button type="button" class="btn btn--ghost btn--sm" id="btn-toggle-split" onclick="window.toggleSplitTender()" style="width: 100%; justify-content: center; font-weight: 700; margin-bottom: 12px;">
-          ⇄ ${isHa ? 'Rarraba Kudi' : 'Split Tender'}
-        </button>
-
-        <!-- Hidden Split Container: Revealed only upon clicking Split Tender -->
-        <div id="pos-split-container" style="display: none; flex-direction: column; gap: 10px; margin-bottom: 14px; padding-top: 10px; border-top: 1px dashed var(--line);">
-          <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 8px;">
-            <div>
-              <label style="font-size: 11px; font-weight: 700; display: block; margin-bottom: 2px;">POS (₦)</label>
-              <input type="number" id="tender-pos" class="input" placeholder="0.00" oninput="window.calcTenderSum()">
-            </div>
-            <div>
-              <label style="font-size: 11px; font-weight: 700; display: block; margin-bottom: 2px;">RRN</label>
-              <input type="text" id="pos-terminal-id" class="input" placeholder="RRN">
-            </div>
+          <!-- POS -->
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+            <label style="font-size: 13px; font-weight: 800; min-width: 60px;">POS</label>
+            <input type="number" id="tender-pos" class="input" placeholder="0.00" style="font-size: 15px; font-weight: 800; text-align: right; height: 38px;" oninput="window.calcLiveTenders()">
           </div>
 
-          <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 8px;">
-            <div>
-              <label style="font-size: 11px; font-weight: 700; display: block; margin-bottom: 2px;">${isHa ? 'Tura Banki' : 'Transfer (₦)'}</label>
-              <input type="number" id="tender-transfer" class="input" placeholder="0.00" oninput="window.calcTenderSum()">
+          <!-- Transfer -->
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+              <label style="font-size: 13px; font-weight: 800; min-width: 60px;">${isHa ? 'Tura Banki' : 'Transfer'}</label>
+              <input type="number" id="tender-transfer" class="input" placeholder="0.00" style="font-size: 15px; font-weight: 800; text-align: right; height: 38px;" oninput="window.calcLiveTenders()">
             </div>
-            <div>
-              <label style="font-size: 11px; font-weight: 700; display: block; margin-bottom: 2px;">Session</label>
-              <input type="text" id="transfer-session-id" class="input" placeholder="Ref">
+            <div id="pos-transfer-bank-box" style="display: none; justify-content: flex-end;">
+              <select id="tender-transfer-bank" class="input input--sm" style="font-size: 11.5px; font-weight: 700; width: 180px; height: 30px;">
+                <option value="Zenith Bank">Zenith Bank</option>
+                <option value="Access Bank">Access Bank</option>
+                <option value="Moniepoint">Moniepoint</option>
+                <option value="OPay">OPay</option>
+              </select>
             </div>
           </div>
 
-          <div>
-            <label style="font-size: 11px; font-weight: 700; display: block; margin-bottom: 2px; color: #d97706;">${isHa ? 'Bashi' : 'Credit (₦)'}</label>
-            <input type="number" id="tender-bashi" class="input" placeholder="0.00" oninput="window.onBashiInputChanged(this.value)">
+          <!-- Credit (Bashi) -->
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+            <label style="font-size: 13px; font-weight: 800; color: #d97706; min-width: 60px;">${isHa ? 'Bashi' : 'Credit'}</label>
+            <input type="number" id="tender-bashi" class="input" placeholder="0.00" style="font-size: 15px; font-weight: 800; text-align: right; height: 38px; color: #d97706; border-color: rgba(217, 119, 6, 0.4);" oninput="window.calcLiveTenders()">
           </div>
         </div>
 
-        <button type="button" class="btn btn--ink" onclick="window.submitPosCheckout()" style="width: 100%; height: 46px; font-size: 15px; font-weight: 800; justify-content: center; background: var(--rusbi-green); border-color: var(--rusbi-green);">
-          ${t('btn_checkout')}
+        <!-- 4. Live Remaining / Change Bar -->
+        <div id="pos-balance-banner" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: var(--well); border-radius: 8px; margin-bottom: 14px; border: 1px solid var(--line);">
+          <span style="font-size: 13px; font-weight: 700;" id="pos-balance-label">${isHa ? 'Ragewa:' : 'Remaining:'}</span>
+          <b id="pos-balance-value" style="font-size: 18px; font-weight: 900; color: var(--bad);">₦0.00</b>
+        </div>
+
+        <!-- 5. Complete Sale Button: ONLY green when Remaining is exactly 0 -->
+        <button type="button" id="btn-complete-sale" class="btn btn--ink" onclick="window.submitPosCheckout()" disabled style="width: 100%; height: 48px; font-size: 15px; font-weight: 850; justify-content: center; background: #64748b; border-color: #64748b; cursor: not-allowed; opacity: 0.6; transition: all 0.2s;">
+          ${isHa ? 'Sayarwa' : 'Complete Sale'}
         </button>
       </div>
     </div>
@@ -718,7 +715,7 @@ export function renderPosView(container, state, engine) {
 }
 
 // ----------------------------------------------------
-// 3. FLOUR BATCHES VIEW
+// 3. FLOUR BATCHES VIEW (PRODUCTION)
 // ----------------------------------------------------
 export function renderBatchesView(container, state) {
   const isHa = currentLang === 'ha';
@@ -727,8 +724,8 @@ export function renderBatchesView(container, state) {
 
   container.innerHTML = `
     <div style="margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
-      <h1 style="font-size: 22px; font-weight: 850; margin: 0;">${t('tbl_production')}</h1>
-      <button class="btn btn--ink" onclick="window.openNewBatchModal()" style="background: var(--rusbi-green); border-color: var(--rusbi-green); font-weight: 700;">
+      <h1 style="font-size: 22px; font-weight: 850; margin: 0;">${isHa ? 'Yini' : 'Production'}</h1>
+      <button class="btn btn--ink" onclick="window.openNewBatchDrawer()" style="background: var(--rusbi-green); border-color: var(--rusbi-green); font-weight: 800;">
         + ${isHa ? 'Yini' : 'Batch'}
       </button>
     </div>
@@ -738,37 +735,52 @@ export function renderBatchesView(container, state) {
         <table class="table">
           <thead>
             <tr>
-              <th>${t('col_batch')}</th>
-              <th>${t('col_shift')}</th>
-              <th>${t('col_recipe')}</th>
-              <th>${t('col_bags')}</th>
-              <th>${t('col_target')}</th>
-              <th>${t('col_bagged')}</th>
+              <th>${isHa ? 'Lamba' : 'Batch'}</th>
+              <th>${isHa ? 'Lokaci' : 'Shift'}</th>
+              <th>${isHa ? 'Hadi' : 'Recipe'}</th>
+              <th>${isHa ? 'Buhu' : 'Bags'}</th>
+              <th>${isHa ? 'Kiyasi' : 'Target'}</th>
+              <th>${isHa ? 'Gurasar' : 'Bagged'}</th>
               <th>${isHa ? 'Kone' : 'Burnt'}</th>
               <th>${isHa ? 'Faduwa' : 'Fallen'}</th>
-              <th>${t('col_yield')}</th>
-              <th>${t('col_baker')}</th>
+              <th>${isHa ? 'Kashi' : 'Yield'}</th>
+              <th>${isHa ? 'Hali' : 'Status'}</th>
+              <th>${isHa ? 'Aiki' : 'Action'}</th>
             </tr>
           </thead>
           <tbody>
-            ${batches.map(b => `
+            ${batches.map(b => {
+              const isInProgress = b.status === 'in_progress' || b.status === 'In Progress';
+              return `
               <tr>
-                <td><b>${b.id}</b></td>
+                <td><b>${b.id.split('-').slice(-2).join('-')}</b></td>
                 <td>${b.shift.split('(')[0].trim()}</td>
-                <td><b>${b.recipe.split('&')[0].trim()}</b></td>
+                <td><b>${b.recipe.split('(')[0].split('&')[0].trim()}</b></td>
                 <td><b>${b.flourBags50kg}</b></td>
                 <td class="num">${b.targetLoaves}</td>
-                <td class="num font-bold" style="color: var(--rusbi-green);">${b.actualLoaves}</td>
-                <td class="num" style="color: var(--bad);">${b.burntLoaves}</td>
-                <td class="num" style="color: var(--bad);">${b.fallenLoaves}</td>
+                <td class="num font-bold" style="color: var(--rusbi-green);">${isInProgress ? '—' : b.actualLoaves}</td>
+                <td class="num" style="color: var(--bad);">${isInProgress ? '—' : b.burntLoaves}</td>
+                <td class="num" style="color: var(--bad);">${isInProgress ? '—' : b.fallenLoaves}</td>
                 <td>
-                  <span class="badge ${Math.abs(b.variancePct) <= 2 ? 'badge--pine' : 'badge--tomato'}">
-                    ${(100 + b.variancePct).toFixed(1)}%
-                  </span>
+                  ${isInProgress
+                    ? `<span class="badge badge--butter">${isHa ? 'Yana Aiki' : 'In Progress'}</span>`
+                    : `<span class="badge ${Math.abs(b.variancePct) <= 2 ? 'badge--pine' : 'badge--tomato'}">${(100 + (b.variancePct || 0)).toFixed(1)}%</span>`
+                  }
                 </td>
-                <td><b>${b.chiefBaker.split(' ')[0]}</b></td>
-              </tr>
-            `).join('')}
+                <td>
+                  ${isInProgress
+                    ? `<span class="badge badge--butter">${isHa ? 'Aiki' : 'In Progress'}</span>`
+                    : `<span class="badge badge--pine">${isHa ? 'Kammala' : 'Completed'}</span>`
+                  }
+                </td>
+                <td>
+                  ${isInProgress
+                    ? `<button class="btn btn--sm btn--ink" onclick="window.openEndBatchModal('${b.id}', ${b.targetLoaves})" style="background: var(--rusbi-green); border-color: var(--rusbi-green); font-weight: 700;">${isHa ? 'Kammala' : 'End Batch'}</button>`
+                    : `<span style="color: var(--muted); font-size: 12px; font-weight: 700;">✓ ${isHa ? 'Daidai' : 'Done'}</span>`
+                  }
+                </td>
+              </tr>`;
+            }).join('')}
           </tbody>
         </table>
       </div>
@@ -777,63 +789,75 @@ export function renderBatchesView(container, state) {
 }
 
 // ----------------------------------------------------
-// 4. CRATE TRACKER VIEW
+// 4. CRATE TRACKER VIEW (THE SECURITY GUARD)
 // ----------------------------------------------------
 export function renderCratesView(container, state) {
   const isHa = currentLang === 'ha';
   const entity = state.entities[0] || {};
-  const crates = entity.cratesSummary || { totalOwned: 1200, inYard: 750, inTransit: 450, unreturnedDeficit: 42, refundableDepositsHeld: 168000, holders: [] };
+  const crates = entity.cratesSummary || { totalOwned: 1200, inYard: 750, inTransit: 450, unreturnedDeficit: 42, holders: [] };
+  const crateCost = 6000;
+
+  const holders = (crates.holders || []).map(h => {
+    const holding = h.deficit || (h.cratesTaken - h.cratesReturned) || 10;
+    return {
+      distributor: h.distributor,
+      holding: holding,
+      value: holding * crateCost
+    };
+  });
+
+  const totalHolding = holders.reduce((s, h) => s + h.holding, 0);
 
   container.innerHTML = `
     <div style="margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
-      <h1 style="font-size: 22px; font-weight: 850; margin: 0;">${t('tbl_crates')}</h1>
-      <button class="btn btn--ink" onclick="window.openCrateMovementModal()" style="background: #8b5cf6; border-color: #8b5cf6; font-weight: 700;">
-        + ${isHa ? 'Fita' : 'Issue'}
-      </button>
+      <h1 style="font-size: 22px; font-weight: 850; margin: 0;">${isHa ? 'Kwano' : 'Crates'}</h1>
+      <button class="btn btn--ghost" onclick="window.navigateTo('dashboard')">← ${t('btn_back')}</button>
     </div>
 
+    <!-- Summary Metrics -->
     <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 20px;">
       <div class="card">
-        <div class="card__head"><span class="card__title">${isHa ? 'Kayan Kamfani' : 'Total Owned'}</span></div>
-        <div class="stat__value" style="font-size: 24px;">${crates.totalOwned}</div>
+        <div class="card__head"><span class="card__title">${isHa ? 'Kwano a Haraba' : 'In Yard'}</span></div>
+        <div class="stat__value" style="font-size: 24px; color: var(--rusbi-green); font-weight: 900;">${crates.inYard}</div>
       </div>
       <div class="card">
-        <div class="card__head"><span class="card__title">${isHa ? 'A Harabar Kamfani' : 'In Yard'}</span></div>
-        <div class="stat__value" style="font-size: 24px; color: var(--rusbi-green);">${crates.inYard}</div>
+        <div class="card__head"><span class="card__title">${isHa ? 'Kwano a Waje' : 'In Field'}</span></div>
+        <div class="stat__value" style="font-size: 24px; color: #8b5cf6; font-weight: 900;">${totalHolding}</div>
       </div>
       <div class="card">
-        <div class="card__head"><span class="card__title">${isHa ? 'A Waje' : 'Field'}</span></div>
-        <div class="stat__value" style="font-size: 24px; color: #8b5cf6;">${crates.inTransit}</div>
-      </div>
-      <div class="card">
-        <div class="card__head"><span class="card__title">${t('col_deficit')}</span></div>
-        <div class="stat__value" style="font-size: 24px; color: var(--bad);">${crates.unreturnedDeficit}</div>
+        <div class="card__head"><span class="card__title">${isHa ? 'Kudin Kwano' : 'Total Value'}</span></div>
+        <div class="stat__value" style="font-size: 24px; font-weight: 900;">₦${(totalHolding * crateCost).toLocaleString()}</div>
       </div>
     </div>
 
+    <!-- Security Guard In/Out Ledger Table -->
     <div class="card">
       <div class="table-wrap">
         <table class="table">
           <thead>
             <tr>
-              <th>${t('col_distributor')}</th>
-              <th>${t('col_taken')}</th>
-              <th>${t('col_returned')}</th>
-              <th class="r">${t('col_deficit')}</th>
-              <th class="r">${t('col_deposit')}</th>
-              <th>${isHa ? 'Aiki' : 'Action'}</th>
+              <th>${isHa ? 'Suna' : 'Name'}</th>
+              <th>${isHa ? 'Adadin Kwano' : 'Holding'}</th>
+              <th class="r">${isHa ? 'Aiki' : 'Action'}</th>
             </tr>
           </thead>
           <tbody>
-            ${crates.holders.map(h => `
+            ${holders.map(h => `
               <tr>
                 <td><b>${h.distributor.split('(')[0].trim()}</b></td>
-                <td>${h.cratesTaken}</td>
-                <td>${h.cratesReturned}</td>
-                <td class="r" style="color: var(--bad); font-weight: 800;">${h.deficit}</td>
-                <td class="r" style="color: var(--rusbi-green); font-weight: 800;">₦${h.depositHeld.toLocaleString()}</td>
                 <td>
-                  <button class="btn btn--sm btn--ghost" onclick="window.recordCrateReturn('${h.distributor}')">${t('btn_return')}</button>
+                  <b>${h.holding} ${isHa ? 'Kwano' : 'Crates'}</b>
+                  <span style="font-size: 12px; color: var(--muted); margin-left: 6px;">(${isHa ? 'Daraja' : 'Value'}: ₦${h.value.toLocaleString()})</span>
+                </td>
+                <td class="r">
+                  <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                    <button class="btn btn--sm btn--ghost" onclick="window.openCrateActionModal('return', '${h.distributor.replace(/'/g, "\\'")}', ${h.holding})">
+                      ${isHa ? 'Mayar' : 'Return'}
+                    </button>
+                    <button class="btn btn--sm btn--ink" onclick="window.openCrateActionModal('charge', '${h.distributor.replace(/'/g, "\\'")}', ${h.holding})" style="background: #d97706; border-color: #d97706;">
+                      ${isHa ? 'Dora Bashi' : 'Charge'}
+                    </button>
+                  </div>
                 </td>
               </tr>
             `).join('')}
@@ -845,7 +869,7 @@ export function renderCratesView(container, state) {
 }
 
 // ----------------------------------------------------
-// 5. CREDIT / BASHI VIEW
+// 5. CREDIT (BASHI) VIEW (WHO OWES ME MONEY)
 // ----------------------------------------------------
 export function renderBashiView(container, state) {
   const isHa = currentLang === 'ha';
@@ -855,25 +879,198 @@ export function renderBashiView(container, state) {
 
   container.innerHTML = `
     <div style="margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
-      <h1 style="font-size: 22px; font-weight: 850; margin: 0;">${t('tbl_credit')}</h1>
-      <button class="btn btn--ink" onclick="window.openNewBashiModal()" style="background: #d97706; border-color: #d97706; font-weight: 700;">
-        + Bashi
-      </button>
+      <h1 style="font-size: 22px; font-weight: 850; margin: 0;">${isHa ? 'Bashi' : 'Credit'}</h1>
+      <button class="btn btn--ghost" onclick="window.navigateTo('dashboard')">← ${t('btn_back')}</button>
     </div>
 
-    <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 20px;">
-      <div class="card">
-        <div class="card__head"><span class="card__title">${isHa ? 'Jimlar Bashi' : 'Total Outstanding'}</span></div>
-        <div class="stat__value" style="font-size: 24px; color: #d97706; font-weight: 900;">₦${totalBashi.toLocaleString()}</div>
+    <!-- Big Number at Top -->
+    <div id="bashi-total-card" class="card" style="margin-bottom: 20px; padding: 22px; text-align: center; border-left: 5px solid #d97706;">
+      <div style="font-size: 13px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em;">
+        ${isHa ? 'Jimlar Bashi' : 'Total Owed'}
       </div>
-      <div class="card">
-        <div class="card__head"><span class="card__title">${isHa ? 'Bashi na Kasa (0-7d)' : 'Current (0-7d)'}</span></div>
-        <div class="stat__value" style="font-size: 24px;">₦${(totalBashi - 180000).toLocaleString()}</div>
+      <div id="bashi-total-amount" style="font-size: 38px; font-weight: 900; color: #d97706; margin-top: 4px;">
+        ₦${totalBashi.toLocaleString()}
       </div>
-      <div class="card">
-        <div class="card__head"><span class="card__title">${isHa ? 'Bashi da ya Wuce (>7d)' : 'Overdue (>7d)'}</span></div>
-        <div class="stat__value" style="font-size: 24px; color: var(--bad);">₦180,000</div>
+    </div>
+
+    <!-- Simple "Who Owes Me Money" List -->
+    <div class="card">
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>${isHa ? 'Suna' : 'Name'}</th>
+              <th class="r">${isHa ? 'Bashi' : 'Owed'}</th>
+              <th>${isHa ? 'Waya' : 'Phone'}</th>
+              <th>${isHa ? 'Hali' : 'Status'}</th>
+              <th class="r">${isHa ? 'Aiki' : 'Action'}</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${bashiList.map(b => {
+              const isOverdue = (b.overdueDays || 0) > 0;
+              return `
+              <tr>
+                <td><b>${b.name}</b></td>
+                <td class="r num font-bold" style="color: #d97706; font-size: 15px;">₦${(b.balanceOwing || 0).toLocaleString()}</td>
+                <td style="font-family: monospace; font-size: 13px;">${b.phone || ''}</td>
+                <td>
+                  ${isOverdue
+                    ? `<span class="badge badge--tomato">${isHa ? `Wuce kwanaki ${b.overdueDays}` : `Overdue ${b.overdueDays}d`}</span>`
+                    : `<span class="badge badge--pine">${isHa ? 'Lafiya' : 'Current'}</span>`
+                  }
+                </td>
+                <td class="r">
+                  <button class="btn btn--sm btn--ink" onclick="window.openPayCreditModal('${b.id}')" style="background: var(--rusbi-green); border-color: var(--rusbi-green); font-weight: 700; padding: 4px 14px;">
+                    ${isHa ? 'Biya' : 'Pay'}
+                  </button>
+                </td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
       </div>
+    </div>
+  `;
+}
+
+// ----------------------------------------------------
+// 6. CASHIER / ACTIVE SHIFT VIEW
+// ----------------------------------------------------
+export function renderShiftsView(container, state) {
+  const isHa = currentLang === 'ha';
+  const entity = state.entities[0] || {};
+  const shift = entity.cashShift || { expectedInDrawer: 420000, safeVaultReserves: 1850000 };
+  const pastShifts = entity.pastShifts || [
+    { date: "2026-10-26", cashier: "Usman Bello", expected: 385000, counted: 385000, diff: 0 },
+    { date: "2026-10-25", cashier: "Aliyu Danladi", expected: 410000, counted: 405000, diff: -5000 },
+    { date: "2026-10-24", cashier: "Usman Bello", expected: 392000, counted: 392000, diff: 0 },
+    { date: "2026-10-23", cashier: "John Ameh", expected: 450000, counted: 450500, diff: 500 }
+  ];
+
+  container.innerHTML = `
+    <div style="margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+      <h1 style="font-size: 22px; font-weight: 850; margin: 0;">${isHa ? 'Kudi' : 'Cashier'}</h1>
+      <button class="btn btn--ghost" onclick="window.navigateTo('dashboard')">← ${t('btn_back')}</button>
+    </div>
+
+    <!-- Active Shift Hero Card -->
+    <div id="active-shift-card" class="card" style="border: 2px solid #2563eb; margin-bottom: 22px; padding: 22px;">
+      <div class="card__head" style="margin-bottom: 16px;">
+        <span style="font-size: 13px; font-weight: 800; color: #2563eb; text-transform: uppercase; letter-spacing: 0.04em;">
+          ${isHa ? 'Yini Mai Ci' : 'Active Shift'}
+        </span>
+        <span class="badge badge--pine">${isHa ? 'Yana Aiki' : 'Live'}</span>
+      </div>
+
+      <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 20px;">
+        <div style="background: var(--well); padding: 12px 16px; border-radius: 10px;">
+          <div style="font-size: 11px; color: var(--muted); font-weight: 700; text-transform: uppercase;">${isHa ? "Ma'aikaci" : 'Cashier Name'}</div>
+          <b style="font-size: 17px;">Usman Bello</b>
+        </div>
+        <div style="background: var(--well); padding: 12px 16px; border-radius: 10px;">
+          <div style="font-size: 11px; color: var(--muted); font-weight: 700; text-transform: uppercase;">${isHa ? 'Lokacin Farawa' : 'Time Started'}</div>
+          <b style="font-size: 17px;">8:00 AM</b>
+        </div>
+        <div style="background: var(--well); padding: 12px 16px; border-radius: 10px;">
+          <div style="font-size: 11px; color: var(--muted); font-weight: 700; text-transform: uppercase;">${isHa ? 'Kudi a Akwati' : 'Cash Expected'}</div>
+          <b style="font-size: 22px; color: #2563eb; font-weight: 900;">₦${shift.expectedInDrawer.toLocaleString()}</b>
+        </div>
+        <div style="background: var(--well); padding: 12px 16px; border-radius: 10px;">
+          <div style="font-size: 11px; color: var(--muted); font-weight: 700; text-transform: uppercase;">${isHa ? 'Asusun Safe' : 'Safe Vault'}</div>
+          <b style="font-size: 22px; color: var(--rusbi-green); font-weight: 900;">₦${shift.safeVaultReserves.toLocaleString()}</b>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 12px; justify-content: flex-end;">
+        <button type="button" class="btn btn--ghost" onclick="window.openSafeDropModal()" style="font-weight: 700;">
+          + ${isHa ? 'Ajiye a Safe' : 'Safe Drop'}
+        </button>
+        <button type="button" class="btn btn--ink" onclick="window.openCloseShiftModal()" style="background: #2563eb; border-color: #2563eb; font-weight: 850; padding: 0 24px;">
+          ${isHa ? 'Rufe Kudi' : 'Close Shift'}
+        </button>
+      </div>
+    </div>
+
+    <!-- Past Shifts Table -->
+    <div class="card">
+      <div class="card__head" style="margin-bottom: 12px;">
+        <b style="font-size: 15px;">${isHa ? 'Teburin Baya' : 'Past Shifts'}</b>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>${isHa ? 'Kwana' : 'Date'}</th>
+              <th>${isHa ? "Ma'aikaci" : 'Cashier'}</th>
+              <th class="r">${isHa ? 'Kiyasi' : 'Expected'}</th>
+              <th class="r">${isHa ? 'Kirga' : 'Counted'}</th>
+              <th class="r">${isHa ? 'Bambanci' : 'Difference'}</th>
+              <th>${isHa ? 'Hali' : 'Status'}</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${pastShifts.map(s => {
+              const diff = s.diff !== undefined ? s.diff : (s.counted - s.expected);
+              let statusBadge = '';
+              if (diff === 0) {
+                statusBadge = `<span class="badge badge--pine">${isHa ? 'Daidai' : 'Good'}</span>`;
+              } else if (diff < 0) {
+                statusBadge = `<span class="badge badge--tomato">${isHa ? `Rasa (-₦${Math.abs(diff).toLocaleString()})` : `Short (-₦${Math.abs(diff).toLocaleString()})`}</span>`;
+              } else {
+                statusBadge = `<span class="badge badge--pine">${isHa ? `Kari (+₦${diff.toLocaleString()})` : `Over (+₦${diff.toLocaleString()})`}</span>`;
+              }
+              return `
+              <tr>
+                <td><b>${s.date}</b></td>
+                <td>${s.cashier}</td>
+                <td class="r num">₦${s.expected.toLocaleString()}</td>
+                <td class="r num font-bold">₦${s.counted.toLocaleString()}</td>
+                <td class="r num" style="color: ${diff === 0 ? 'var(--rusbi-green)' : (diff < 0 ? 'var(--bad)' : 'var(--rusbi-green)')}; font-weight: 800;">
+                  ${diff === 0 ? '₦0' : (diff < 0 ? `-₦${Math.abs(diff).toLocaleString()}` : `+₦${diff.toLocaleString()}`)}
+                </td>
+                <td>${statusBadge}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+// ----------------------------------------------------
+// 7. DISTRIBUTORS VIEW (MERGED CONTRACTS & WHOLESALERS)
+// ----------------------------------------------------
+export function renderDistributorsView(container, state) {
+  const isHa = currentLang === 'ha';
+  const entity = state.entities[0] || {};
+  const bashiList = entity.bashiDistributors || [];
+  const registeredCusts = entity.customers || [];
+
+  const seen = new Set();
+  const allDistributors = [];
+  [...bashiList, ...registeredCusts].forEach(c => {
+    if (c && c.name && !seen.has(c.id || c.name)) {
+      seen.add(c.id || c.name);
+      const isInst = (c.role || '').toLowerCase().includes('institutional') || (c.role || '').toLowerCase().includes('mess') || (c.role || '').toLowerCase().includes('school') || (c.role || '').toLowerCase().includes('hospital');
+      allDistributors.push({
+        id: c.id,
+        name: c.name,
+        type: isInst ? (isHa ? 'Kwangila' : 'Institutional') : (isHa ? 'Mai Sari' : 'Wholesale'),
+        isInst: isInst,
+        creditLimit: c.creditLimit || (isInst ? 5000000 : 250000),
+        balanceOwing: c.balanceOwing || c.balance || 0,
+        phone: c.phone || '',
+        dailyAllocation: c.dailyAllocation || 50
+      });
+    }
+  });
+
+  container.innerHTML = `
+    <div style="margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+      <h1 style="font-size: 22px; font-weight: 850; margin: 0;">${isHa ? 'Yan Sari' : 'Distributors'}</h1>
+      <button class="btn btn--ghost" onclick="window.navigateTo('dashboard')">← ${t('btn_back')}</button>
     </div>
 
     <div class="card">
@@ -881,36 +1078,30 @@ export function renderBashiView(container, state) {
         <table class="table">
           <thead>
             <tr>
-              <th>${t('col_distributor')}</th>
-              <th>${isHa ? 'Matsayi' : 'Role'}</th>
-              <th>${isHa ? 'Lambar Waya' : 'Phone'}</th>
-              <th>${t('col_allocation')}</th>
-              <th class="r">${t('col_balance')}</th>
-              <th>${t('col_guarantor')}</th>
-              <th>${t('col_status')}</th>
+              <th>${isHa ? 'Suna' : 'Name'}</th>
+              <th>${isHa ? 'Nau\'i' : 'Type'}</th>
+              <th>${isHa ? 'Iyakar Bashi' : 'Limit'}</th>
+              <th class="r">${isHa ? 'Bashi' : 'Owed'}</th>
               <th>${isHa ? 'Aiki' : 'Action'}</th>
             </tr>
           </thead>
           <tbody>
-            ${bashiList.map(b => `
+            ${allDistributors.map(d => `
               <tr>
-                <td><b>${b.name}</b></td>
-                <td><span class="spill spill--plain">${formatRole(b.role, isHa)}</span></td>
-                <td><b>${b.phone}</b></td>
-                <td>${b.dailyAllocation}</td>
-                <td class="r num font-bold" style="color: #d97706;">₦${b.balanceOwing.toLocaleString()}</td>
                 <td>
-                  <div><b>${formatGuarantor(b.guarantor, isHa)}</b></div>
-                  <span style="font-size: 11px; color: var(--rusbi-green);">${b.guarantorPhone}</span>
+                  <b>${d.name}</b>
+                  ${d.phone ? `<div style="font-size: 11px; color: var(--muted); font-family: monospace;">${d.phone}</div>` : ''}
                 </td>
                 <td>
-                  <span class="badge ${b.overdueDays > 7 ? 'badge--tomato' : (b.overdueDays > 0 ? 'badge--butter' : 'badge--pine')}">
-                    ${formatStatus(b.overdueDays, isHa)}
-                  </span>
+                  <span class="badge ${d.isInst ? 'badge--pine' : 'badge--butter'}">${d.type}</span>
+                </td>
+                <td>₦${d.creditLimit.toLocaleString()}</td>
+                <td class="r" style="color: ${d.balanceOwing > 0 ? '#d97706' : 'var(--text)'}; font-weight: 850;">
+                  ₦${d.balanceOwing.toLocaleString()}
                 </td>
                 <td>
-                  <button class="btn btn--sm btn--ink" onclick="window.recordBashiSettlement('${b.id}')" style="padding: 3px 8px; font-size: 11.5px; background: var(--rusbi-green);">
-                    ${t('btn_pay')}
+                  <button class="btn btn--sm btn--ink" onclick="window.openDeliverWaybillModal('${d.id}')" style="background: var(--rusbi-green); border-color: var(--rusbi-green); font-weight: 700;">
+                    ${isHa ? 'Aika' : 'Deliver'}
                   </button>
                 </td>
               </tr>
@@ -923,49 +1114,7 @@ export function renderBashiView(container, state) {
 }
 
 // ----------------------------------------------------
-// 6. CASHIER / SHIFTS VIEW
-// ----------------------------------------------------
-export function renderShiftsView(container, state) {
-  const isHa = currentLang === 'ha';
-  const entity = state.entities[0] || {};
-  const shift = entity.cashShift || { expectedInDrawer: 420000, safeVaultReserves: 1850000 };
-
-  container.innerHTML = `
-    <div style="margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: gap: 14px;">
-      <h1 style="font-size: 22px; font-weight: 850; margin: 0;">${isHa ? 'Kudi (Cashier)' : 'Cashier'}</h1>
-      <div style="display: flex; gap: 8px;">
-        <button class="btn btn--ghost" onclick="window.openSafeDropModal()">+ ${isHa ? 'Ajiye a Safe' : 'Safe Drop'}</button>
-        <button class="btn btn--ink" onclick="window.openCloseShiftModal()" style="background: #2563eb; border-color: #2563eb;">
-          ${t('btn_close_shift')}
-        </button>
-      </div>
-    </div>
-
-    <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 20px;">
-      <div class="card">
-        <div class="card__head"><b style="font-size: 15px;">${t('kpi_till')}</b></div>
-        <div style="background: var(--well); border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 14px;">
-          <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; font-weight: 800;">${isHa ? 'Kudi a Akwati' : 'Till Balance'}</div>
-          <div style="font-size: 34px; font-weight: 900; color: #2563eb;">₦${shift.expectedInDrawer.toLocaleString()}</div>
-        </div>
-        <button type="button" class="btn btn--ink" onclick="window.openCloseShiftModal()" style="width: 100%; height: 44px; justify-content: center; background: #2563eb;">
-          ${t('btn_close_shift')}
-        </button>
-      </div>
-
-      <div class="card">
-        <div class="card__head"><b style="font-size: 15px;">${isHa ? 'Babban Safe' : 'Safe Vault'}</b></div>
-        <div style="background: var(--well); border-radius: 12px; padding: 20px; text-align: center;">
-          <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; font-weight: 800;">${isHa ? 'Asusun Ajiya' : 'Vault Reserves'}</div>
-          <div style="font-size: 34px; font-weight: 900; color: var(--rusbi-green);">₦${shift.safeVaultReserves.toLocaleString()}</div>
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-// ----------------------------------------------------
-// 7. ENERGY VIEW
+// 8. ENERGY VIEW (POWER & FUEL)
 // ----------------------------------------------------
 export function renderEnergyView(container, state) {
   const isHa = currentLang === 'ha';
@@ -974,9 +1123,9 @@ export function renderEnergyView(container, state) {
 
   container.innerHTML = `
     <div style="margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
-      <h1 style="font-size: 22px; font-weight: 850; margin: 0;">${t('tbl_energy')}</h1>
+      <h1 style="font-size: 22px; font-weight: 850; margin: 0;">${isHa ? 'Man Fetur' : 'Power & Fuel'}</h1>
       <button class="btn btn--ink" onclick="window.openLogDieselModal()" style="background: #ef4444; border-color: #ef4444; font-weight: 700;">
-        + ${isHa ? 'Zuba Fetur' : 'Log Fuel'}
+        + ${isHa ? 'Zuba Fetur' : 'Fuel'}
       </button>
     </div>
 
@@ -986,11 +1135,11 @@ export function renderEnergyView(container, state) {
         <div style="display: flex; flex-direction: column; gap: 10px; padding: 8px 0;">
           <div style="display: flex; justify-content: space-between; padding: 10px 12px; background: var(--well); border-radius: 8px;">
             <span>${isHa ? 'Awanni:' : 'Run Time:'}</span>
-            <b>6.5 Hours</b>
+            <b>${energy.generatorRunHours || 6.5} Hours</b>
           </div>
           <div style="display: flex; justify-content: space-between; padding: 10px 12px; background: var(--well); border-radius: 8px;">
             <span>${isHa ? 'Dizal:' : 'Diesel Consumed:'}</span>
-            <b>45 Litres (₦49,500)</b>
+            <b>${energy.dieselLitresConsumed || 45} Litres</b>
           </div>
           <div style="display: flex; justify-content: space-between; padding: 10px 12px; background: var(--well); border-radius: 8px;">
             <span>${isHa ? 'Sabis na gaba:' : 'Next Service:'}</span>
@@ -1003,60 +1152,15 @@ export function renderEnergyView(container, state) {
         <div class="card__head"><b style="font-size: 15px;">${t('kpi_energy')}</b></div>
         <div style="background: var(--well); border-radius: 12px; padding: 24px; text-align: center;">
           <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; font-weight: 800;">${isHa ? 'Kudin Gurasa' : 'Cost Allocation'}</div>
-          <div style="font-size: 36px; font-weight: 900; color: var(--rusbi-green);">₦${energy.energyCostPerLoaf.toFixed(2)}</div>
+          <div style="font-size: 36px; font-weight: 900; color: var(--rusbi-green);">₦${Number(energy.energyCostPerLoaf || 16.76).toFixed(2)}</div>
         </div>
       </div>
     </div>
   `;
 }
 
-// ----------------------------------------------------
-// 8. CONTRACTS / INSTITUTIONAL VIEW
-// ----------------------------------------------------
-export function renderInstitutionalView(container, state) {
-  const isHa = currentLang === 'ha';
-  container.innerHTML = `
-    <div style="margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
-      <h1 style="font-size: 22px; font-weight: 850; margin: 0;">${isHa ? 'Kwangila' : 'Contracts'}</h1>
-      <button class="btn btn--ink" onclick="window.openNewDeliveryNoteModal()" style="background: var(--rusbi-green); font-weight: 700;">
-        + ${isHa ? 'Sabuwar Rasiti' : 'New Delivery'}
-      </button>
-    </div>
-
-    <div class="card">
-      <div class="table-wrap">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>${isHa ? 'Wurin Aiki' : 'Institution'}</th>
-              <th>${isHa ? 'Sashe' : 'Sector'}</th>
-              <th>${t('col_allocation')}</th>
-              <th>${t('col_balance')}</th>
-              <th>${isHa ? 'Ka\'ida' : 'Terms'}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><b>Command Secondary School Kaduna</b></td>
-              <td>${isHa ? 'Makarantar Soji' : 'Military School'}</td>
-              <td>650</td>
-              <td style="color: #d97706; font-weight: 800;">₦3,450,000</td>
-              <td><span class="badge badge--butter">Net 90d</span></td>
-            </tr>
-            <tr>
-              <td><b>Federal Medical Centre Staff Mess</b></td>
-              <td>${isHa ? 'Asibiti' : 'Hospital'}</td>
-              <td>180</td>
-              <td style="color: #d97706; font-weight: 800;">₦780,000</td>
-              <td><span class="badge badge--butter">Net 30d</span></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  `;
-}
-
+// Alias for backward compatibility
+export const renderInstitutionalView = renderDistributorsView;
 // ----------------------------------------------------
 // 9. AUDIT / NO-LIES VIEW
 // ----------------------------------------------------
