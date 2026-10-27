@@ -1,0 +1,2817 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Rusbi Bakery OS — Bakery Management & Accounting System</title>
+  <meta name="description" content="Commercial bakery management, recipe costing, production assembly & double-entry accounting system for Rusbi Bakery Ltd." />
+  <meta name="theme-color" content="#e3e6dd" />
+  
+  <!-- Progressive Web App (PWA) & Mobile App Shortcut Meta Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Rusbi Bakery OS" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="./assets/rusbi-icon-192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="./assets/rusbi-icon-512.png" />
+  <link rel="icon" type="image/png" href="./assets/rusbi-icon.png" />
+  <link rel="manifest" href="./manifest.json?v=4.6" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400..800&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="./styles/main.css?v=4.6">
+  <script>
+    (function (d) {
+      d.classList.add('js', 'is-ready');
+      try {
+        var p = new URLSearchParams(window.location.search).get('theme');
+        var t = p || JSON.parse(localStorage.getItem('apex:theme') || '"light"');
+        d.dataset.theme = t;
+      } catch (e) {}
+    })(document.documentElement);
+
+    function togglePasswordVisibility(e) {
+      if (e) {
+        if (typeof e.preventDefault === 'function') e.preventDefault();
+        if (typeof e.stopPropagation === 'function') e.stopPropagation();
+      }
+      var p = document.getElementById('login-password');
+      var openSvg = document.getElementById('eye-icon-open');
+      var closedSvg = document.getElementById('eye-icon-closed');
+      if (!p) return;
+      if (p.type === 'password') {
+        p.type = 'text';
+        if (openSvg) openSvg.style.display = 'none';
+        if (closedSvg) closedSvg.style.display = 'block';
+      } else {
+        p.type = 'password';
+        if (openSvg) openSvg.style.display = 'block';
+        if (closedSvg) closedSvg.style.display = 'none';
+      }
+    }
+    window.toggleLoginPasswordVisibility = togglePasswordVisibility;
+    window.closeModal = window.closeModal || function (id) {
+      var m = document.getElementById(id);
+      if (m) m.classList.remove('open');
+    };
+    window.openResetPasswordModal = window.openResetPasswordModal || function () {
+      var m = document.getElementById('modal-reset-password');
+      if (m) m.classList.add('open');
+    };
+
+    window.triggerLogin = function (e) {
+      if (e) {
+        if (typeof e.preventDefault === 'function') e.preventDefault();
+        if (typeof e.stopPropagation === 'function') e.stopPropagation();
+      }
+      if (typeof window.executeLogin === 'function') {
+        return window.executeLogin(e);
+      }
+      var btn = document.getElementById('btn-login-submit');
+      var origContent = btn ? btn.innerHTML : '';
+      if (btn) {
+        btn.innerHTML = '<span>⏳</span> <span>Signing In...</span>';
+        btn.disabled = true;
+      }
+      var attempts = 0;
+      var interval = setInterval(function () {
+        attempts++;
+        if (typeof window.executeLogin === 'function') {
+          clearInterval(interval);
+          if (btn) {
+            btn.innerHTML = origContent;
+            btn.disabled = false;
+          }
+          window.executeLogin(e);
+        } else if (attempts > 30) {
+          clearInterval(interval);
+          if (btn) {
+            btn.innerHTML = origContent;
+            btn.disabled = false;
+          }
+          var err = document.getElementById('login-error-alert');
+          if (err) {
+            err.innerText = 'Application is still initializing. Please check your connection or refresh the page.';
+            err.style.display = 'block';
+          }
+        }
+      }, 100);
+      return false;
+    };
+  </script>
+</head>
+<body>
+  <!-- ================= ULTRA-CRISP MOBILE & DESKTOP SPLASH SCREEN ================= -->
+  <div id="app-splash-screen" class="app-splash-screen" aria-label="Loading Rusbi Bakery OS">
+    <div class="splash-container">
+      <div class="splash-card-box">
+        <img src="./assets/rusbi-icon.png" alt="Rusbi Bakery OS" class="splash-card-img" />
+      </div>
+      <div class="splash-brand-typography">
+        <span class="splash-brand-rusbi">Rusbi</span> <span class="splash-brand-books">Books</span>
+      </div>
+      <div class="splash-loader-line">
+        <div class="splash-loader-bar"></div>
+      </div>
+    </div>
+  </div>
+  <script>
+    setTimeout(function() {
+      var s = document.getElementById('app-splash-screen');
+      if (s && !s.classList.contains('fade-out')) {
+        s.classList.add('fade-out');
+        setTimeout(function() { if (s && s.parentNode) s.parentNode.removeChild(s); }, 450);
+      }
+    }, 2500);
+  </script>
+
+  <div class="mesh" aria-hidden="true"><i class="mesh__a"></i><i class="mesh__b"></i><i class="mesh__c"></i></div>
+
+  <!-- ================= HOMEPAGE UNIVERSAL LOGIN PORTAL ================= -->
+  <div id="app-login-portal" class="login-portal-wrapper">
+    <div class="login-portal-container">
+      <!-- Header -->
+      <header class="login-brand-header">
+        <div class="login-logo-box" title="Rusbi Bakery Logo">
+          <img src="./assets/rusbi-icon.png" alt="Rusbi Bakery OS" />
+        </div>
+        <h1 class="login-title-h1">Rusbi <span>Bakery OS</span></h1>
+        <p class="login-subtitle">
+          Commercial Bakery Production, Recipe Costing &amp; General Ledger System.<br />
+          Dedicated Operations &amp; Accounting Management System.
+        </p>
+      </header>
+
+      <!-- Grid: Centered Corporate Sign-In Card -->
+      <div class="login-portal-grid">
+        <div class="login-auth-card">
+          <div class="login-card-head" style="text-align: center; margin-bottom: 24px;">
+            <div class="login-card-title" style="font-size: 22px; font-weight: 850; letter-spacing: -0.02em;">🔐 Employee &amp; Admin Sign In</div>
+            <div class="login-card-desc">Enter your Rusbi Bakery staff email &amp; password.</div>
+          </div>
+
+          <div id="login-error-alert" class="login-error-alert" role="alert">
+            Incorrect email or password. Please verify your credentials.
+          </div>
+
+          <form id="form-login-portal" action="javascript:void(0);" onsubmit="return window.triggerLogin(event);">
+            <div class="field" style="margin-bottom: 18px;">
+              <label class="field__label" for="login-email">Official Email Address</label>
+              <input type="text" id="login-email" class="input" placeholder="name@company.com" autocomplete="username" oninput="const err=document.getElementById('login-error-alert'); if(err) err.style.display='none'; this.style.borderColor='';" onkeydown="if(event.key==='Enter'){if(event)event.preventDefault(); window.triggerLogin(event); return false;}" required />
+            </div>
+
+            <div class="field" style="margin-bottom: 20px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <label class="field__label" for="login-password">Password</label>
+                <span style="font-size: 11.5px; color: var(--muted);">Encrypted Credential</span>
+              </div>
+              <div class="login-pwd-wrapper">
+                <input type="password" id="login-password" class="input" placeholder="••••••••••••" autocomplete="current-password" oninput="const err=document.getElementById('login-error-alert'); if(err) err.style.display='none'; this.style.borderColor='';" onkeydown="if(event.key==='Enter'){if(event)event.preventDefault(); window.triggerLogin(event); return false;}" required />
+                <button type="button" class="btn-toggle-pwd" onclick="togglePasswordVisibility(event)" title="Show/Hide Password" aria-label="Toggle password visibility">
+                  <svg id="eye-icon-open" viewBox="0 0 24 24" style="width: 19px; height: 19px; stroke: currentColor; stroke-width: 2; fill: none; display: block;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  <svg id="eye-icon-closed" viewBox="0 0 24 24" style="width: 19px; height: 19px; stroke: currentColor; stroke-width: 2; fill: none; display: none;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; font-size: 12.5px;">
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--muted);">
+                <input type="checkbox" id="login-remember" checked />
+                <span>Keep session active</span>
+              </label>
+              <a href="javascript:void(0)" onclick="window.openResetPasswordModal()" style="color: var(--rusbi-green); font-weight: 700; text-decoration: underline;">
+                Forgot Password?
+              </a>
+            </div>
+
+            <button type="submit" id="btn-login-submit" class="btn btn--ink" onclick="return window.triggerLogin(event);" style="width: 100%; height: 48px; font-size: 15px; font-weight: 700; gap: 8px; justify-content: center; box-shadow: 0 4px 14px rgba(0,0,0,0.12); margin-bottom: 12px;">
+              <span>Sign In to Workspace</span>
+              <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; stroke: currentColor; stroke-width: 2.4; fill: none;"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+            <div style="text-align: center; margin-top: 8px;">
+              <a href="javascript:void(0)" onclick="window.openResetPasswordModal()" style="font-size: 12.5px; color: var(--rusbi-green); font-weight: 700;">
+                🔑 Locked out? Click here to Reset Password
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Footer Info -->
+      <footer style="text-align: center; font-size: 12px; color: var(--muted); margin-top: 10px;">
+        Rusbi Bakery Ltd. © 2026. All rights reserved. Self-hosted on Apache / cPanel / Node.
+      </footer>
+    </div>
+  </div>
+
+  <!-- Modal: Enterprise SMTP-Verified Password Reset -->
+  <div class="apex-modal-overlay" id="modal-reset-password">
+    <div class="apex-modal-card" style="max-width: 460px;">
+      <div class="apex-modal-header">
+        <div>
+          <b style="font-size: 16px; display: flex; align-items: center; gap: 8px;">
+            <span>🔐</span> <span>Reset Account Password</span>
+          </b>
+          <div style="font-size: 12px; color: var(--muted); margin-top: 2px;">
+            Industry-standard corporate email SMTP verification.
+          </div>
+        </div>
+        <button class="ibtn ibtn--sm" onclick="window.closeModal('modal-reset-password')">✕</button>
+      </div>
+
+      <!-- Step 1: Corporate Email & Account Lookup -->
+      <div id="reset-stage-1">
+        <form onsubmit="window.requestPasswordResetOtp(event)">
+          <div class="apex-modal-body">
+            <div style="background: rgba(0, 166, 81, 0.08); border: 1px solid rgba(0, 166, 81, 0.22); border-radius: 10px; padding: 12px 14px; margin-bottom: 16px; font-size: 12.5px; line-height: 1.5; color: var(--text);">
+              🛡️ <b>Identity Verification:</b> Enter your registered corporate email address. The system will verify that this active account exists on the ledger chain and dispatch a secure <b>6-digit verification code</b> to your active email inbox via SMTP.
+            </div>
+
+            <div class="field" style="margin-bottom: 16px;">
+              <label class="field__label" for="reset-user-email">Registered Email Address</label>
+              <input type="email" id="reset-user-email" class="input" placeholder="name@company.com" required autocomplete="email">
+              <small style="color: var(--muted); font-size: 11px; margin-top: 4px; display: block;">Enter your registered email to receive a 6-digit OTP verification code.</small>
+            </div>
+
+            <div id="reset-feedback-stage-1" style="display: none; margin-top: 10px; font-size: 12.5px; padding: 10px 14px; border-radius: 8px; line-height: 1.4;"></div>
+          </div>
+
+          <div class="apex-modal-footer">
+            <button type="button" class="btn btn--ghost" onclick="window.closeModal('modal-reset-password')">Cancel</button>
+            <button type="submit" id="btn-request-reset-otp" class="btn btn--ink" style="display: flex; align-items: center; gap: 6px;">
+              <span>📧</span> <span>Send Verification Code</span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Step 2: Enter 6-Digit OTP & Set New Password -->
+      <div id="reset-stage-2" style="display: none;">
+        <form onsubmit="window.submitPasswordResetWithOtp(event)">
+          <div class="apex-modal-body">
+            <div style="background: rgba(2, 132, 199, 0.08); border: 1px solid rgba(2, 132, 199, 0.25); border-radius: 10px; padding: 12px 14px; margin-bottom: 16px; font-size: 12.5px; line-height: 1.5; color: var(--text);">
+              ✉️ Verification code sent to: <b id="reset-target-masked-email" style="font-family: monospace; color: #0284c7;"></b>.<br>
+              ⏱️ Valid for <b>15 minutes</b>. Enter the 6-digit code below.
+            </div>
+
+            <div class="field" style="margin-bottom: 16px; text-align: center;">
+              <label class="field__label" style="text-align: center; margin-bottom: 6px;" for="reset-otp-input">6-Digit Email Verification Code</label>
+              <input type="text" id="reset-otp-input" class="input" placeholder="• • • • • •" maxlength="6" pattern="[0-9]{6}" required style="text-align: center; font-size: 24px; font-weight: 800; letter-spacing: 8px; font-family: monospace; max-width: 220px; margin: 0 auto;">
+            </div>
+
+            <div class="field" style="margin-bottom: 14px;">
+              <label class="field__label" for="reset-new-password">New Password</label>
+              <input type="password" id="reset-new-password" class="input" placeholder="Minimum 6 characters" required minlength="6" autocomplete="new-password">
+            </div>
+
+            <div class="field" style="margin-bottom: 16px;">
+              <label class="field__label" for="reset-confirm-password">Confirm New Password</label>
+              <input type="password" id="reset-confirm-password" class="input" placeholder="Re-type new password" required minlength="6" autocomplete="new-password">
+            </div>
+
+            <!-- Emergency Master Recovery Collapsible -->
+            <details style="margin-top: 8px; font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 10px;">
+              <summary style="cursor: pointer; font-weight: 600; color: var(--text); margin-bottom: 8px;">
+                ⚙️ Master Admin Emergency Key (Offline Recovery)
+              </summary>
+              <div class="field" style="margin-top: 6px;">
+                <input type="password" id="reset-emergency-key" class="input input--sm" placeholder="Enter master security key" style="font-family: monospace;">
+                <small style="color: var(--muted); font-size: 11px;">Allows Master Admin to override if corporate mail server is offline.</small>
+              </div>
+            </details>
+
+            <div id="reset-feedback-stage-2" style="display: none; margin-top: 14px; font-size: 12.5px; padding: 10px 14px; border-radius: 8px; line-height: 1.4;"></div>
+          </div>
+
+          <div class="apex-modal-footer" style="justify-content: space-between;">
+            <button type="button" class="btn btn--ghost btn--sm" onclick="window.backToResetStep1()">← Change Email</button>
+            <div style="display: flex; gap: 8px;">
+              <button type="button" class="btn btn--ghost btn--sm" id="btn-resend-reset-otp" onclick="window.resendResetOtp()">Resend Code</button>
+              <button type="submit" id="btn-verify-reset-submit" class="btn btn--ink">Verify &amp; Update Password</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Bakery End-of-Shift Blind Close -->
+  <div class="apex-modal-overlay" id="modal-close-shift">
+    <div class="apex-modal-card" style="max-width: 420px; text-align: center;">
+      <div class="apex-modal-header" style="justify-content: space-between; border-bottom: 1px solid var(--line); padding: 14px 20px;">
+        <b style="font-size: 16px;" id="modal-close-shift-title" data-i18n="close_shift_title">Count Cash</b>
+        <button type="button" class="ibtn ibtn--sm" onclick="window.closeModal('modal-close-shift')">✕</button>
+      </div>
+      <div class="apex-modal-body" style="padding: 24px 20px;">
+        <form onsubmit="window.executeModalCloseShift(event)">
+          <div style="margin-bottom: 20px;">
+            <label style="font-size: 13px; font-weight: 700; color: var(--muted); display: block; margin-bottom: 8px;" id="modal-count-cash-label" data-i18n="count_cash_label">Count Cash (₦)</label>
+            <input type="number" step="any" id="modal-count-cash-input" class="input" placeholder="0.00" required
+              style="font-size: 32px; font-weight: 900; text-align: center; height: 64px; border-radius: 12px; border: 2px solid var(--rusbi-green);">
+          </div>
+          <div id="modal-close-shift-result" style="display: none; margin-bottom: 16px; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 800;"></div>
+          <button type="submit" id="btn-submit-close-shift" class="btn btn--ink" style="width: 100%; height: 50px; font-size: 16px; font-weight: 800; background: var(--rusbi-green); border-color: var(--rusbi-green); justify-content: center;">
+            <span id="btn-close-shift-text" data-i18n="btn_close_shift">Close Shift</span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="rusbi-layout" id="app-workspace" style="display: none;">
+    <!-- ================= FULL UP-TO-DOWN SIDE PANEL ================= -->
+    <aside class="sidebar">
+      <!-- 1. Brand Header with Cropped Flower/Leaves in Box -->
+      <div class="sidebar__header">
+        <a class="brand-wrapper" href="javascript:void(0)" onclick="window.navigateTo('dashboard')" aria-label="Rusbi Bakery OS">
+          <div class="brand-flower-box" title="Rusbi Bakery Logo">
+            <img src="./assets/rusbi-icon.png" alt="Rusbi Bakery Emblem" />
+          </div>
+          <div class="brand-titles">
+            <div class="brand-name">Rusbi <span>Bakery</span></div>
+            <div class="brand-sub">Bakery Operating System</div>
+          </div>
+        </a>
+        <button type="button" class="sidebar-close-btn" onclick="window.closeMobileSidebar()" aria-label="Close navigation drawer">
+          <svg viewBox="0 0 24 24" style="width: 18px; height: 18px; stroke: currentColor; stroke-width: 2.2; fill: none;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <!-- 2. Facility Status Badge -->
+      <div class="entity-switcher-wrap" id="sidebar-switcher-container">
+        <div class="entity-switcher-label">
+          <span>Operating Facility</span>
+          <span class="badge badge--pine" style="font-size: 9px; padding: 1px 6px;">Commercial Plant</span>
+        </div>
+        <div class="entity-select-btn" style="cursor: default;">
+          <div class="entity-btn-left">
+            <span class="entity-icon-pill" id="current-entity-icon">🍞</span>
+            <span class="entity-btn-text" id="current-entity-name-text">Rusbi Bakery (Plant #1)</span>
+          </div>
+        </div>
+        <div class="entity-dropdown-menu" id="entity-dropdown-menu" style="display: none;"></div>
+      </div>
+
+      <!-- 4. Sidebar Navigation Links -->
+      <nav class="sidebar__nav" id="sidebar-navigation">
+        <a class="sidebar__link active" data-route="dashboard" id="nav-link-dashboard">
+          <svg class="ico" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+          <span data-i18n="nav_dashboard">Dashboard</span>
+        </a>
+
+        <!-- OPERATIONS SECTION (The core of the business) -->
+        <div class="nav-section-title" id="nav-sec-operations" data-i18n="sec_operations">Operations</div>
+
+        <a class="sidebar__link" data-route="pos" id="nav-link-pos" style="color: var(--rusbi-green); font-weight: 700;">
+          <svg class="ico" viewBox="0 0 24 24" style="stroke: var(--rusbi-green);"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+          <span data-i18n="nav_pos">Sales</span>
+        </a>
+
+        <a class="sidebar__link" data-route="batches" id="nav-link-batches">
+          <svg class="ico" viewBox="0 0 24 24"><path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/></svg>
+          <span data-i18n="nav_batches">Production</span>
+        </a>
+
+        <a class="sidebar__link" data-route="crates" id="nav-link-crates">
+          <svg class="ico" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>
+          <span data-i18n="nav_crates">Crates</span>
+        </a>
+
+        <a class="sidebar__link" data-route="bashi" id="nav-link-bashi">
+          <svg class="ico" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
+          <span data-i18n="nav_bashi">Credit</span>
+        </a>
+
+        <a class="sidebar__link" data-route="shifts" id="nav-link-shifts">
+          <svg class="ico" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M12 8v8M8 12h8"/></svg>
+          <span data-i18n="nav_shifts">Cashier</span>
+        </a>
+
+        <a class="sidebar__link" data-route="energy" id="nav-link-energy">
+          <svg class="ico" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          <span data-i18n="nav_energy">Energy</span>
+        </a>
+
+        <a class="sidebar__link" data-route="inventory" id="nav-link-inventory">
+          <svg class="ico" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+          <span data-i18n="nav_inventory">Inventory</span>
+        </a>
+
+        <a class="sidebar__link" data-route="institutional" id="nav-link-institutional">
+          <svg class="ico" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <span data-i18n="nav_institutional">Contracts</span>
+        </a>
+
+        <!-- SYSTEM SECTION (Where system management lives) -->
+        <div class="nav-section-title" id="nav-sec-system" data-i18n="sec_system">System</div>
+
+        <a class="sidebar__link" data-route="nolies" id="nav-link-nolies" style="color: #b45309; font-weight: 700;">
+          <svg class="ico" viewBox="0 0 24 24" style="stroke: #b45309;"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          <span data-i18n="nav_nolies">Audit</span>
+        </a>
+
+        <a class="sidebar__link" data-route="staff" id="nav-link-staff">
+          <svg class="ico" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span data-i18n="nav_staff">Staff</span>
+        </a>
+
+        <a class="sidebar__link" data-route="admin" id="nav-link-admin">
+          <svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span data-i18n="nav_settings">Settings</span>
+        </a>
+
+        <!-- Collapsible Accounting Sub-Menu -->
+        <div class="nav-accounting-group" style="margin-top: 6px;">
+          <a class="sidebar__link" id="nav-accounting-toggle" href="javascript:void(0)" onclick="window.toggleAccountingMenu()" style="justify-content: space-between; font-weight: 700; color: var(--muted); cursor: pointer;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <svg class="ico" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+              <span data-i18n="sec_accounting">Accounting</span>
+            </div>
+            <span id="nav-accounting-chevron" style="font-size: 10px; transition: transform 0.2s;">▶</span>
+          </a>
+
+          <div id="nav-accounting-submenu" style="display: none; padding-left: 14px; flex-direction: column; gap: 2px;">
+            <a class="sidebar__link" data-route="invoices" id="nav-link-invoices">
+              <svg class="ico" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              <span data-i18n="nav_invoices">Invoices</span>
+            </a>
+            <a class="sidebar__link" data-route="expenses" id="nav-link-expenses">
+              <svg class="ico" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 15h0M2 10h20"/></svg>
+              <span data-i18n="nav_expenses">Expenses</span>
+            </a>
+            <a class="sidebar__link" data-route="suppliers" id="nav-link-suppliers">
+              <svg class="ico" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              <span data-i18n="nav_suppliers">Suppliers</span>
+            </a>
+            <a class="sidebar__link" data-route="banking" id="nav-link-banking">
+              <svg class="ico" viewBox="0 0 24 24"><line x1="3" y1="21" x2="21" y2="21"/><line x1="3" y1="10" x2="21" y2="10"/><polyline points="5 6 12 3 19 6"/><line x1="4" y1="10" x2="4" y2="21"/><line x1="20" y1="10" x2="20" y2="21"/></svg>
+              <span data-i18n="nav_banking">Banking</span>
+            </a>
+            <a class="sidebar__link" data-route="accounts" id="nav-link-accounts">
+              <svg class="ico" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+              <span data-i18n="nav_accounts">Accounts</span>
+            </a>
+            <a class="sidebar__link" data-route="reports" id="nav-link-reports">
+              <svg class="ico" viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+              <span data-i18n="nav_reports">Reports</span>
+            </a>
+            <a class="sidebar__link" data-route="close-books" id="nav-link-close-books">
+              <svg class="ico" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <span data-i18n="nav_close_books">Close Books</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Mobile Application Shortcut -->
+        <a class="sidebar__link" id="nav-link-pwa-install" onclick="window.promptInstallPWA()" style="color: var(--rusbi-green); font-weight: 700; margin-top: 10px;">
+          <svg class="ico" viewBox="0 0 24 24" style="stroke: var(--rusbi-green);"><rect x="5" y="2" width="14" height="20" rx="3"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+          <span data-i18n="nav_install_app">Install App</span>
+        </a>
+      </nav>
+
+      <!-- 5. Sidebar Footer: Profile & Theme Toggle -->
+      <div class="sidebar__footer">
+        <div class="sidebar-user">
+          <div class="user-avatar-circle" id="user-avatar-badge">RG</div>
+          <div class="user-info-text">
+            <b id="user-display-name">Rusbi Group</b>
+            <small id="user-display-sub">Super Admin / Master</small>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <button type="button" class="ibtn ibtn--sm ibtn--glass" onclick="window.executeLogout()" aria-label="Sign Out" title="Sign Out / Change User" style="color: var(--bad);">
+            <svg class="ico" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          </button>
+          <button type="button" class="ibtn ibtn--sm ibtn--glass" id="btn-theme-toggle" aria-label="Toggle Theme" title="Toggle Theme">
+            <svg class="ico" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Mobile Sidebar Dark Backdrop -->
+    <div class="mobile-sidebar-backdrop" id="mobile-sidebar-backdrop" onclick="window.closeMobileSidebar()"></div>
+
+    <!-- ================= MAIN CONTENT WRAPPER ================= -->
+    <div class="main-wrapper">
+      <!-- Top Sticky Navigation Bar -->
+      <header class="top-navbar">
+        <div class="top-nav-left" style="display: flex; align-items: center; gap: 10px;">
+          <!-- Mobile Hamburger Drawer Toggle -->
+          <button type="button" class="mobile-hamburger-btn" id="btn-mobile-sidebar-toggle" onclick="window.toggleMobileSidebar(event)" aria-label="Toggle Navigation Drawer">
+            <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; stroke: currentColor; stroke-width: 2.2; fill: none;"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+
+          <!-- QuickBooks-Style + Create / New Quick Action Button -->
+          <div class="dropdown-quick-create" id="quick-create-dropdown" style="position: relative;">
+            <button type="button" class="btn btn--ink" id="btn-quick-create" onclick="window.toggleQuickCreateMenu(event)" style="display: flex; align-items: center; gap: 6px; font-weight: 700; padding: 6px 14px; border-radius: 999px;">
+              <span style="font-size: 16px; line-height: 1;">＋</span>
+              <span>Create / New</span>
+              <svg viewBox="0 0 24 24" style="width: 14px; height: 14px; stroke: currentColor; stroke-width: 2.5; fill: none;"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <div class="quick-create-menu" id="quick-create-menu" style="display: none;">
+              <!-- Populated dynamically by scripts/app.js based on role permissions -->
+            </div>
+          </div>
+
+          <span class="top-entity-badge" id="top-bar-entity-badge">
+            🍞 <b>Rusbi Bakery — Commercial Plant Ledger</b>
+          </span>
+        </div>
+
+        <!-- Global Command Center & Instant Search Bar (Ctrl+K) -->
+        <div class="top-nav-center" id="top-nav-center">
+          <div class="global-search-wrapper" id="global-search-wrapper">
+            <span class="global-search-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" style="width: 15px; height: 15px; stroke: currentColor; stroke-width: 2.2; fill: none;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            </span>
+            <input 
+              type="text" 
+              id="global-search-input" 
+              class="global-search-input" 
+              placeholder="Search (Ctrl+K)..." 
+              autocomplete="off"
+              spellcheck="false"
+              oninput="window.handleGlobalSearch(event)"
+              onkeydown="window.handleGlobalSearchKeydown(event)"
+              onfocus="window.handleGlobalSearchFocus(event)"
+              aria-label="Universal Search"
+            />
+            <div class="global-search-shortcut" onclick="document.getElementById('global-search-input').focus()" title="Keyboard shortcut: Ctrl+K or Cmd+K">
+              <kbd class="global-search-kbd">Ctrl</kbd>
+              <kbd class="global-search-kbd">K</kbd>
+            </div>
+            <button type="button" class="global-search-clear" id="global-search-clear" onclick="window.clearGlobalSearch(event)" aria-label="Clear search" style="display: none;">✕</button>
+          </div>
+          <!-- Instant Teleport Dropdown -->
+          <div class="global-search-dropdown" id="global-search-dropdown" style="display: none;" role="listbox"></div>
+        </div>
+
+        <div class="top-nav-right" style="display: flex; align-items: center; gap: 8px;">
+          <button type="button" class="btn btn--sm btn--ghost" id="btn-lang-toggle" onclick="window.toggleLanguage()" style="padding: 4px 12px; font-size: 12px; display: flex; align-items: center; gap: 6px; font-weight: 700; border-radius: 999px; border-color: var(--line);" title="Switch Language">
+            <span id="lang-flag">🌐</span> <span id="lang-text">EN</span>
+          </button>
+          <button type="button" class="btn btn--sm btn--ghost top-nav-logout-btn" style="padding: 4px 10px; font-size: 11.5px; display: flex; align-items: center; gap: 5px; color: var(--bad); border-color: rgba(200,67,31,0.3);" onclick="window.executeLogout()" title="Log out of system">
+            <span>🚪</span> <span class="hide-on-mobile">Log Out</span>
+          </button>
+          <div class="ov-kpi top-nav-currency-pill" style="padding: 5px 14px; background: var(--well); border: 1px solid var(--line); border-radius: 999px;">
+            <b class="num" style="color: var(--rusbi-green); font-size: 13px;">NGN (₦) Currency</b>
+          </div>
+        </div>
+      </header>
+
+      <!-- Dynamic Content Injection -->
+      <main class="content-body" id="main-view-container">
+        <!-- Rendered by scripts/app.js -->
+      </main>
+    </div>
+  </div>
+
+  <!-- Global Toast Notification -->
+  <div class="toast" role="status" aria-live="polite">
+    <span class="toast__ico">✓</span>
+    <span class="toast__msg">Action completed</span>
+  </div>
+
+  <!-- ================= MODALS ================= -->
+
+  <!-- Modal: Add New Staff Member / Employee (Direct to Employees Tab) -->
+  <div class="apex-modal-overlay" id="modal-new-staff">
+    <div class="apex-modal-card" style="max-width: 620px;">
+      <div class="apex-modal-header">
+        <div>
+          <b style="font-size: 16px;">New Employee</b>
+        </div>
+        <button class="ibtn ibtn--sm" onclick="window.closeModal('modal-new-staff')">✕</button>
+      </div>
+      <form onsubmit="window.submitNewStaff(event)">
+        <div class="apex-modal-body">
+          <div class="grid" style="grid-template-columns: 1.5fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Full Employee Name</label>
+              <input type="text" id="staff-name-input" class="input" placeholder="e.g. Chukwudi Nnamdi" required>
+            </div>
+            <div class="field">
+              <label class="field__label">Designation / Role Title</label>
+              <input type="text" id="staff-role-input" class="input" placeholder="e.g. Master Baker, Shift Supervisor" required>
+            </div>
+          </div>
+
+          <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Assigned Subsidiary / Branch</label>
+              <select id="staff-branch-select" class="input" style="font-weight: 700;">
+                <!-- Populated dynamically by JS with entities -->
+              </select>
+            </div>
+            <div class="field">
+              <label class="field__label">Monthly Net Salary (₦)</label>
+              <input type="number" id="staff-salary-input" class="input" placeholder="250000" min="0" step="any" required style="font-weight: 700; color: var(--rusbi-green);">
+            </div>
+          </div>
+
+          <!-- Bank Details -->
+          <div class="grid" style="grid-template-columns: 1.2fr 1.2fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Bank Name</label>
+              <input type="text" id="staff-bank-name" class="input" list="nigerian-banks-list" placeholder="e.g. Zenith Bank, GTBank, Moniepoint" autocomplete="off" required>
+            </div>
+            <div class="field">
+              <label class="field__label">10-Digit Account Number</label>
+              <input type="text" id="staff-bank-account" class="input" placeholder="0123456789" maxlength="10" pattern="[0-9]{10}" inputmode="numeric" required style="font-family: monospace; font-weight: 700;">
+            </div>
+          </div>
+
+          <!-- Contact details -->
+          <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Mobile Phone Number</label>
+              <input type="tel" id="staff-phone-input" class="input" placeholder="+234 803 000 0000">
+            </div>
+            <div class="field">
+              <label class="field__label">Email Address</label>
+              <input type="email" id="staff-email-input" class="input" placeholder="employee@domain.com">
+            </div>
+          </div>
+
+          <!-- System Login Access Provisioning Box -->
+          <div style="background: var(--well); border: 1px solid var(--line); border-radius: 12px; padding: 14px; margin-top: 6px;">
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 13px; font-weight: 700; color: var(--text);">
+              <input type="checkbox" id="staff-grant-login" onchange="window.toggleStaffLoginFields(this.checked)" style="width: 17px; height: 17px; accent-color: var(--rusbi-green);">
+              <span>🔑 Also provision Rusbi Bakery OS Login Portal access for this staff member</span>
+            </label>
+
+            <div id="staff-login-fields-wrap" style="display: none; margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--line);">
+              <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 14px;">
+                <div class="field">
+                  <label class="field__label">System Role Permission Tier</label>
+                  <select id="staff-login-role" class="input">
+                    <option value="production_staff">🏭 Type P (Operations / Production Clerk - Financials Redacted)</option>
+                    <option value="storekeeper">📦 Storekeeper (Raw Material Intake &amp; Inventory)</option>
+                    <option value="sales_rep">🧾 Sales &amp; Billing Officer</option>
+                    <option value="accountant">📊 Senior Accountant (Full Financials)</option>
+                    <option value="branch_admin">🏢 Branch General Manager</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <label class="field__label" style="margin-bottom: 0;">Initial Password</label>
+                    <button type="button" class="btn btn--sm btn--ghost" style="padding: 2px 8px; font-size: 11px;" onclick="window.generateRandomPassword('staff-login-password')">⚡ Generate</button>
+                  </div>
+                  <input type="text" id="staff-login-password" class="input" style="font-family: monospace; font-weight: 700;" value="Staff#Rusbi2026!">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="apex-modal-footer">
+          <button type="button" class="btn btn--ghost" onclick="window.closeModal('modal-new-staff')">Cancel</button>
+          <button type="submit" class="btn btn--ink">Save Employee Record</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Edit Existing Staff Details -->
+  <div class="apex-modal-overlay" id="modal-edit-staff">
+    <div class="apex-modal-card" style="max-width: 620px;">
+      <div class="apex-modal-header">
+        <div>
+          <b style="font-size: 16px;">Edit Employee</b>
+        </div>
+        <button class="ibtn ibtn--sm" onclick="window.closeModal('modal-edit-staff')">✕</button>
+      </div>
+      <form onsubmit="window.submitEditStaff(event)">
+        <input type="hidden" id="edit-staff-entity-id">
+        <input type="hidden" id="edit-staff-id">
+        <div class="apex-modal-body">
+          <div class="grid" style="grid-template-columns: 1.5fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Full Employee Name</label>
+              <input type="text" id="edit-staff-name" class="input" required>
+            </div>
+            <div class="field">
+              <label class="field__label">Designation / Role Title</label>
+              <input type="text" id="edit-staff-role" class="input" required>
+            </div>
+          </div>
+
+          <div class="field" style="margin-bottom: 14px;">
+            <label class="field__label">Monthly Net Salary (₦)</label>
+            <input type="number" id="edit-staff-salary" class="input" min="0" step="any" required style="font-weight: 700; color: var(--rusbi-green);">
+          </div>
+
+          <!-- Bank Details -->
+          <div class="grid" style="grid-template-columns: 1.2fr 1.2fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Bank Name</label>
+              <input type="text" id="edit-staff-bank-name" class="input" list="nigerian-banks-list" placeholder="e.g. Zenith Bank, GTBank, Moniepoint" autocomplete="off" required>
+            </div>
+            <div class="field">
+              <label class="field__label">10-Digit Account Number</label>
+              <input type="text" id="edit-staff-bank-account" class="input" maxlength="10" pattern="[0-9]{10}" inputmode="numeric" required style="font-family: monospace; font-weight: 700;">
+            </div>
+          </div>
+
+          <!-- Datalist for Nigerian Banks -->
+          <datalist id="nigerian-banks-list">
+            <option value="Zenith Bank Plc">
+            <option value="Guaranty Trust Bank (GTBank)">
+            <option value="First Bank of Nigeria">
+            <option value="Access Bank Plc">
+            <option value="United Bank for Africa (UBA)">
+            <option value="Fidelity Bank Plc">
+            <option value="Stanbic IBTC Bank">
+            <option value="Moniepoint MFB">
+            <option value="OPay Digital Services">
+            <option value="Kuda Microfinance Bank">
+            <option value="PalmPay">
+            <option value="Sterling Bank">
+            <option value="Wema Bank / ALAT">
+            <option value="Union Bank">
+            <option value="FCMB">
+            <option value="Keystone Bank">
+            <option value="Polaris Bank">
+            <option value="Jaiz Bank">
+            <option value="Providus Bank">
+            <option value="Taj Bank">
+          </datalist>
+
+          <!-- Contact details -->
+          <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Mobile Phone Number</label>
+              <input type="tel" id="edit-staff-phone" class="input">
+            </div>
+            <div class="field">
+              <label class="field__label">Email Address</label>
+              <input type="email" id="edit-staff-email" class="input">
+            </div>
+          </div>
+        </div>
+        <div class="apex-modal-footer">
+          <button type="button" class="btn btn--ghost" onclick="window.closeModal('modal-edit-staff')">Cancel</button>
+          <button type="submit" class="btn btn--ink">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Create New Business / Brand (with Email Access & Generated Password) -->
+  <div class="apex-modal-overlay" id="modal-new-business">
+    <div class="apex-modal-card">
+      <div class="apex-modal-header">
+        <b style="font-size: 16px;">🏢 Create New Rusbi Business / Branch Unit</b>
+        <button class="ibtn ibtn--sm" onclick="window.closeModal('modal-new-business')">✕</button>
+      </div>
+      <form onsubmit="window.submitNewBusiness(event)">
+        <div class="apex-modal-body">
+          <div class="grid" style="grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Brand / Business Name</label>
+              <input type="text" id="biz-name" class="input" placeholder="e.g. Rusbi Real Estate &amp; Construction" required>
+            </div>
+            <div class="field">
+              <label class="field__label">Entity Icon</label>
+              <input type="text" id="biz-icon" class="input" placeholder="e.g. 🏢, 🏗️, 🚛, 🌾" value="🏢" required>
+            </div>
+          </div>
+
+          <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Industry / Operating Sector</label>
+              <input type="text" id="biz-category" class="input" placeholder="e.g. Real Estate Development" required>
+            </div>
+            <div class="field">
+              <label class="field__label">Assigned Branch Admin Name</label>
+              <input type="text" id="biz-manager" class="input" placeholder="e.g. Kelechi Nnamdi" required>
+            </div>
+          </div>
+
+          <!-- Email Access & Password Provisioning -->
+          <div class="grid" style="grid-template-columns: 1.2fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Admin Login Email</label>
+              <input type="email" id="biz-admin-email" class="input" placeholder="manager@domain.com" required>
+            </div>
+            <div class="field">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <label class="field__label" style="margin-bottom: 0;">Initial Password</label>
+                <button type="button" class="btn btn--sm btn--ghost" style="padding: 2px 8px; font-size: 11px;" onclick="window.generateRandomPassword('biz-admin-password')">⚡ Generate</button>
+              </div>
+              <input type="text" id="biz-admin-password" class="input" style="font-family: monospace; font-weight: 700;" value="Rusbi#RealEstate26!" required>
+            </div>
+          </div>
+
+          <div class="field" style="margin-bottom: 14px;">
+            <label class="field__label">Opening Capital Allocation in Naira (₦)</label>
+            <input type="number" id="biz-capital" class="input" placeholder="25000000" value="25000000" min="0" step="any" required>
+            <small style="color: var(--muted); font-size: 11.5px; margin-top: 4px;">
+              Will automatically fund the new branch's Operating Checking account (Zenith Bank) and Owner Equity ledger.
+            </small>
+          </div>
+
+          <div style="background: var(--well); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px;">
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 12.5px; font-weight: 600;">
+              <input type="checkbox" id="biz-send-email" checked style="width: 16px; height: 16px; accent-color: var(--rusbi-green);">
+              <span>📧 Send password &amp; branch portal onboarding email to administrator</span>
+            </label>
+          </div>
+        </div>
+        <div class="apex-modal-footer">
+          <button type="button" class="btn btn--ghost" onclick="window.closeModal('modal-new-business')">Cancel</button>
+          <button type="submit" class="btn btn--ink">Launch Business Ledger &amp; Grant Access</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Share Access with Staff / Provision Role (Accountant & Admin Capability) -->
+  <div class="apex-modal-overlay" id="modal-share-access">
+    <div class="apex-modal-card">
+      <div class="apex-modal-header">
+        <div>
+          <b style="font-size: 16px;">Share Access</b>
+        </div>
+        <button class="ibtn ibtn--sm" onclick="window.closeModal('modal-share-access')">✕</button>
+      </div>
+      <form onsubmit="window.submitShareAccess(event)">
+        <div class="apex-modal-body">
+          <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Full Name</label>
+              <input type="text" id="share-staff-name" class="input" placeholder="Full Name" required>
+            </div>
+            <div class="field">
+              <label class="field__label">Email Address</label>
+              <input type="email" id="share-staff-email" class="input" placeholder="staff@company.com" required>
+            </div>
+          </div>
+
+          <div class="field" style="margin-bottom: 14px;">
+            <label class="field__label">Target Business / Branch Entity</label>
+            <select id="share-staff-branch" class="input" style="font-weight: 600;">
+              <!-- Populated dynamically based on user rights -->
+            </select>
+          </div>
+
+          <!-- Access Role Selection -->
+          <div class="field" style="margin-bottom: 14px;">
+            <label class="field__label">Access Tier &amp; Security Restriction</label>
+            <div class="role-cards-grid">
+              <!-- Type P: Production & Operations (Recommended for field/floor staff) -->
+              <label class="role-card-label">
+                <input type="radio" name="share-role-select" value="production_staff" checked onchange="window.updateRoleHelp(this.value)">
+                <div class="role-card-header">
+                  <span>🏭 Type P: Production Clerk</span>
+                  <span class="badge-role badge-type-p">Restricted</span>
+                </div>
+                <div class="role-card-desc">
+                  Strictly limited to logging factory &amp; farm production, batches, raw materials, and damages. <b>Financials &amp; ledgers are 100% hidden.</b>
+                </div>
+              </label>
+
+              <!-- Branch Senior Accountant -->
+              <label class="role-card-label" id="role-option-accountant">
+                <input type="radio" name="share-role-select" value="accountant" onchange="window.updateRoleHelp(this.value)">
+                <div class="role-card-header">
+                  <span>📊 Senior Accountant</span>
+                  <span class="badge-role badge-accountant">Financials</span>
+                </div>
+                <div class="role-card-desc">
+                  Full branch financial ledgers, bills, invoices, bank reconciliation, and P&amp;L. Can invite &amp; share access with production staff.
+                </div>
+              </label>
+
+              <!-- Storekeeper / Warehouse Clerk -->
+              <label class="role-card-label">
+                <input type="radio" name="share-role-select" value="storekeeper" onchange="window.updateRoleHelp(this.value)">
+                <div class="role-card-header">
+                  <span>📦 Storekeeper</span>
+                  <span class="badge-role badge-admin">Stock / Bills</span>
+                </div>
+                <div class="role-card-desc">
+                  Receives raw materials in KG, creates vendor bills and POs. General Ledger and Bank accounts are hidden.
+                </div>
+              </label>
+
+              <!-- Sales Rep -->
+              <label class="role-card-label">
+                <input type="radio" name="share-role-select" value="sales_rep" onchange="window.updateRoleHelp(this.value)">
+                <div class="role-card-header">
+                  <span>🧾 Sales &amp; Billing Officer</span>
+                  <span class="badge-role badge-sales">Invoicing</span>
+                </div>
+                <div class="role-card-desc">
+                  Create customer sales invoices and record orders. Bank accounts, supplier bills, and P&amp;L remain hidden.
+                </div>
+              </label>
+
+              <!-- Branch Admin -->
+              <label class="role-card-label" id="role-option-admin">
+                <input type="radio" name="share-role-select" value="branch_admin" onchange="window.updateRoleHelp(this.value)">
+                <div class="role-card-header">
+                  <span>🏢 Branch Admin</span>
+                  <span class="badge-role badge-admin">Full Branch</span>
+                </div>
+                <div class="role-card-desc">
+                  Full operations, staff payroll, and branch executive management.
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Password Generation -->
+          <div class="field" style="margin-bottom: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <label class="field__label" style="margin-bottom: 0;">Initial Password Credential</label>
+              <button type="button" class="btn btn--sm btn--ghost" style="padding: 2px 8px; font-size: 11px;" onclick="window.generateRandomPassword('share-staff-password')">⚡ Generate Random</button>
+            </div>
+            <input type="text" id="share-staff-password" class="input" style="font-family: monospace; font-weight: 700;" value="TypeP#Staff789!" required>
+          </div>
+
+          <div style="background: var(--well); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px;">
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 12.5px; font-weight: 600;">
+              <input type="checkbox" id="share-send-email" checked style="width: 16px; height: 16px; accent-color: var(--rusbi-green);">
+              <span>📧 Send password access email with direct branch login link to staff</span>
+            </label>
+          </div>
+        </div>
+        <div class="apex-modal-footer">
+          <button type="button" class="btn btn--ghost" onclick="window.closeModal('modal-share-access')">Cancel</button>
+          <button type="submit" class="btn btn--ink">Grant Access &amp; Dispatch Password</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Edit Authorized User & Login Access -->
+  <div class="apex-modal-overlay" id="modal-edit-user-access">
+    <div class="apex-modal-card" style="max-width: 580px;">
+      <div class="apex-modal-header">
+        <div>
+          <b style="font-size: 16px;">Edit User</b>
+        </div>
+        <button class="ibtn ibtn--sm" onclick="window.closeModal('modal-edit-user-access')">✕</button>
+      </div>
+      <form onsubmit="window.submitEditUserAccess(event)">
+        <input type="hidden" id="edit-user-id">
+        <div class="apex-modal-body">
+          <!-- Security Restriction & Chinese Wall Notice Banner -->
+          <div id="edit-user-security-notice" style="display: none; margin-bottom: 14px; padding: 10px 14px; border-radius: 8px; font-size: 12px; line-height: 1.45;"></div>
+
+          <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Full Name</label>
+              <input type="text" id="edit-user-name" class="input" required>
+            </div>
+            <div class="field">
+              <label class="field__label">Email Address</label>
+              <input type="email" id="edit-user-email" class="input" placeholder="user@company.com" required>
+            </div>
+          </div>
+
+          <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Assigned Subsidiary / Business</label>
+              <select id="edit-user-entity" class="input" style="font-weight: 600;">
+                <option value="bakery" selected>🍞 Rusbi Bakery</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="field__label">Security Restriction Role</label>
+              <select id="edit-user-role" class="input" style="font-weight: 600;">
+                <option value="branch_admin">🏢 Branch General Manager</option>
+                <option value="accountant">📊 Branch Senior Accountant</option>
+                <option value="production_staff">🏭 Type P (Production Clerk)</option>
+                <option value="sales_rep">🧾 Sales &amp; Billing Officer</option>
+                <option value="storekeeper">📦 Storekeeper &amp; Warehouse Clerk</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field" style="margin-bottom: 14px;">
+            <label class="field__label">Password / Login Credential</label>
+            <div style="position: relative; display: flex; align-items: center;">
+              <input type="text" id="edit-user-password" class="input" style="font-family: monospace; font-weight: 700; padding-right: 60px;" required>
+              <button type="button" class="btn btn--sm btn--ghost" style="position: absolute; right: 4px; padding: 3px 8px; font-size: 11px;" onclick="window.generateRandomUserPassword()">⚡ Gen</button>
+            </div>
+            <small style="color: var(--muted); font-size: 11px; margin-top: 4px; display: block;">Enter a new password or click Gen to generate a secure credential.</small>
+          </div>
+        </div>
+        <div class="apex-modal-footer">
+          <button type="button" class="btn btn--ghost" onclick="window.closeModal('modal-edit-user-access')">Cancel</button>
+          <button type="submit" class="btn btn--ink">Save User Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Password & Credentials Confirmation Receipt -->
+  <div class="apex-modal-overlay" id="modal-credentials-display">
+    <div class="apex-modal-card" style="max-width: 540px;">
+      <div class="apex-modal-header">
+        <b style="font-size: 16px; color: var(--rusbi-green);">✓ Email Access Granted &amp; Password Dispatched</b>
+        <button class="ibtn ibtn--sm" onclick="window.closeModal('modal-credentials-display')">✕</button>
+      </div>
+      <div class="apex-modal-body">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+          <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(0, 166, 81, 0.12); color: var(--rusbi-green); display: grid; place-items: center; font-size: 24px;">
+            ✉️
+          </div>
+          <div>
+            <h3 style="font-size: 16px; font-weight: 700; margin: 0;" id="cred-user-name">Staff Member</h3>
+            <div style="font-size: 12.5px; color: var(--muted);" id="cred-role-label">Type P Access Granted</div>
+          </div>
+        </div>
+
+        <p style="font-size: 13px; color: var(--muted); margin-bottom: 14px;">
+          An automated onboarding email has been delivered to the user with the following login password and branch portal details:
+        </p>
+
+        <div class="credentials-box">
+          <div class="credentials-row">
+            <span class="credentials-key">User Name:</span>
+            <span class="credentials-val" id="disp-cred-name">-</span>
+          </div>
+          <div class="credentials-row">
+            <span class="credentials-key">Login Email:</span>
+            <span class="credentials-val" id="disp-cred-email">-</span>
+          </div>
+          <div class="credentials-row">
+            <span class="credentials-key">Initial Password:</span>
+            <span class="credentials-val" id="disp-cred-pass" style="color: var(--rusbi-green); font-size: 14px;">-</span>
+          </div>
+          <div class="credentials-row">
+            <span class="credentials-key">Assigned Entity:</span>
+            <span class="credentials-val" id="disp-cred-entity">-</span>
+          </div>
+          <div class="credentials-row">
+            <span class="credentials-key">Security Tier:</span>
+            <span class="credentials-val" id="disp-cred-tier">-</span>
+          </div>
+          <div class="credentials-row">
+            <span class="credentials-key">Portal Access:</span>
+            <span class="credentials-val" style="font-size: 11px;">https://books.rusbigroup.com</span>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+          <button type="button" class="btn btn--ghost" style="flex: 1;" onclick="window.copyCredentialsToClipboard()">
+            📋 Copy Credentials
+          </button>
+          <button type="button" class="btn btn--ink" style="flex: 1;" id="btn-login-as-new-user">
+            ⚡ Switch to This User
+          </button>
+        </div>
+      </div>
+      <div class="apex-modal-footer">
+        <button type="button" class="btn btn--ghost" onclick="window.closeModal('modal-credentials-display')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Log Daily Production Run (Type P Floor Entry) -->
+  <div class="apex-modal-overlay" id="modal-new-production">
+    <div class="apex-modal-card">
+      <div class="apex-modal-header">
+        <div>
+          <b style="font-size: 16px;">🏭 Log Daily Production Run (Type P Entry)</b>
+          <div style="font-size: 12px; color: var(--muted);">Record factory or farm batch yields, raw material usage, and damage counts.</div>
+        </div>
+        <button class="ibtn ibtn--sm" onclick="window.closeModal('modal-new-production')">✕</button>
+      </div>
+      <form onsubmit="window.submitNewProduction(event)">
+        <div class="apex-modal-body">
+          <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Production Date</label>
+              <input type="date" id="prod-date" class="input" required value="2026-10-20">
+            </div>
+            <div class="field">
+              <label class="field__label">Operating Shift</label>
+              <select id="prod-shift" class="input" style="font-weight: 600;">
+                <option value="Morning Shift (6:00 AM - 2:00 PM)">Morning Shift (6:00 AM - 2:00 PM)</option>
+                <option value="Afternoon Shift (2:00 PM - 10:00 PM)">Afternoon Shift (2:00 PM - 10:00 PM)</option>
+                <option value="Night Shift (10:00 PM - 6:00 AM)">Night Shift (10:00 PM - 6:00 AM)</option>
+                <option value="Continuous Run">Continuous Run</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field" style="margin-bottom: 14px;">
+            <label class="field__label">Product / Output Batch Name</label>
+            <input type="text" id="prod-name" class="input" placeholder="e.g. Rusbi Special Family Jumbo Loaf / NPK Fertilizer Blend" required>
+          </div>
+
+          <div class="field" style="margin-bottom: 14px;">
+            <label class="field__label">Raw Materials / Ingredients Consumed</label>
+            <textarea id="prod-materials" class="input" style="height: 60px; resize: vertical;" placeholder="e.g. 25 Bags Golden Penny Flour, 4 Bags Sugar, 12kg Yeast, 8kg Salt" required></textarea>
+            <small style="color: var(--muted); font-size: 11px;">Track quantities consumed from factory storage.</small>
+          </div>
+
+          <div class="grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Total Units Produced</label>
+              <input type="number" id="prod-units-produced" class="input" placeholder="2500" min="0" step="any" required oninput="window.calcDispatchReady()">
+            </div>
+            <div class="field">
+              <label class="field__label">Defective / Damaged</label>
+              <input type="number" id="prod-units-damaged" class="input" placeholder="10" min="0" step="any" value="0" required oninput="window.calcDispatchReady()">
+            </div>
+            <div class="field">
+              <label class="field__label">Net Dispatch Ready</label>
+              <input type="number" id="prod-units-ready" class="input" placeholder="2490" readonly style="background: var(--well); font-weight: 700; color: var(--rusbi-green);">
+            </div>
+          </div>
+
+          <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div class="field">
+              <label class="field__label">Supervisor / Clerk Sign-off</label>
+              <input type="text" id="prod-supervisor" class="input" placeholder="e.g. John Ameh (Head Baker)" required>
+            </div>
+            <div class="field">
+              <label class="field__label">Quality / Machine Notes</label>
+              <input type="text" id="prod-notes" class="input" placeholder="Oven temp 210°C, clean quality inspection">
+            </div>
+          </div>
+        </div>
+        <div class="apex-modal-footer">
+          <button type="button" class="btn btn--ghost" onclick="window.closeModal('modal-new-production')">Cancel</button>
+          <button type="submit" class="btn btn--ink">Record Production Batch</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Add New Product / Raw Material (Module 1) -->
+  <div class="apex-modal-overlay" id="modal-new-inventory-item">
+    <div class="apex-modal-card">
+      <div class="apex-modal-header">
+        <div>
+          <b style="font-size: 16px;">New Item</b>
+        </div>
+        <button class="ibtn ibtn--sm" onclick="window.closeModal('modal-new-inventory-item')">✕</button>
+      </div>
+      <form onsubmit="window.submitNewInventoryItem(event)">
+        <div class="apex-modal-body">
+          <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Item Classification</label>
+              <select id="item-type-select" class="input" onchange="window.toggleItemTypeFields(this.value)" style="font-weight: 700;">
+                <option value="raw_material">Raw Material (Flour, Sugar, Yeast, DAP, Urea in KG)</option>
+                <option value="product">Finished Product (Bread Loaves, Pastries, Fertilizers in Units)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="field__label">Item Icon / Emoji</label>
+              <input type="text" id="item-icon" class="input" placeholder="e.g. 🍞, 🌾, 🍚, 🧪" value="🌾" required>
+            </div>
+          </div>
+
+          <!-- Module 1: Product Photo Upload -->
+          <div style="background: var(--well); border: 1px solid var(--line-2); border-radius: 12px; padding: 12px; margin-bottom: 14px; display: flex; align-items: center; gap: 14px;">
+            <div id="new-item-image-preview" style="width: 44px; height: 44px; border-radius: 8px; background: var(--solid); border: 1px solid var(--line); display: grid; place-items: center; font-size: 20px; overflow: hidden; flex-shrink: 0;">
+              📦
+            </div>
+            <div style="flex: 1;">
+              <label class="field__label" style="margin-bottom: 2px;">Product Photo / Picture (Optional)</label>
+              <input type="file" id="item-image-file" accept="image/*" class="input" style="padding: 4px 8px; font-size: 11.5px;" onchange="window.onItemImageSelected(event, 'new-item-image-preview', 'item-image-data')">
+              <input type="hidden" id="item-image-data">
+              <small style="color: var(--muted); font-size: 10.5px;">Click to select an image from your computer to display on catalog.</small>
+            </div>
+          </div>
+
+          <div class="grid" style="grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Item / Product Name</label>
+              <input type="text" id="item-name" class="input" placeholder="e.g. Banana Bread or Calcium Preservatives" required>
+            </div>
+            <div class="field">
+              <label class="field__label">Category</label>
+              <input type="text" id="item-category" class="input" placeholder="e.g. Bread, Pastries, Raw Materials" value="Raw Materials" required>
+            </div>
+          </div>
+
+          <div class="grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Standard Unit</label>
+              <input type="text" id="item-unit" class="input" value="kg" placeholder="kg or pcs" required>
+              <span class="kg-helper-pill" id="item-unit-hint">Raw materials strictly in KG</span>
+            </div>
+            <div class="field">
+              <label class="field__label">Initial Qty on Hand</label>
+              <input type="number" id="item-qty-hand" class="input" placeholder="50" min="0" step="any" value="0" required>
+            </div>
+            <div class="field">
+              <label class="field__label">Reorder Warning Point</label>
+              <input type="number" id="item-reorder-point" class="input" placeholder="30" min="0" step="any" value="30" required>
+              <small style="color: var(--muted); font-size: 11px;">Triggers red alert when stock drops to this level.</small>
+            </div>
+          </div>
+
+          <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Cost Price / Purchase Rate (₦)</label>
+              <input type="number" id="item-cost-price" class="input" placeholder="1000" min="0" step="any" value="1000" required>
+            </div>
+            <div class="field" id="wrap-item-sales-price">
+              <label class="field__label">Sales Price (₦)</label>
+              <input type="number" id="item-sales-price" class="input" placeholder="1500" min="0" step="any" value="0">
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field__label">As of Handover Date</label>
+            <input type="date" id="item-as-of-date" class="input" value="2026-10-20" required>
+          </div>
+        </div>
+        <div class="apex-modal-footer">
+          <button type="button" class="btn btn--ghost" onclick="window.closeModal('modal-new-inventory-item')">Cancel</button>
+          <button type="submit" class="btn btn--ink">Save Item &amp; Initialize Stock</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Edit Item & Starting Value at Handover (Module 1) -->
+  <div class="apex-modal-overlay" id="modal-edit-inventory-item">
+    <div class="apex-modal-card">
+      <div class="apex-modal-header">
+        <b style="font-size: 16px;">✏️ Edit Product / Handover Starting Value</b>
+        <button class="ibtn ibtn--sm" onclick="window.closeModal('modal-edit-inventory-item')">✕</button>
+      </div>
+      <form onsubmit="window.submitEditInventoryItem(event)">
+        <input type="hidden" id="edit-item-id">
+        <div class="apex-modal-body">
+          <!-- Module 1: Product Photo Edit -->
+          <div style="background: var(--well); border: 1px solid var(--line-2); border-radius: 12px; padding: 12px; margin-bottom: 14px; display: flex; align-items: center; gap: 14px;">
+            <div id="edit-item-image-preview" style="width: 44px; height: 44px; border-radius: 8px; background: var(--solid); border: 1px solid var(--line); display: grid; place-items: center; font-size: 20px; overflow: hidden; flex-shrink: 0;">
+              📦
+            </div>
+            <div style="flex: 1;">
+              <label class="field__label" style="margin-bottom: 2px;">Change Picture / Upload Photo</label>
+              <input type="file" id="edit-item-image-file" accept="image/*" class="input" style="padding: 4px 8px; font-size: 11.5px;" onchange="window.onItemImageSelected(event, 'edit-item-image-preview', 'edit-item-image-data')">
+              <input type="hidden" id="edit-item-image-data">
+            </div>
+          </div>
+
+          <div class="grid" style="grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Product / Material Name</label>
+              <input type="text" id="edit-item-name" class="input" required>
+            </div>
+            <div class="field">
+              <label class="field__label">Unit</label>
+              <input type="text" id="edit-item-unit" class="input" required>
+            </div>
+          </div>
+
+          <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Physical Starting Quantity on Hand</label>
+              <input type="number" id="edit-item-qty" class="input" step="any" required>
+              <small style="color: var(--muted); font-size: 11px;">Handover physical stock count.</small>
+            </div>
+            <div class="field">
+              <label class="field__label">Reorder Alert Threshold</label>
+              <input type="number" id="edit-item-reorder" class="input" required>
+            </div>
+          </div>
+
+          <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div class="field">
+              <label class="field__label">Unit Cost Price (₦)</label>
+              <input type="number" id="edit-item-cost" class="input" step="any" required>
+            </div>
+            <div class="field">
+              <label class="field__label">Sales Selling Price (₦)</label>
+              <input type="number" id="edit-item-price" class="input" step="any">
+            </div>
+          </div>
+        </div>
+        <div class="apex-modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+          <button type="button" class="btn btn--sm btn--ghost" style="color: var(--bad); border-color: rgba(220, 38, 38, 0.3);" onclick="window.deleteInventoryItem(document.getElementById('edit-item-id')?.value)" title="Delete this product from catalog">
+            ✕ Delete Product
+          </button>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn btn--ghost" onclick="window.closeModal('modal-edit-inventory-item')">Cancel</button>
+            <button type="submit" class="btn btn--ink">Save Changes</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Quick Operating Expense (OpEx) - No Supplier Onboarding Required -->
+  <!-- Modal: Direct Operating Expense (Module 2 Overhead & Cash Outflow) -->
+  <div class="apex-modal-overlay" id="modal-quick-expense">
+    <div class="apex-modal-card" style="max-width: 540px;">
+      <div class="apex-modal-header">
+        <div>
+          <b style="font-size: 16px;">💵 Record Operating Expense</b>
+          <div style="font-size: 12px; color: var(--muted);">Direct company expenditure (Diesel, Electricity, Repairs, Logistics, Supplies)</div>
+        </div>
+        <button class="ibtn ibtn--sm" onclick="window.closeModal('modal-quick-expense')">✕</button>
+      </div>
+      <form onsubmit="window.submitQuickExpense(event)">
+        <div class="apex-modal-body">
+          <div class="field" style="margin-bottom: 14px;">
+            <label class="field__label">Payee / Recipient / Vendor <span style="font-weight: normal; color: var(--muted);">(Type name or pick suggestion)</span></label>
+            <input type="text" id="quick-expense-payee" class="input" list="quick-expense-payee-list" placeholder="e.g. TotalEnergies, AEDC Electricity, Engr Mike, Local Market" autocomplete="off" required>
+            <datalist id="quick-expense-payee-list"></datalist>
+            <small style="color: var(--muted); font-size: 11px; margin-top: 3px; display: block;">💡 No supplier profile registration needed. Type any business or individual name.</small>
+          </div>
+
+          <div class="grid" style="grid-template-columns: 1.3fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Operating Expense Category</label>
+              <select id="quick-expense-category" class="input" style="font-weight: 700;">
+                <option value="5030">⛽ Generator Diesel &amp; Fuel Power</option>
+                <option value="5035">⚡ Electricity Bill (NEPA / DisCo)</option>
+                <option value="5050">🔧 Equipment, Machine &amp; Oven Repairs</option>
+                <option value="5040">🚚 Delivery Vans Maintenance &amp; Logistics</option>
+                <option value="5060">🏢 Factory Rent &amp; Facility Lease</option>
+                <option value="5070">📦 Packaging Bags, Cartons &amp; Consumables</option>
+                <option value="5080">🧹 Cleaning, Sanitation &amp; Waste Management</option>
+                <option value="5090">📋 Office Supplies, Internet &amp; Admin</option>
+                <option value="5095">🛡️ Factory Security &amp; Safety Services</option>
+                <option value="5099">🏷️ General Miscellaneous Expense</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="field__label">Expense Amount (₦)</label>
+              <input type="number" id="quick-expense-amount" class="input" placeholder="e.g. 50000" min="0" step="any" required style="font-size: 16px; font-weight: 800; color: var(--rusbi-green);">
+            </div>
+          </div>
+
+          <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Paid From Account</label>
+              <select id="quick-expense-payment-account" class="input" style="font-weight: 600;">
+                <option value="1010">🏦 Bank Checking (Zenith Bank Operating)</option>
+                <option value="1020">💵 Cash on Hand / Petty Cash Float</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="field__label">Payment Date</label>
+              <input type="date" id="quick-expense-date" class="input" required>
+            </div>
+          </div>
+
+          <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Payment Method</label>
+              <select id="quick-expense-method" class="input" style="font-weight: 600;">
+                <option value="Bank Transfer">⚡ Instant Bank Transfer (Online)</option>
+                <option value="Cash Float">💵 Cash Float / Petty Cash</option>
+                <option value="POS Debit Card">💳 POS Terminal Card Payment</option>
+                <option value="Cheque">📄 Bank Cheque Disbursed</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="field__label">Receipt / Reference # <span style="font-weight: normal; color: var(--muted);">(Optional)</span></label>
+              <input type="text" id="quick-expense-ref" class="input" placeholder="e.g. REC-9842 or Transfer Ref">
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field__label">Expense Memo / Description <span style="font-weight: normal; color: var(--muted);">(Optional)</span></label>
+            <input type="text" id="quick-expense-notes" class="input" placeholder="e.g. 150L Diesel purchase for Perkins generator night shift">
+          </div>
+        </div>
+        <div class="apex-modal-footer">
+          <button type="button" class="btn btn--ghost" onclick="window.closeModal('modal-quick-expense')">Cancel</button>
+          <button type="submit" class="btn btn--ink">💵 Save &amp; Disburse Expense</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Enter Vendor Bill / Raw Material Restock (Module 2 Standard) -->
+  <div class="apex-modal-overlay" id="modal-new-bill">
+    <div class="apex-modal-card" style="max-width: 620px;">
+      <div class="apex-modal-header">
+        <div>
+          <b style="font-size: 16px;">Enter Bill</b>
+        </div>
+        <button class="ibtn ibtn--sm" onclick="window.closeModal('modal-new-bill')">✕</button>
+      </div>
+      <form onsubmit="window.submitNewBill(event)">
+        <div class="apex-modal-body">
+          <div class="grid" style="grid-template-columns: 1.4fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <label class="field__label" style="margin-bottom: 0;">Vendor / Supplier (A/P)</label>
+                <button type="button" class="btn btn--sm btn--ghost" style="padding: 2px 8px; font-size: 11px;" onclick="window.openNewSupplierModal()">+ Add Supplier</button>
+              </div>
+              <select id="bill-vendor-select" class="input" style="font-weight: 700;" onchange="window.onBillSupplierChanged(this.value)">
+                <!-- Populated by JS -->
+              </select>
+              <small id="bill-supplier-credit-hint" style="color: var(--rusbi-green); font-size: 11px; font-weight: 700; margin-top: 3px; display: none;"></small>
+            </div>
+            <div class="field">
+              <label class="field__label">Bill Classification</label>
+              <select id="bill-classification" class="input" style="font-weight: 600;" onchange="window.toggleBillClassification(this.value)">
+                <option value="inventory">🌾 Restock Raw Materials (KG)</option>
+                <option value="service">📦 Commercial Supplies on Credit</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid" style="grid-template-columns: 1fr 1fr 1.2fr; gap: 12px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Bill / Invoice Date</label>
+              <input type="date" id="bill-date" class="input" required>
+            </div>
+            <div class="field">
+              <label class="field__label">Payment Due Date</label>
+              <input type="date" id="bill-due-date" class="input" required>
+            </div>
+            <div class="field">
+              <label class="field__label">Invoice / Waybill Ref #</label>
+              <input type="text" id="bill-inv-num" class="input" placeholder="e.g. FMN-INV-891">
+            </div>
+          </div>
+
+          <!-- Section A: Raw Material Restock in KG -->
+          <div id="section-bill-inventory" style="background: var(--well); border: 1px solid var(--line-2); border-radius: 12px; padding: 14px; margin-bottom: 14px;">
+            <div style="font-weight: 700; font-size: 13px; margin-bottom: 8px;">Restock Raw Material in KG</div>
+            <div class="grid" style="grid-template-columns: 1.5fr 1fr; gap: 12px; margin-bottom: 10px;">
+              <div class="field">
+                <label class="field__label">Raw Material Item</label>
+                <select id="bill-raw-select" class="input" onchange="window.onBillRawSelected(this.value)">
+                  <!-- Populated by JS -->
+                </select>
+              </div>
+              <div class="field">
+                <label class="field__label">Quick 50kg Bag Converter</label>
+                <div style="display: flex; gap: 6px;">
+                  <input type="number" id="bill-bag-count" class="input" placeholder="e.g. 10 bags" min="0" step="any" oninput="window.calcBillKgFromBags()">
+                  <span class="spill spill--plain" style="align-self: center; font-size: 11px;">x 50kg</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+              <div class="field">
+                <label class="field__label">Quantity in KG</label>
+                <input type="number" id="bill-qty-kg" class="input" placeholder="500" min="0" step="any" oninput="window.calcBillTotal()">
+              </div>
+              <div class="field">
+                <label class="field__label">Rate per 1 KG (₦)</label>
+                <input type="number" id="bill-rate-kg" class="input" placeholder="1000" min="0" step="any" oninput="window.calcBillTotal()">
+              </div>
+              <div class="field">
+                <label class="field__label">Total Bill Cost (₦)</label>
+                <input type="number" id="bill-amount" class="input" placeholder="500000" readonly style="background: var(--solid); font-weight: 700; color: var(--text);">
+              </div>
+            </div>
+          </div>
+
+          <!-- Section B: Supplier Commercial Bill (Hidden unless chosen) -->
+          <div id="section-bill-service" style="display: none; background: var(--well); border: 1px solid var(--line-2); border-radius: 12px; padding: 14px; margin-bottom: 14px;">
+            <div style="font-weight: 700; font-size: 13px; margin-bottom: 8px;">Commercial Supplies / A/P Bill Details</div>
+            <div class="grid" style="grid-template-columns: 1.4fr 1fr; gap: 12px;">
+              <div class="field">
+                <label class="field__label">Expense Category Account</label>
+                <select id="bill-category-account" class="input" style="font-weight: 600;">
+                  <option value="5070">📦 Packaging Bags, Cartons &amp; Wrappers</option>
+                  <option value="5050">🔧 Equipment &amp; Machinery Parts on Credit</option>
+                  <option value="5040">🚚 Delivery Vans Maintenance &amp; Spares</option>
+                  <option value="5060">🏢 Factory Rent &amp; Facility Lease</option>
+                  <option value="5080">🧹 Cleaning, Sanitation &amp; Chemicals</option>
+                  <option value="5090">📋 Office Supplies &amp; Admin Services</option>
+                  <option value="5099">🏷️ General Miscellaneous Credit Bill</option>
+                </select>
+              </div>
+              <div class="field">
+                <label class="field__label">Invoice Amount (₦)</label>
+                <input type="number" id="bill-direct-amount" class="input" placeholder="e.g. 150000" min="0" step="any" style="font-weight: 800; font-size: 16px; color: var(--rusbi-green);">
+              </div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field__label">Invoice # / Memo / Delivery Notes</label>
+            <input type="text" id="bill-notes" class="input" placeholder="e.g. Delivery received at warehouse dock, inspection passed">
+          </div>
+        </div>
+        <div class="apex-modal-footer">
+          <button type="button" class="btn btn--ghost" onclick="window.closeModal('modal-new-bill')">Cancel</button>
+          <button type="submit" class="btn btn--ink" id="btn-submit-bill">Save Bill &amp; Post to A/P</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Create Purchase Order (Module 2) -->
+  <div class="apex-modal-overlay" id="modal-new-po">
+    <div class="apex-modal-card">
+      <div class="apex-modal-header">
+        <div>
+          <b style="font-size: 16px;">Create Purchase Order</b>
+        </div>
+        <button class="ibtn ibtn--sm" onclick="window.closeModal('modal-new-po')">✕</button>
+      </div>
+      <form onsubmit="window.submitNewPO(event)">
+        <div class="apex-modal-body">
+          <div class="grid" style="grid-template-columns: 1.5fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <label class="field__label" style="margin-bottom: 0;">Supplier / Vendor</label>
+                <button type="button" class="btn btn--sm btn--ghost" style="padding: 2px 8px; font-size: 11px;" onclick="window.openNewSupplierModal()">+ Add Supplier</button>
+              </div>
+              <select id="po-vendor-select" class="input" style="font-weight: 700;">
+                <!-- Populated by JS -->
+              </select>
+            </div>
+            <div class="field">
+              <label class="field__label">Delivery Due Date</label>
+              <input type="date" id="po-due-date" class="input" value="2026-11-05" required>
+            </div>
+          </div>
+
+          <div class="grid" style="grid-template-columns: 2fr 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Requested Raw Material</label>
+              <select id="po-raw-select" class="input">
+                <!-- Populated by JS -->
+              </select>
+            </div>
+            <div class="field">
+              <label class="field__label">Quantity in KG</label>
+              <input type="number" id="po-qty-kg" class="input" placeholder="5000" min="0" step="any" required oninput="window.calcPOTotal()">
+            </div>
+            <div class="field">
+              <label class="field__label">Estimated Rate/KG (₦)</label>
+              <input type="number" id="po-rate-kg" class="input" placeholder="1200" min="0" step="any" required oninput="window.calcPOTotal()">
+            </div>
+          </div>
+
+          <div class="field" style="margin-bottom: 14px;">
+            <label class="field__label">Total Order Commitment in Naira (₦)</label>
+            <input type="number" id="po-total" class="input" readonly style="font-weight: 800; color: var(--text); background: var(--well);">
+          </div>
+
+          <div class="field">
+            <label class="field__label">Purchase Order Notes &amp; Terms</label>
+            <input type="text" id="po-notes" class="input" placeholder="Weekly warehouse raw materials restocking request">
+          </div>
+        </div>
+        <div class="apex-modal-footer">
+          <button type="button" class="btn btn--ghost" onclick="window.closeModal('modal-new-po')">Cancel</button>
+          <button type="submit" class="btn btn--ink">Save Open Purchase Order</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Record Supplier Credit (Module 2) -->
+  <div class="apex-modal-overlay" id="modal-new-supplier-credit">
+    <div class="apex-modal-card">
+      <div class="apex-modal-header">
+        <div>
+          <b style="font-size: 16px;">Supplier Credit</b>
+        </div>
+        <button class="ibtn ibtn--sm" onclick="window.closeModal('modal-new-supplier-credit')">✕</button>
+      </div>
+      <form onsubmit="window.submitSupplierCredit(event)">
+        <div class="apex-modal-body">
+          <div class="grid" style="grid-template-columns: 1.5fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <label class="field__label" style="margin-bottom: 0;">Supplier / Vendor</label>
+                <button type="button" class="btn btn--sm btn--ghost" style="padding: 2px 8px; font-size: 11px;" onclick="window.openNewSupplierModal()">+ Add Supplier</button>
+              </div>
+              <select id="sc-vendor-select" class="input" style="font-weight: 700;">
+                <!-- Populated by JS -->
+              </select>
+            </div>
+            <div class="field">
+              <label class="field__label">Return Date</label>
+              <input type="date" id="sc-date" class="input" value="2026-10-20" required>
+            </div>
+          </div>
+
+          <div class="grid" style="grid-template-columns: 2fr 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Returned Raw Material</label>
+              <select id="sc-raw-select" class="input">
+                <!-- Populated by JS -->
+              </select>
+            </div>
+            <div class="field">
+              <label class="field__label">Returned Qty (KG)</label>
+              <input type="number" id="sc-qty-kg" class="input" placeholder="100" min="0" step="any" required oninput="window.calcSCTotal()">
+            </div>
+            <div class="field">
+              <label class="field__label">Unit Rate/KG (₦)</label>
+              <input type="number" id="sc-rate-kg" class="input" placeholder="1000" min="0" step="any" required oninput="window.calcSCTotal()">
+            </div>
+          </div>
+
+          <div class="field" style="margin-bottom: 14px;">
+            <label class="field__label">Total Credit Amount in Naira (₦)</label>
+            <input type="number" id="sc-amount" class="input" readonly style="font-weight: 800; color: var(--rusbi-green); background: var(--well);">
+          </div>
+
+          <div class="field">
+            <label class="field__label">Reason for Return</label>
+            <input type="text" id="sc-reason" class="input" placeholder="e.g. Moisture damaged bags / torn packaging" required>
+          </div>
+        </div>
+        <div class="apex-modal-footer">
+          <button type="button" class="btn btn--ghost" onclick="window.closeModal('modal-new-supplier-credit')">Cancel</button>
+          <button type="submit" class="btn btn--ink">Record Supplier Credit &amp; Adjust Stock</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Add New Supplier / Vendor (Module 2 Standard) -->
+  <div class="apex-modal-overlay" id="modal-new-supplier">
+    <div class="apex-modal-card" style="max-width: 620px;">
+      <div class="apex-modal-header">
+        <div>
+          <b style="font-size: 16px;">New Supplier</b>
+        </div>
+        <button class="ibtn ibtn--sm" onclick="window.closeModal('modal-new-supplier')">✕</button>
+      </div>
+      <form onsubmit="window.submitNewSupplier(event)">
+        <div class="apex-modal-body">
+          <div class="grid" style="grid-template-columns: 1.5fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Supplier / Company Name</label>
+              <input type="text" id="vend-name" class="input" placeholder="e.g. Flour Mills of Nigeria Plc / TotalEnergies" required>
+            </div>
+            <div class="field">
+              <label class="field__label">Trade Alias / Short Name</label>
+              <input type="text" id="vend-display-name" class="input" placeholder="e.g. Golden Penny Mills">
+            </div>
+          </div>
+
+          <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Supplier Category</label>
+              <select id="vend-category" class="input" style="font-weight: 700;">
+                <option value="Raw Ingredients">🌾 Raw Ingredients &amp; Flour</option>
+                <option value="Sugar & Sweeteners">🍬 Sugar, Salt &amp; Sweeteners</option>
+                <option value="Power & Fuel">⚡ Power, Generator &amp; Diesel Fuel</option>
+                <option value="Packaging Supplies">📦 Packaging, Wrappers &amp; Crates</option>
+                <option value="Repairs & Maintenance">🔧 Bakery / Machinery Repairs</option>
+                <option value="Feed Raw Materials">🚜 Farm Seeds &amp; Livestock Feeds</option>
+                <option value="Medication & Vaccines">💉 Farm Vaccines &amp; Veterinary</option>
+                <option value="General Supplies">🏢 General Supplies &amp; Logistics</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="field__label">Representative / Key Contact</label>
+              <input type="text" id="vend-rep" class="input" placeholder="e.g. Engr. Babatunde Lawal (Sales Head)">
+            </div>
+          </div>
+
+          <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Phone Number (WhatsApp Ready)</label>
+              <input type="tel" id="vend-phone" class="input" placeholder="+234 802 000 0000" required>
+            </div>
+            <div class="field">
+              <label class="field__label">Email Address (Orders &amp; POs) <span style="font-weight: normal; color: var(--muted);">(Optional)</span></label>
+              <input type="email" id="vend-email" class="input" placeholder="orders@domain.com">
+            </div>
+          </div>
+
+          <div class="field" style="margin-bottom: 14px;">
+            <label class="field__label">Depot / Warehouse / Delivery Address</label>
+            <input type="text" id="vend-address" class="input" placeholder="e.g. Wharf Road, Apapa Industrial Area, Lagos / Idu Hub Abuja">
+          </div>
+
+          <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div class="field">
+              <label class="field__label">Initial Outstanding Payable (₦)</label>
+              <input type="number" id="vend-balance" class="input" placeholder="0" min="0" step="any" value="0">
+              <small style="color: var(--muted); font-size: 11px;">Opening debt owed to this vendor if starting midway.</small>
+            </div>
+            <div class="field">
+              <label class="field__label">Initial Available Credit (₦)</label>
+              <input type="number" id="vend-credit" class="input" placeholder="0" min="0" step="any" value="0" style="color: var(--rusbi-green); font-weight: 700;">
+              <small style="color: var(--muted); font-size: 11px;">Existing credit balance from previous returns.</small>
+            </div>
+          </div>
+        </div>
+        <div class="apex-modal-footer">
+          <button type="button" class="btn btn--ghost" onclick="window.closeModal('modal-new-supplier')">Cancel</button>
+          <button type="submit" class="btn btn--ink">Save Supplier Profile</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Production Assembly Adjustment (Module 3 Standard) -->
+  <div class="apex-modal-overlay" id="modal-production-assembly">
+    <div class="apex-modal-card" style="max-width: 780px;">
+      <div class="apex-modal-header">
+        <div>
+          <b style="font-size: 16px;">Record Assembly</b>
+        </div>
+        <button class="ibtn ibtn--sm" onclick="window.closeModal('modal-production-assembly')">✕</button>
+      </div>
+      <form onsubmit="window.submitProductionAssembly(event)">
+        <div class="apex-modal-body">
+          <div class="grid" style="grid-template-columns: 2fr 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Finished Product Manufactured</label>
+              <select id="assembly-product-select" class="input" onchange="window.onAssemblyProductChanged(this.value)">
+                <!-- Populated by JS -->
+              </select>
+            </div>
+            <div class="field">
+              <label class="field__label">Output Units (+)</label>
+              <input type="number" id="assembly-output-qty" class="input" placeholder="200" min="0" step="any" value="200" required oninput="window.calcAssemblyIngredients()">
+            </div>
+            <div class="field">
+              <label class="field__label">Run Date</label>
+              <input type="date" id="assembly-date" class="input" value="2026-10-20" required>
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <label class="field__label" style="margin-bottom: 0;">Raw Materials Consumed in KG (Automatically Deducted with - sign)</label>
+            <button type="button" class="btn btn--sm btn--ghost" onclick="window.openRecipeCalculatorModal()">
+              🧮 Open Recipe Formula Calculator
+            </button>
+          </div>
+
+          <div id="assembly-ingredients-container" style="background: var(--well); border: 1px solid var(--line-2); border-radius: 12px; padding: 14px; margin-bottom: 14px; max-height: 220px; overflow-y: auto;">
+            <!-- Populated dynamically based on recipe -->
+          </div>
+
+          <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div class="field">
+              <label class="field__label">Shift Supervisor Sign-off</label>
+              <input type="text" id="assembly-supervisor" class="input" value="John Ameh (Head Baker)" required>
+            </div>
+            <div class="field">
+              <label class="field__label">Quality / Oven Machine Notes</label>
+              <input type="text" id="assembly-notes" class="input" placeholder="Standard oven run, passed crust test">
+            </div>
+          </div>
+        </div>
+        <div class="apex-modal-footer">
+          <button type="button" class="btn btn--ghost" onclick="window.closeModal('modal-production-assembly')">Cancel</button>
+          <button type="submit" class="btn btn--ink">Complete Assembly &amp; Adjust Inventory</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Loss, Spoilage & Wastage Adjustment (Module 3) -->
+  <div class="apex-modal-overlay" id="modal-inventory-wastage">
+    <div class="apex-modal-card">
+      <div class="apex-modal-header">
+        <div>
+          <b style="font-size: 16px;">Record Spoilage</b>
+        </div>
+        <button class="ibtn ibtn--sm" onclick="window.closeModal('modal-inventory-wastage')">✕</button>
+      </div>
+      <form onsubmit="window.submitInventoryWastage(event)">
+        <div class="apex-modal-body">
+          <div class="grid" style="grid-template-columns: 1.5fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Item Lost / Damaged</label>
+              <select id="waste-item-select" class="input">
+                <!-- Populated by JS -->
+              </select>
+            </div>
+            <div class="field">
+              <label class="field__label">Quantity Lost / Damaged (-)</label>
+              <input type="number" id="waste-qty" class="input" placeholder="10" min="0" step="any" required>
+            </div>
+          </div>
+
+          <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Adjustment Reason</label>
+              <select id="waste-reason" class="input" style="font-weight: 600;">
+                <option value="damaged_goods">Damaged Goods (Burnt in oven / crushed)</option>
+                <option value="stolen_goods">Stolen Goods / Pilferage</option>
+                <option value="expired">Expired Stock / Stale</option>
+                <option value="inventory_unknown">Inventory Spoilage / Unknown Shrinkage</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="field__label">Date of Discovery</label>
+              <input type="date" id="waste-date" class="input" value="2026-10-20" required>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field__label">Investigation / Audit Notes</label>
+            <input type="text" id="waste-notes" class="input" placeholder="e.g. Over-proofed dough during power cut" required>
+          </div>
+        </div>
+        <div class="apex-modal-footer">
+          <button type="button" class="btn btn--ghost" onclick="window.closeModal('modal-inventory-wastage')">Cancel</button>
+          <button type="submit" class="btn btn--ink">Confirm Write-Off &amp; Reduce Stock</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Interactive Recipe Formula & Unit Converter (Module 6) -->
+  <div class="apex-modal-overlay" id="modal-recipe-calculator">
+    <div class="apex-modal-card" style="max-width: 740px;">
+      <div class="apex-modal-header">
+        <div>
+          <b style="font-size: 16px;">Recipes</b>
+        </div>
+        <button class="ibtn ibtn--sm" onclick="window.closeModal('modal-recipe-calculator')">✕</button>
+      </div>
+      <div class="apex-modal-body">
+        <div class="recipe-calc-card">
+          <div class="grid" style="grid-template-columns: 1.5fr 1fr; gap: 14px;">
+            <div class="field">
+              <label class="field__label">Select Recipe Preset</label>
+              <select id="calc-recipe-preset" class="input" onchange="window.runRecipeCalculation()" style="font-weight: 700;">
+                <!-- Populated by JS -->
+              </select>
+            </div>
+            <div class="field">
+              <label class="field__label">Batch Production Target (Units)</label>
+              <input type="number" id="calc-target-units" class="input" value="100" min="0" step="any" oninput="window.runRecipeCalculation()" style="font-size: 16px; font-weight: 800;">
+            </div>
+          </div>
+
+          <div style="margin-top: 14px; font-size: 12.5px; font-weight: 700;">Ingredient Requirements in KG for Target Batch:</div>
+          <div class="calc-output-grid" id="calc-output-container">
+            <!-- Output dynamically generated -->
+          </div>
+        </div>
+
+        <!-- Standalone Unit Converter Tool (Module 6) -->
+        <div style="background: var(--solid); border: 1px solid var(--line); border-radius: 12px; padding: 14px;">
+          <b style="font-size: 13px; display: block; margin-bottom: 8px;">🔄 Quick Unit Converter to KG</b>
+          <div class="grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+            <div class="field">
+              <label class="field__label">Input Value</label>
+              <input type="number" id="conv-input" class="input" placeholder="e.g. 10" value="10" oninput="window.runUnitConverter()">
+            </div>
+            <div class="field">
+              <label class="field__label">From Unit</label>
+              <select id="conv-type" class="input" onchange="window.runUnitConverter()">
+                <option value="bags50">Bags (50 kg)</option>
+                <option value="grams">Grams (g)</option>
+                <option value="liters">Liters (Liquid Flour/Oil)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="field__label">Result in Kilograms (KG)</label>
+              <input type="text" id="conv-result" class="input" readonly style="font-weight: 800; color: var(--rusbi-green); background: var(--well);">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="apex-modal-footer">
+        <button type="button" class="btn btn--ghost" onclick="window.closeModal('modal-recipe-calculator')">Close</button>
+        <button type="button" class="btn btn--ink" onclick="window.applyRecipeToAssembly()">Apply Recipe to Assembly</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Record Customer Upfront Deposit / Credit Liability (Module 4) -->
+  <div class="apex-modal-overlay" id="modal-customer-deposit">
+    <div class="apex-modal-card">
+      <div class="apex-modal-header">
+        <div>
+          <b style="font-size: 16px;">Customer Deposit</b>
+        </div>
+        <button class="ibtn ibtn--sm" onclick="window.closeModal('modal-customer-deposit')">✕</button>
+      </div>
+      <form onsubmit="window.submitCustomerDeposit(event)">
+        <div class="apex-modal-body">
+          <div class="grid" style="grid-template-columns: 1.5fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Customer Name</label>
+              <select id="deposit-customer-select" class="input" style="font-weight: 700;">
+                <!-- Populated by JS -->
+              </select>
+            </div>
+            <div class="field">
+              <label class="field__label">Payment Date</label>
+              <input type="date" id="deposit-date" class="input" value="2026-10-20" required>
+            </div>
+          </div>
+
+          <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Advance Deposit Amount in Naira (₦)</label>
+              <input type="number" id="deposit-amount" class="input" placeholder="500000" min="0" step="any" required>
+            </div>
+            <div class="field">
+              <label class="field__label">Payment Channel</label>
+              <select id="deposit-method" class="input">
+                <option value="Bank Transfer">Bank Transfer (Zenith Operating)</option>
+                <option value="Cash">Cash Deposit</option>
+                <option value="POS / Card">POS Terminal Card</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field__label">Deposit Memo</label>
+            <input type="text" id="deposit-memo" class="input" placeholder="e.g. Advance prepayment for weekend 500 loaves order">
+          </div>
+        </div>
+        <div class="apex-modal-footer">
+          <button type="button" class="btn btn--ghost" onclick="window.closeModal('modal-customer-deposit')">Cancel</button>
+          <button type="submit" class="btn btn--ink">Save Customer Credit Deposit</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Close Books & Period Audit Lock (Module 5) -->
+  <div class="apex-modal-overlay" id="modal-close-books">
+    <div class="apex-modal-card" style="max-width: 540px;">
+      <div class="apex-modal-header">
+        <div>
+          <b style="font-size: 16px;">Close Books</b>
+        </div>
+        <button class="ibtn ibtn--sm" onclick="window.closeModal('modal-close-books')">✕</button>
+      </div>
+      <form onsubmit="window.submitCloseBooks(event)">
+        <div class="apex-modal-body">
+          <div style="background: rgba(138, 43, 226, 0.08); border-left: 4px solid #8a2be2; border-radius: 10px; padding: 12px; margin-bottom: 16px; font-size: 12.5px;">
+            <b>Auditor Security Protection:</b> Once books are closed through a selected date, transactions on or before that date cannot be modified without the closing password. Net Income for the period is transferred into Retained Earnings (Equity 3020).
+          </div>
+
+          <div class="field" style="margin-bottom: 14px;">
+            <label class="field__label">Closing Cut-off Date</label>
+            <input type="date" id="close-books-date" class="input" required>
+            <small style="color: var(--muted); font-size: 11px;">All transactions on or prior to this date will be sealed.</small>
+          </div>
+
+          <div class="field" style="margin-bottom: 14px;">
+            <label class="field__label">Audit Master Password</label>
+            <input type="password" id="close-books-password" class="input" placeholder="Set or enter auditor password" required>
+            <small style="color: var(--muted); font-size: 11px;">Only the Managing Director and Head Accountant hold this key.</small>
+          </div>
+
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 600; cursor: pointer; background: var(--well); border: 1px solid var(--line-2); border-radius: 8px; padding: 10px 12px;">
+            <input type="checkbox" id="close-books-transfer-retained" checked style="accent-color: #8a2be2;">
+            <span>Transfer Period Net Profit to Retained Earnings (Account 3020)</span>
+          </label>
+        </div>
+        <div class="apex-modal-footer">
+          <button type="button" class="btn btn--ghost" onclick="window.closeModal('modal-close-books')">Cancel</button>
+          <button type="submit" class="btn btn--ink" style="background: #8a2be2; border-color: #8a2be2;">🔒 Lock &amp; Close Period</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Reopen Books & Unlock Period -->
+  <div class="apex-modal-overlay" id="modal-reopen-books">
+    <div class="apex-modal-card" style="max-width: 460px;">
+      <div class="apex-modal-header">
+        <div>
+          <b style="font-size: 16px;">Reopen Books</b>
+        </div>
+        <button class="ibtn ibtn--sm" onclick="window.closeModal('modal-reopen-books')">✕</button>
+      </div>
+      <form onsubmit="window.submitReopenBooks(event)">
+        <div class="apex-modal-body">
+          <p style="font-size: 13px; color: var(--text); margin-bottom: 14px;">
+            Enter the <b>Auditor Closing Password</b> or <b>Master Password</b> to unlock this entity's financial period:
+          </p>
+          <div class="field" style="margin-bottom: 14px;">
+            <label class="field__label">Auditor Password</label>
+            <input type="password" id="reopen-books-password" class="input" placeholder="Enter password to unlock" required>
+          </div>
+        </div>
+        <div class="apex-modal-footer">
+          <button type="button" class="btn btn--ghost" onclick="window.closeModal('modal-reopen-books')">Cancel</button>
+          <button type="submit" class="btn btn--ink">🔓 Unlock &amp; Reopen Books</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Bank Transactions Weekly CSV Import (Module 5) -->
+  <div class="apex-modal-overlay" id="modal-csv-bank-upload">
+    <div class="apex-modal-card" style="max-width: 600px;">
+      <div class="apex-modal-header">
+        <div>
+          <b style="font-size: 16px;">Import CSV</b>
+        </div>
+        <button class="ibtn ibtn--sm" onclick="window.closeModal('modal-csv-bank-upload')">✕</button>
+      </div>
+      <div class="apex-modal-body">
+        <!-- Sample CSV Download Bar -->
+        <div style="background: rgba(0, 166, 81, 0.08); border: 1px solid rgba(0, 166, 81, 0.28); border-radius: 12px; padding: 12px 16px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 24px;">📋</span>
+            <div>
+              <b style="font-size: 13.5px; color: var(--text);">Need the Sample Statement CSV?</b>
+              <div style="font-size: 11.5px; color: var(--muted);">Pre-formatted with Rusbi columns: Date, Description, Amount, Supplier, Category, Approval.</div>
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn btn--sm btn--ink" style="background: var(--rusbi-green); border-color: var(--rusbi-green); color: #fff; padding: 6px 14px; font-weight: 700;" onclick="window.downloadWeeklyCSVTemplate()">
+              📥 Download Sample CSV
+            </button>
+          </div>
+        </div>
+
+        <div style="border: 2px dashed var(--line-2); border-radius: 14px; padding: 32px 20px; text-align: center; cursor: pointer; background: var(--well);" onclick="document.getElementById('file-bank-csv').click()">
+          <span style="font-size: 32px; display: block; margin-bottom: 8px;">📊</span>
+          <b>Click to select weekly transaction CSV log</b>
+          <p style="font-size: 12px; color: var(--muted); margin-top: 4px;">Template columns: Date, Description, Amount, Supplier/Payee, Category, Approval</p>
+          <input type="file" id="file-bank-csv" accept=".csv" style="display: none;" onchange="window.onCSVFileSelected(event)">
+        </div>
+        <div id="csv-preview-feedback" style="margin-top: 14px; font-size: 12.5px; display: none;"></div>
+      </div>
+      <div class="apex-modal-footer">
+        <button type="button" class="btn btn--ghost" style="margin-right: auto; color: var(--rusbi-green); display: flex; align-items: center; gap: 6px;" onclick="window.downloadWeeklyCSVTemplate()">
+          <span>📥</span> <span>Download Sample CSV</span>
+        </button>
+        <button type="button" class="btn btn--ghost" onclick="window.closeModal('modal-csv-bank-upload')">Cancel</button>
+        <button type="button" class="btn btn--ink" onclick="window.processBankCSVUpload()">Import Statement Lines</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: New Sales Invoice (Module 4 Standard) -->
+  <div class="apex-modal-overlay" id="modal-new-invoice">
+    <div class="apex-modal-card" style="max-width: 740px;">
+      <div class="apex-modal-header">
+        <div>
+          <b style="font-size: 16px;">New Invoice</b>
+        </div>
+        <button class="ibtn ibtn--sm" onclick="window.closeModal('modal-new-invoice')">✕</button>
+      </div>
+      <form onsubmit="window.submitNewInvoice(event)">
+        <div class="apex-modal-body">
+          <div class="grid" style="grid-template-columns: 1.5fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <label class="field__label" style="margin-bottom: 0;">Customer Name</label>
+                <button type="button" class="btn btn--sm btn--ghost" style="padding: 2px 8px; font-size: 11px;" onclick="window.openNewCustomerModal()">+ Add Customer</button>
+              </div>
+              <select id="inv-customer-select" class="input" onchange="window.onInvoiceCustomerChanged(this.value)">
+                <!-- Populated by JS -->
+              </select>
+              <small id="inv-credit-hint" style="color: var(--rusbi-green); font-size: 11px; font-weight: 700; margin-top: 2px;"></small>
+            </div>
+            <div class="field">
+              <label class="field__label">Payment Due Date</label>
+              <input type="date" id="inv-due-date" class="input" required value="2026-11-20">
+            </div>
+          </div>
+
+          <div class="grid" style="grid-template-columns: 2fr 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Finished Product</label>
+              <select id="inv-prod-select" class="input" onchange="window.onInvoiceProductChanged(this.value)">
+                <!-- Populated by JS -->
+              </select>
+            </div>
+            <div class="field">
+              <label class="field__label">Quantity</label>
+              <input type="number" id="inv-qty" class="input" placeholder="100" min="0" step="any" value="100" required oninput="window.calcInvoiceTotals()">
+            </div>
+            <div class="field">
+              <label class="field__label">Unit Rate (₦)</label>
+              <input type="number" id="inv-rate" class="input" placeholder="1200" min="0" step="any" required oninput="window.calcInvoiceTotals()">
+            </div>
+          </div>
+
+          <!-- Invoice Modifiers: Discount, Shipping & Customer Credit -->
+          <div class="grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 12px; background: var(--well); border-radius: 12px; padding: 12px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Discount (% off)</label>
+              <input type="number" id="inv-discount-pct" class="input" placeholder="5" min="0" max="100" step="any" value="0" oninput="window.calcInvoiceTotals()">
+            </div>
+            <div class="field">
+              <label class="field__label">Shipping / Delivery Fee (₦)</label>
+              <input type="number" id="inv-shipping-fee" class="input" placeholder="0" min="0" step="any" value="0" oninput="window.calcInvoiceTotals()">
+            </div>
+            <div class="field">
+              <label class="field__label">Apply Customer Credit (₦)</label>
+              <input type="number" id="inv-credit-deduct" class="input" placeholder="0" min="0" step="any" value="0" oninput="window.calcInvoiceTotals()">
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field__label">Net Payable Total in Naira (₦)</label>
+            <input type="number" id="inv-amount" class="input" readonly style="font-size: 18px; font-weight: 800; color: var(--rusbi-green); background: var(--solid);">
+          </div>
+        </div>
+        <div class="apex-modal-footer">
+          <button type="button" class="btn btn--ghost" onclick="window.closeModal('modal-new-invoice')">Cancel</button>
+          <button type="submit" class="btn btn--ink">Post Invoice &amp; Deduct Finished Stock</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Create Commercial Estimate / Quotation (QBO Plus A/R) -->
+  <div class="apex-modal-overlay" id="modal-new-estimate">
+    <div class="apex-modal-card" style="max-width: 740px;">
+      <div class="apex-modal-header">
+        <div>
+          <b style="font-size: 16px;">New Estimate</b>
+        </div>
+        <button class="ibtn ibtn--sm" onclick="window.closeModal('modal-new-estimate')">✕</button>
+      </div>
+      <form onsubmit="window.submitNewEstimate(event)">
+        <div class="apex-modal-body">
+          <div class="grid" style="grid-template-columns: 1.5fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <label class="field__label" style="margin-bottom: 0;">Target Customer</label>
+                <button type="button" class="btn btn--sm btn--ghost" style="padding: 2px 8px; font-size: 11px;" onclick="window.openNewCustomerModal()">+ Add Customer</button>
+              </div>
+              <select id="est-customer-select" class="input" style="font-weight: 700;">
+                <!-- Populated by JS -->
+              </select>
+            </div>
+            <div class="field">
+              <label class="field__label">Quote Expiration Date</label>
+              <input type="date" id="est-due-date" class="input" required value="2026-11-20">
+            </div>
+          </div>
+
+          <div class="grid" style="grid-template-columns: 2fr 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Offered Product / Service</label>
+              <select id="est-product-select" class="input" onchange="window.onEstimateProductChanged(this.value)">
+                <!-- Populated by JS -->
+              </select>
+            </div>
+            <div class="field">
+              <label class="field__label">Quantity</label>
+              <input type="number" id="est-qty" class="input" value="1000" min="0" step="any" required oninput="window.calcEstimateTotal()">
+            </div>
+            <div class="field">
+              <label class="field__label">Unit Price (₦)</label>
+              <input type="number" id="est-rate" class="input" value="430" min="0" step="any" required oninput="window.calcEstimateTotal()">
+            </div>
+          </div>
+
+          <div class="grid" style="grid-template-columns: 1fr 1fr 1.2fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Discount (%)</label>
+              <input type="number" id="est-discount" class="input" value="0" min="0" max="100" step="any" oninput="window.calcEstimateTotal()">
+            </div>
+            <div class="field">
+              <label class="field__label">Shipping / Delivery (₦)</label>
+              <input type="number" id="est-shipping" class="input" value="0" min="0" step="any" oninput="window.calcEstimateTotal()">
+            </div>
+            <div class="field">
+              <label class="field__label">Quotation Grand Total (₦)</label>
+              <input type="number" id="est-total" class="input" readonly style="font-weight: 800; color: var(--rusbi-green); font-size: 16px; background: var(--well);">
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field__label">Commercial Terms &amp; Scope Notes</label>
+            <input type="text" id="est-notes" class="input" placeholder="e.g. Bulk institutional pricing trial. Delivery within 48h of confirmation.">
+          </div>
+        </div>
+        <div class="apex-modal-footer">
+          <button type="button" class="btn btn--ghost" onclick="window.closeModal('modal-new-estimate')">Cancel</button>
+          <button type="submit" class="btn btn--ink">Save Open Quotation</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Send Invoice Customer Email Preview (Module 4) -->
+  <div class="apex-modal-overlay" id="modal-send-invoice-email">
+    <div class="apex-modal-card" style="max-width: 580px;">
+      <div class="apex-modal-header">
+        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 20px;">📧</span>
+            <b style="font-size: 16px;">Dispatch Commercial Invoice via Email</b>
+          </div>
+          <button type="button" class="btn btn--sm btn--ghost" style="padding: 2px 8px; font-size: 11px; margin-right: 12px;" onclick="window.openSMTPSettingsModal()">
+            ⚙️ Configure SMTP
+          </button>
+        </div>
+        <button class="ibtn ibtn--sm" onclick="window.closeModal('modal-send-invoice-email')">✕</button>
+      </div>
+      <div class="apex-modal-body">
+        <div style="background: rgba(0, 166, 81, 0.08); border: 1px solid rgba(0, 166, 81, 0.25); border-radius: 8px; padding: 8px 12px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between;">
+          <div style="font-size: 11.5px; color: var(--rusbi-green); font-weight: 700;">
+            ⚡ Outgoing Mailer: <span id="active-smtp-label">127.0.0.1 (Port 25 Exim Direct)</span>
+          </div>
+          <a style="font-size: 11px; text-decoration: underline; cursor: pointer; color: var(--text);" onclick="window.openSMTPSettingsModal()">Change Server</a>
+        </div>
+
+        <div class="field" style="margin-bottom: 14px;">
+          <label class="field__label">Recipient Customer Email</label>
+          <input type="email" id="email-inv-to" class="input" required>
+        </div>
+        <div class="field" style="margin-bottom: 14px;">
+          <label class="field__label">Subject Line</label>
+          <input type="text" id="email-inv-subject" class="input" value="Commercial Sales Invoice from Rusbi Group of Companies Ltd.">
+        </div>
+        <div class="field" style="margin-bottom: 14px;">
+          <label class="field__label">Custom Note / Dispatch Memo</label>
+          <textarea id="email-inv-body" class="input" style="height: 100px; resize: vertical;">Dear Valued Client,
+
+We appreciate your business! Please find your official commercial sales invoice details and bank wire settlement instructions attached below. Feel free to contact our accounts desk if you have any questions.
+
+Warm regards,
+Rusbi Accounts & Treasury Team</textarea>
+        </div>
+        <div style="background: var(--well); border: 1px solid var(--line); border-radius: 8px; padding: 10px;">
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer;">
+            <input type="checkbox" id="email-inv-cc" checked>
+            <span>CC accounts@rusbigroup.com on this delivery</span>
+          </label>
+        </div>
+      </div>
+      <div class="apex-modal-footer">
+        <button type="button" class="btn btn--ghost" onclick="window.closeModal('modal-send-invoice-email')">Cancel</button>
+        <button type="button" class="btn btn--ink" onclick="window.executeSendInvoiceEmail()">Send via Corporate SMTP</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Print Invoice Simulator & PDF Generator -->
+  <div class="apex-modal-overlay" id="modal-print-invoice">
+    <div class="apex-modal-card" style="max-width: 860px; width: 95vw; max-height: 94vh; padding: 0; background: var(--solid); overflow: hidden; display: flex; flex-direction: column;">
+      <div class="apex-modal-header" style="padding: 16px 20px; background: var(--float); border-bottom: 1px solid var(--line); flex-shrink: 0;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 20px;">📄</span>
+          <div>
+            <b style="font-size: 16px;">Commercial Sales Invoice Simulator</b>
+            <div style="font-size: 12px; color: var(--muted);" id="print-modal-meta">Official Tax Invoice Document</div>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+          <button type="button" class="btn btn--sm btn--ink" onclick="window.printInvoicePaper()">
+            🖨️ Print / Save as PDF
+          </button>
+          <button type="button" class="btn btn--sm btn--ghost" style="color: #128C7E; border-color: rgba(18,140,126,0.35);" onclick="window.shareCurrentInvoiceWhatsApp()">
+            💬 WhatsApp
+          </button>
+          <button type="button" class="btn btn--sm btn--ghost" onclick="window.emailCurrentInvoice()">
+            📧 Email
+          </button>
+          <button class="ibtn ibtn--sm" onclick="window.closeModal('modal-print-invoice')">✕</button>
+        </div>
+      </div>
+      <div class="apex-modal-body" style="padding: 24px; overflow-y: auto; background: #e8e6e1; display: flex; justify-content: center;">
+        <div id="invoice-paper-printable" class="invoice-paper-sheet">
+          <!-- Dynamically populated by renderInvoicePaper(invoiceId) in scripts/app.js -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: WhatsApp Customer Message Dispatch -->
+  <div class="apex-modal-overlay" id="modal-whatsapp-preview">
+    <div class="apex-modal-card" style="max-width: 580px;">
+      <div class="apex-modal-header">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 22px;">💬</span>
+          <div>
+            <b style="font-size: 16px;">WhatsApp Customer Message Dispatch</b>
+            <div style="font-size: 12px; color: var(--muted);">Direct one-click customer messaging with order breakdown & bank payment details.</div>
+          </div>
+        </div>
+        <button class="ibtn ibtn--sm" onclick="window.closeModal('modal-whatsapp-preview')">✕</button>
+      </div>
+      <div class="apex-modal-body">
+        <div class="grid" style="grid-template-columns: 1.4fr 1fr; gap: 14px; margin-bottom: 14px;">
+          <div class="field">
+            <label class="field__label">Customer Recipient Name</label>
+            <input type="text" id="wa-cust-name" class="input" readonly style="font-weight: 700; background: var(--well);">
+          </div>
+          <div class="field">
+            <label class="field__label">WhatsApp Phone Number</label>
+            <input type="text" id="wa-cust-phone" class="input" placeholder="e.g. +234 803 123 4567" required style="font-weight: 700;">
+            <small style="font-size: 11px; color: var(--muted); display: block; margin-top: 3px;">Format: 0803... or 234803...</small>
+          </div>
+        </div>
+
+        <div class="field" style="margin-bottom: 14px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <label class="field__label" style="margin-bottom: 0;">Message Text Preview</label>
+            <button type="button" class="btn btn--sm btn--ghost" style="padding: 2px 8px; font-size: 11px;" onclick="window.copyWhatsAppMessage()">📋 Copy Text</button>
+          </div>
+          <textarea id="wa-message-text" class="input" style="height: 220px; font-family: system-ui, -apple-system, sans-serif; font-size: 12px; line-height: 1.45; resize: vertical; white-space: pre-wrap;"></textarea>
+        </div>
+
+        <div style="background: rgba(37, 211, 102, 0.08); border: 1px solid rgba(37, 211, 102, 0.25); border-radius: 10px; padding: 10px 14px; display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 18px;">💡</span>
+          <div style="font-size: 12px; color: var(--text);">
+            Clicking <b>Open in WhatsApp</b> launches WhatsApp Web (desktop) or mobile app with this exact formatted text ready to send.
+          </div>
+        </div>
+      </div>
+      <div class="apex-modal-footer">
+        <button type="button" class="btn btn--ghost" onclick="window.closeModal('modal-whatsapp-preview')">Cancel</button>
+        <button type="button" class="btn btn--ink" style="background: #25D366; border-color: #25D366; color: #fff;" onclick="window.sendWhatsAppMessage()">
+          🚀 Open in WhatsApp
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: SMTP Email Server Configuration -->
+  <div class="apex-modal-overlay" id="modal-smtp-settings">
+    <div class="apex-modal-card" style="max-width: 620px;">
+      <div class="apex-modal-header">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 20px;">⚙️</span>
+          <div>
+            <b style="font-size: 16px;">Configure Outgoing SMTP Mail Server</b>
+            <div style="font-size: 12px; color: var(--muted);">Setup corporate email credentials for customer invoices & payment receipts.</div>
+          </div>
+        </div>
+        <button class="ibtn ibtn--sm" onclick="window.closeModal('modal-smtp-settings')">✕</button>
+      </div>
+      <form onsubmit="window.saveSMTPSettings(event)">
+        <div class="apex-modal-body">
+          <div class="grid" style="grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">SMTP Host Server</label>
+              <input type="text" id="smtp-host" class="input" placeholder="mail.domain.com" required>
+            </div>
+            <div class="field">
+              <label class="field__label">SMTP Port</label>
+              <input type="number" id="smtp-port" class="input" value="465" required>
+            </div>
+          </div>
+
+          <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Encryption Protocol</label>
+              <select id="smtp-secure" class="input">
+                <option value="ssl" selected>SSL (Standard Port 465)</option>
+                <option value="tls">TLS / STARTTLS (Port 587)</option>
+                <option value="none">None (Port 25)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="field__label">Sender Display Name</label>
+              <input type="text" id="smtp-from-name" class="input" placeholder="Company Name" required>
+            </div>
+          </div>
+
+          <div class="grid" style="grid-template-columns: 1.2fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">SMTP Username / Email</label>
+              <input type="email" id="smtp-user" class="input" placeholder="user@domain.com" required>
+            </div>
+            <div class="field">
+              <label class="field__label">SMTP Password</label>
+              <input type="password" id="smtp-pass" class="input" placeholder="••••••••••••">
+            </div>
+          </div>
+
+          <div class="field" style="margin-bottom: 14px;">
+            <label class="field__label">Default From / Reply-To Email</label>
+            <input type="email" id="smtp-from-email" class="input" placeholder="noreply@domain.com" required>
+          </div>
+
+          <!-- Quick Test Block -->
+          <div style="background: var(--well); border: 1px solid var(--line-2); border-radius: 12px; padding: 14px; margin-top: 10px;">
+            <b style="font-size: 13px; display: block; margin-bottom: 6px;">⚡ Test SMTP Connection</b>
+            <div style="display: flex; gap: 10px;">
+              <input type="email" id="smtp-test-email" class="input" placeholder="recipient@domain.com" style="flex: 1;">
+              <button type="button" class="btn btn--sm btn--ghost" onclick="window.testSMTPConnection()">Send Test Email</button>
+            </div>
+            <div id="smtp-test-result" style="font-size: 12px; margin-top: 6px; font-weight: 600;"></div>
+          </div>
+        </div>
+        <div class="apex-modal-footer">
+          <button type="button" class="btn btn--ghost" onclick="window.closeModal('modal-smtp-settings')">Cancel</button>
+          <button type="submit" class="btn btn--ink">Save Configuration</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- Modal: Add New Customer (Module 4) -->
+  <div class="apex-modal-overlay" id="modal-new-customer">
+    <div class="apex-modal-card" style="max-width: 600px;">
+      <div class="apex-modal-header">
+        <div>
+          <b style="font-size: 16px;">New Customer</b>
+        </div>
+        <button class="ibtn ibtn--sm" onclick="window.closeModal('modal-new-customer')">✕</button>
+      </div>
+      <form onsubmit="window.submitNewCustomer(event)">
+        <div class="apex-modal-body">
+          <div class="grid" style="grid-template-columns: 1.5fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Customer / Company Legal Name</label>
+              <input type="text" id="cust-name" class="input" placeholder="e.g. MegaMart Supermarkets Ltd" required>
+            </div>
+            <div class="field">
+              <label class="field__label">Display Name / Trade Alias</label>
+              <input type="text" id="cust-display-name" class="input" placeholder="e.g. MegaMart Garki">
+            </div>
+          </div>
+
+          <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Company Representative / Contact Person</label>
+              <input type="text" id="cust-rep" class="input" placeholder="e.g. Abdullahi Umar (Procurement)">
+            </div>
+            <div class="field">
+              <label class="field__label">Phone Number</label>
+              <input type="tel" id="cust-phone" class="input" placeholder="+234 803 000 0000" required>
+            </div>
+          </div>
+
+          <div class="field" style="margin-bottom: 14px;">
+            <label class="field__label">Email Address (for invoices & statements)</label>
+            <input type="email" id="cust-email" class="input" placeholder="contact@domain.com" required>
+          </div>
+
+          <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Billing Address</label>
+              <textarea id="cust-billing-address" class="input" style="height: 60px; resize: vertical;" placeholder="Plot 14 Commercial District, Abuja"></textarea>
+            </div>
+            <div class="field">
+              <label class="field__label">Shipping / Delivery Address</label>
+              <textarea id="cust-shipping-address" class="input" style="height: 60px; resize: vertical;" placeholder="Receiving Dock, Warehouse 4"></textarea>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field__label">Initial Customer Credit Liability Deposit (₦, optional)</label>
+            <input type="number" id="cust-initial-credit" class="input" placeholder="0" min="0" step="any" value="0">
+            <small style="color: var(--muted); font-size: 11px;">If client has already made an advance cash deposit before goods collection.</small>
+          </div>
+        </div>
+        <div class="apex-modal-footer">
+          <button type="button" class="btn btn--ghost" onclick="window.closeModal('modal-new-customer')">Cancel</button>
+          <button type="submit" class="btn btn--ink">Save Customer Profile</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Set Opening / Starting Balance Journal Entry (Module 21) -->
+  <div class="apex-modal-overlay" id="modal-starting-balance">
+    <div class="apex-modal-card" style="max-width: 540px;">
+      <div class="apex-modal-header">
+        <div>
+          <b style="font-size: 16px;">Starting Balance</b>
+        </div>
+        <button class="ibtn ibtn--sm" onclick="window.closeModal('modal-starting-balance')">✕</button>
+      </div>
+      <form onsubmit="window.submitStartingBalance(event)">
+        <div class="apex-modal-body">
+          <div class="field" style="margin-bottom: 14px;">
+            <label class="field__label">Target General Ledger Account</label>
+            <select id="start-account-select" class="input" style="font-weight: 700;">
+              <!-- Populated by JS -->
+            </select>
+          </div>
+
+          <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">As of Handover Date</label>
+              <input type="date" id="start-balance-date" class="input" value="2026-10-01" required>
+            </div>
+            <div class="field">
+              <label class="field__label">Opening Balance Amount (₦)</label>
+              <input type="number" id="start-balance-amount" class="input" placeholder="20000000" min="0" step="any" required style="font-weight: 700; color: var(--rusbi-green);">
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field__label">Journal Memo / Audit Note</label>
+            <input type="text" id="start-balance-memo" class="input" value="Handover Starting Balance / Opening Float" required>
+            <small style="color: var(--muted); font-size: 11px;">Recorded as an Opening Journal Entry in General Ledger history.</small>
+          </div>
+        </div>
+        <div class="apex-modal-footer">
+          <button type="button" class="btn btn--ghost" onclick="window.closeModal('modal-starting-balance')">Cancel</button>
+          <button type="submit" class="btn btn--ink">Save Starting Balance</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Add Account (Bank & General Ledger Account) -->
+  <div class="apex-modal-overlay" id="modal-add-account">
+    <div class="apex-modal-card" style="max-width: 620px;">
+      <div class="apex-modal-header">
+        <div>
+          <b style="font-size: 16px;">Add Account</b>
+        </div>
+        <button class="ibtn ibtn--sm" onclick="window.closeModal('modal-add-account')">✕</button>
+      </div>
+      <form onsubmit="window.submitNewAccount(event)">
+        <div class="apex-modal-body">
+          <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field" id="acc-entity-field-container">
+              <label class="field__label">Target Subsidiary Entity</label>
+              <select id="acc-entity-select" class="input" style="font-weight: 700;">
+                <!-- Populated dynamically by openAddAccountModal with Chinese Wall protection -->
+              </select>
+            </div>
+            <div class="field">
+              <label class="field__label">Account Type</label>
+              <select id="acc-type-select" class="input" style="font-weight: 700;" onchange="window.onAccountTypeChange()">
+                <option value="Asset">Asset (Bank, Cash, Receivables)</option>
+                <option value="Liability">Liability (Payables, Loans)</option>
+                <option value="Equity">Equity (Capital, Reserves)</option>
+                <option value="Income">Income / Revenue (Sales)</option>
+                <option value="Expense">Expense (Operating, COGS)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid" style="grid-template-columns: 1.2fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Detail / Sub-Type</label>
+              <select id="acc-subtype-select" class="input" onchange="window.onAccountSubTypeChange()">
+                <option value="Bank">Bank Checking / Savings Account</option>
+                <option value="Cash">Cash on Hand / Petty Till</option>
+                <option value="Accounts Receivable">Accounts Receivable</option>
+                <option value="Current Asset">Other Current Asset</option>
+                <option value="Fixed Asset">Fixed Asset (Plant, Equipment)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="field__label">GL Code</label>
+              <input type="text" id="acc-code-input" class="input" placeholder="e.g. 1030" style="font-family: monospace; font-weight: 700;" required>
+              <small id="acc-code-hint" style="color: var(--muted); font-size: 11px;">Auto-suggested next ledger code.</small>
+            </div>
+          </div>
+
+          <div class="field" style="margin-bottom: 14px;">
+            <label class="field__label">Account Name</label>
+            <input type="text" id="acc-name-input" class="input" placeholder="e.g. Guaranty Trust Bank (GTB Operations)" required style="font-weight: 600;">
+          </div>
+
+          <!-- Bank Specific Fields (Shown when type is Bank) -->
+          <div id="acc-bank-fields-wrapper" style="background: var(--well); border: 1px solid var(--line-2); border-radius: 10px; padding: 14px; margin-bottom: 14px;">
+            <div style="font-size: 12px; font-weight: 700; color: var(--rusbi-green); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">
+              🇳🇬 Nigerian Commercial Bank Details
+            </div>
+            <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 12px;">
+              <div class="field">
+                <label class="field__label">Bank Name</label>
+                <input type="text" id="acc-bank-name-input" class="input" placeholder="e.g. GTBank, Zenith, Access, Moniepoint" list="acc-nigerian-banks-list">
+                <datalist id="acc-nigerian-banks-list">
+                  <option value="Zenith Bank Plc">
+                  <option value="Access Bank Plc">
+                  <option value="Guaranty Trust Bank (GTBank)">
+                  <option value="First Bank of Nigeria">
+                  <option value="United Bank for Africa (UBA)">
+                  <option value="Fidelity Bank">
+                  <option value="Stanbic IBTC Bank">
+                  <option value="Sterling Bank">
+                  <option value="Kuda Microfinance Bank">
+                  <option value="Moniepoint Microfinance Bank">
+                  <option value="OPay Digital Services">
+                </datalist>
+              </div>
+              <div class="field">
+                <label class="field__label">10-Digit Account Number</label>
+                <input type="text" id="acc-bank-num-input" class="input" placeholder="0123456789" maxlength="10" style="font-family: monospace; font-weight: 700;">
+              </div>
+            </div>
+          </div>
+
+          <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div class="field">
+              <label class="field__label">Opening Balance (₦, optional)</label>
+              <input type="number" id="acc-opening-balance" class="input" placeholder="0" min="0" step="any" value="0" style="font-weight: 700; color: var(--rusbi-green);">
+              <small style="color: var(--muted); font-size: 11px;">Initial balance as of handover.</small>
+            </div>
+            <div class="field">
+              <label class="field__label">As of Date</label>
+              <input type="date" id="acc-opening-date" class="input" value="2026-10-01">
+            </div>
+          </div>
+        </div>
+        <div class="apex-modal-footer">
+          <button type="button" class="btn btn--ghost" onclick="window.closeModal('modal-add-account')">Cancel</button>
+          <button type="submit" class="btn btn--ink">Save Account</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Edit Account (Bank & General Ledger Account) -->
+  <div class="apex-modal-overlay" id="modal-edit-account">
+    <div class="apex-modal-card" style="max-width: 600px;">
+      <div class="apex-modal-header">
+        <div>
+          <b style="font-size: 16px;">Edit Account</b>
+        </div>
+        <button class="ibtn ibtn--sm" onclick="window.closeModal('modal-edit-account')">✕</button>
+      </div>
+      <form onsubmit="window.submitEditAccount(event)">
+        <input type="hidden" id="edit-acc-code">
+        <div class="apex-modal-body">
+          <!-- Entity & GL Code Information Bar -->
+          <div class="grid" style="grid-template-columns: 1.4fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Subsidiary Business</label>
+              <div id="edit-acc-entity-display" style="display: flex; align-items: center; justify-content: space-between; padding: 7px 12px; background: var(--well); border: 1px solid var(--rim); border-radius: 8px; font-weight: 700; height: 38px;">
+                <span id="edit-acc-entity-name">Rusbi Bakery</span>
+                <span class="spill spill--plain" style="font-size: 10px; font-weight: 700; color: var(--rusbi-green); background: rgba(0, 166, 81, 0.08); border: 1px solid rgba(0, 166, 81, 0.25);">🔒 Branch Scoped</span>
+              </div>
+            </div>
+            <div class="field">
+              <label class="field__label">GL Account Code</label>
+              <input type="text" id="edit-acc-code-display" class="input" readonly style="font-family: monospace; font-weight: 800; background: var(--well); color: var(--text);">
+            </div>
+          </div>
+
+          <div class="field" style="margin-bottom: 14px;">
+            <label class="field__label">Account Title / Name</label>
+            <input type="text" id="edit-acc-name-input" class="input" placeholder="e.g. Guaranty Trust Bank (GTB Operations)" required style="font-weight: 700;">
+          </div>
+
+          <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="field">
+              <label class="field__label">Account Type</label>
+              <input type="text" id="edit-acc-type-display" class="input" readonly style="font-weight: 600; background: var(--well); color: var(--muted);">
+            </div>
+            <div class="field">
+              <label class="field__label">Detail / Sub-Type</label>
+              <select id="edit-acc-subtype-select" class="input" onchange="window.onEditAccountSubTypeChange()">
+                <option value="Bank">Bank Checking / Savings Account</option>
+                <option value="Cash">Cash on Hand / Petty Cash Till</option>
+                <option value="Accounts Receivable">Accounts Receivable</option>
+                <option value="Current Asset">Other Current Asset</option>
+                <option value="Fixed Asset">Fixed Asset (Plant, Equipment)</option>
+                <option value="Accounts Payable">Accounts Payable (A/P)</option>
+                <option value="Current Liability">Other Current Liability</option>
+                <option value="Owner Equity">Owner Capital & Equity</option>
+                <option value="Operating Revenue">Operating Revenue</option>
+                <option value="Operating Expense">Operating Expense</option>
+                <option value="General">General Ledger</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Bank Specific Fields (Shown when type is Bank) -->
+          <div id="edit-acc-bank-fields-wrapper" style="background: var(--well); border: 1px solid var(--line-2); border-radius: 10px; padding: 14px; margin-bottom: 14px;">
+            <div style="font-size: 12px; font-weight: 700; color: var(--rusbi-green); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">
+              🇳🇬 Nigerian Commercial Bank Details
+            </div>
+            <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 12px;">
+              <div class="field">
+                <label class="field__label">Bank Name</label>
+                <input type="text" id="edit-acc-bank-name-input" class="input" placeholder="e.g. GTBank, Zenith, Access, Moniepoint" list="acc-nigerian-banks-list">
+              </div>
+              <div class="field">
+                <label class="field__label">10-Digit Account Number</label>
+                <input type="text" id="edit-acc-bank-num-input" class="input" placeholder="0123456789" maxlength="10" style="font-family: monospace; font-weight: 700;">
+              </div>
+            </div>
+          </div>
+
+          <!-- Current Balance Info Bar -->
+          <div style="padding: 10px 14px; background: rgba(0, 166, 81, 0.06); border: 1px solid rgba(0, 166, 81, 0.2); border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 12px; color: var(--muted);">Live Ledger Balance:</span>
+            <b id="edit-acc-balance-display" style="font-size: 15px; color: var(--rusbi-green);">₦0.00</b>
+          </div>
+        </div>
+        <div class="apex-modal-footer">
+          <button type="button" class="btn btn--ghost" onclick="window.closeModal('modal-edit-account')">Cancel</button>
+          <button type="submit" class="btn btn--ink">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Print / View Payment Voucher (Module 2) -->
+  <div class="apex-modal-overlay" id="modal-bill-voucher">
+    <div class="apex-modal-card" style="max-width: 650px;">
+      <div class="apex-modal-header">
+        <div>
+          <b style="font-size: 16px;">Payment Voucher</b>
+        </div>
+        <button class="ibtn ibtn--sm" onclick="window.closeModal('modal-bill-voucher')">✕</button>
+      </div>
+      <div class="apex-modal-body" id="bill-voucher-content">
+        <!-- Injected by scripts/app.js -->
+      </div>
+      <div class="apex-modal-footer">
+        <button type="button" class="btn btn--ghost" onclick="window.closeModal('modal-bill-voucher')">Close</button>
+        <button type="button" class="btn btn--ink" onclick="window.printBillVoucher()">🖨️ Print Voucher</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: System Reboot Confirmation (Individual Business Wipe Clean) -->
+  <div class="apex-modal-overlay" id="modal-system-reboot">
+    <div class="apex-modal-card" style="max-width: 520px; border-top: 4px solid #dc2626;">
+      <div class="apex-modal-header">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 22px;">🔄</span>
+          <div>
+            <b style="font-size: 16px; color: #dc2626;" id="reboot-modal-title">System Reboot</b>
+            <div style="font-size: 11.5px; color: var(--muted);">Individual Subsidiary Data Wipe &amp; Day 1 Fresh Start</div>
+          </div>
+        </div>
+        <button class="ibtn ibtn--sm" onclick="window.closeModal('modal-system-reboot')">✕</button>
+      </div>
+      <div class="apex-modal-body">
+        <div id="reboot-modal-desc" style="font-size: 13.5px; line-height: 1.5; color: var(--text); margin-bottom: 14px;">
+          Are you sure you want to reboot and wipe all data for this subsidiary?
+        </div>
+        
+        <div style="background: rgba(220, 38, 38, 0.08); border: 1px solid rgba(220, 38, 38, 0.25); border-radius: 8px; padding: 12px; font-size: 12px; color: #dc2626; margin-bottom: 16px; line-height: 1.5;">
+          <b>⚠️ What gets wiped:</b> All sales invoices, customer receipts, purchases/bills, direct expenses, production assembly batches, waste records, and inventory quantities (reset to 0). Junior floor staff logins are reset.<br><br>
+          <b>🛡️ What is protected:</b> Branch Administrator credentials (Muhammad &amp; Ahmad), Super Admin login (Rusbi Group), all other subsidiaries, and company legal profiles (TIN, RC, phone, address).
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="reboot-confirm-input">Type <b>REBOOT</b> below to confirm execution:</label>
+          <input type="text" id="reboot-confirm-input" class="input" placeholder="REBOOT" style="font-weight: 700; text-transform: uppercase; font-family: monospace;" />
+        </div>
+      </div>
+      <div class="apex-modal-footer">
+        <button type="button" class="btn btn--ghost" onclick="window.closeModal('modal-system-reboot')">Cancel</button>
+        <button type="button" class="btn btn--bad" id="btn-execute-reboot" onclick="window.executeConfirmedReboot()">
+          <span>🔄</span> <span>Confirm System Reboot</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Install Mobile App (PWA Shortcut) -->
+  <div class="apex-modal-overlay" id="modal-install-app">
+    <div class="apex-modal-card" style="max-width: 480px;">
+      <div class="apex-modal-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 40px; height: 40px; border-radius: 10px; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 4px;">
+            <img src="./assets/rusbi-icon.png" alt="Rusbi Bakery OS" style="width: 100%; height: 100%; object-fit: contain;" />
+          </div>
+          <div>
+            <b style="font-size: 16px;">📲 Install Rusbi Bakery OS App</b>
+            <div style="font-size: 11.5px; color: var(--muted);">Direct Standalone Mobile Shortcut</div>
+          </div>
+        </div>
+        <button class="ibtn ibtn--sm" onclick="window.closeModal('modal-install-app')">✕</button>
+      </div>
+      <div class="apex-modal-body">
+        <div style="background: rgba(0, 166, 81, 0.08); border: 1px solid rgba(0, 166, 81, 0.25); border-radius: 12px; padding: 14px; margin-bottom: 16px; font-size: 13px; line-height: 1.5; color: var(--text);">
+          Install <b>Rusbi Bakery OS</b> directly onto your home screen. It opens instantly in full-screen mode like a native app without any browser navigation bars!
+        </div>
+
+        <!-- Android / Chrome Native Prompt Area -->
+        <div id="pwa-android-install-section" style="display: none; text-align: center; padding: 10px 0;">
+          <p style="font-size: 13.5px; color: var(--text); margin-bottom: 14px;">
+            Click the button below to add Rusbi Bakery OS to your device's home screen.
+          </p>
+          <button type="button" class="btn btn--ink" style="width: 100%; padding: 12px; font-weight: 700; background: var(--rusbi-green); color: #fff; font-size: 14px;" onclick="window.triggerNativePWAInstall()">
+            📲 Add to Home Screen / Install Now
+          </button>
+        </div>
+
+        <!-- iOS Safari Instructions Area -->
+        <div id="pwa-ios-install-section">
+          <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--muted); letter-spacing: 0.05em; margin-bottom: 10px;">
+            How to Install on iPhone / iPad (Safari):
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: var(--well); border-radius: 10px;">
+              <span style="display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: var(--pill); color: var(--on-pill); font-weight: 800; font-size: 12px; flex-shrink: 0;">1</span>
+              <span style="font-size: 13px;">Tap the <b>Share</b> icon <svg style="display: inline-block; vertical-align: middle; width: 18px; height: 18px; margin: 0 2px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> at the bottom of Safari.</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: var(--well); border-radius: 10px;">
+              <span style="display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: var(--pill); color: var(--on-pill); font-weight: 800; font-size: 12px; flex-shrink: 0;">2</span>
+              <span style="font-size: 13px;">Scroll down and select <b>"Add to Home Screen"</b> (➕).</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: var(--well); border-radius: 10px;">
+              <span style="display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: var(--pill); color: var(--on-pill); font-weight: 800; font-size: 12px; flex-shrink: 0;">3</span>
+              <span style="font-size: 13px;">Tap <b>"Add"</b> in the top right corner. Done!</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="apex-modal-footer">
+        <button type="button" class="btn btn--ghost" onclick="window.closeModal('modal-install-app')">Got It</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./scripts/app.js?v=6.0"></script>
+</body>
+</html>

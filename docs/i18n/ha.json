@@ -1,0 +1,29 @@
+{
+  "lang": "ha",
+  "name": "Hausa",
+  "translations": {
+    "dashboard": "Babban Shafin Kulawa",
+    "enter_cash": "Shigar da Kudi",
+    "credit_debt": "Bashi",
+    "bread_baked": "Gurasar da aka toya",
+    "spoiled_goods": "Kayan da suka baci",
+    "payment_received": "An karɓi kuɗi",
+    "balance_owing": "Sauran kuɗi",
+    "crate_return": "Mayar da kwano",
+    "crates_issued": "Kwanonin da aka bayar",
+    "crates_held": "Kwanonin da ke waje",
+    "flour_bags": "Buhunan Fawa",
+    "sugar_bags": "Buhunan Sukari",
+    "diesel_litres": "Litan Kalanzir / Dizil",
+    "cash_in_hand": "Kudi a Hannu",
+    "cash_in_safe": "Kudi a Asusun Ajiya",
+    "generator_hours": "Awannin Inji",
+    "shift_closed": "An Rufe Lokacin Aiki",
+    "discrepancy": "Bambancin Lissafi",
+    "wholesaler": "Mai Sari",
+    "tea_vendor": "Mai Shayi",
+    "guarantor": "Wakili / Mai Lamuni",
+    "animal_feed": "Abincin Dabbobi / Kifi",
+    "unaccounted_shortfall": "Gurasar da ba a gani ba"
+  }
+}

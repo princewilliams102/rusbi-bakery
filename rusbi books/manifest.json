@@ -1,0 +1,38 @@
+{
+  "name": "Rusbi Books — Group Accounting OS",
+  "short_name": "Rusbi Books",
+  "description": "Multi-entity double-entry accounting software for Rusbi Group of Companies Ltd.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#e3e6dd",
+  "theme_color": "#00a651",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "./assets/rusbi-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./assets/rusbi-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./assets/rusbi-icon-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "./assets/rusbi-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["business", "finance", "productivity"]
+}

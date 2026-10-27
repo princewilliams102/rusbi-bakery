@@ -1,0 +1,8 @@
+Date,Bank Description,Amount,Payment Method,Supplier/Payee,Expense Category,Approved By
+2026-05-01,Direct Transfer - Diesel Fuel Supply (2000L),2400000,Direct Debit,TotalEnergies Marketing Nig Plc,Utilities & Fuel,Managing Director
+2026-05-02,Customer Bank Transfer - MegaMart Settlement,1850000,NIP Transfer,MegaMart Supermarkets Ltd,Sales Receipt,Chief Accountant
+2026-05-03,Direct Vendor Payment - 200 Bags Flour (50kg standard),12000000,Wire Transfer,Flour Mills of Nigeria Plc,Raw Materials Restock,Managing Director
+2026-05-04,Oven Maintenance & Baking Equipment Service,450000,POS Transfer,Fidson Technical Engineering,Repairs & Maintenance,Head Baker
+2026-05-05,Customer Advance Prepayment - 500 Loaves Order,500000,Bank Deposit,Alh. Mohammed Ishaq,Customer Prepayment,Chief Accountant
+2026-05-06,Commercial Packaging Materials & Loaf Wrappers,750000,Bank Transfer,Polyfilm Packaging Ltd,Packaging Supplies,Procurement Head
+2026-05-07,Zenith Bank Monthly Account Maintenance & Stamp Duty,14500,Direct Debit,Zenith Bank Plc,Bank Charges,Automated System

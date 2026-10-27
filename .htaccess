@@ -1,0 +1,14 @@
+# Apache / cPanel Configuration for Apex Books
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # Deny direct browser access to the sqlite database file
+    RewriteRule ^data/.*\.sqlite$ - [F,L]
+</IfModule>
+
+# Enable Gzip Compression for Fast Loading
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/plain text/html text/xml text/css application/xml application/xhtml+xml application/rss+xml application/javascript application/x-javascript application/json
+</IfModule>
+
+# Prevent Directory Browsing
+Options -Indexes
