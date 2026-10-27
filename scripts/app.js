@@ -9334,12 +9334,108 @@ window.calcTenderSum = function() {
 window.handlePosCustomerChange = function() {
   const select = document.getElementById('pos-customer');
   const bashiInput = document.getElementById('tender-bashi');
+  const walkinBox = document.getElementById('pos-walkin-data');
+  const regInfo = document.getElementById('pos-registered-info');
+  if (!select) return;
+
+  const opt = select.options[select.selectedIndex];
+
   if (select.value === 'walkin') {
+    if (walkinBox) walkinBox.style.display = 'grid';
+    if (regInfo) regInfo.style.display = 'none';
     if (bashiInput && Number(bashiInput.value) > 0) {
       alert("Cannot issue credit to Walk-in retail customer. Bashi reset to 0.");
       bashiInput.value = '';
     }
+  } else {
+    if (walkinBox) walkinBox.style.display = 'none';
+    if (regInfo) {
+      regInfo.style.display = 'block';
+      const roleEl = document.getElementById('pos-cust-role-badge');
+      const phoneEl = document.getElementById('pos-cust-phone-disp');
+      const balEl = document.getElementById('pos-cust-balance-disp');
+      if (roleEl) roleEl.innerText = opt?.dataset.role || 'Wholesale';
+      if (phoneEl) phoneEl.innerText = opt?.dataset.phone || '';
+      if (balEl) balEl.innerText = `₦${Number(opt?.dataset.owing || 0).toLocaleString()}`;
+    }
   }
+};
+
+window.togglePosNewCustomer = function() {
+  const form = document.getElementById('pos-new-cust-form');
+  if (form) {
+    const isHidden = form.style.display === 'none' || !form.style.display;
+    form.style.display = isHidden ? 'flex' : 'none';
+    if (isHidden) {
+      document.getElementById('pos-new-cust-name')?.focus();
+    }
+  }
+};
+
+window.savePosNewCustomer = function() {
+  const nameInput = document.getElementById('pos-new-cust-name');
+  const phoneInput = document.getElementById('pos-new-cust-phone');
+  const typeSelect = document.getElementById('pos-new-cust-type');
+  const name = (nameInput?.value || '').trim();
+  const phone = (phoneInput?.value || '').trim();
+  const role = typeSelect?.value || 'Wholesale Distributor (Mai Sari)';
+
+  if (!name) {
+    alert("Please enter customer name.");
+    nameInput?.focus();
+    return;
+  }
+
+  const entity = state.entities[0] || {};
+  if (!entity.bashiDistributors) entity.bashiDistributors = [];
+
+  const newCust = {
+    id: `cust-${Date.now()}`,
+    name: name,
+    phone: phone || '+234 800 000 0000',
+    role: role,
+    dailyAllocation: 50,
+    creditLimit: 200000,
+    balanceOwing: 0,
+    overdueDays: 0,
+    status: 'active'
+  };
+
+  entity.bashiDistributors.push(newCust);
+  if (!entity.customers) entity.customers = [];
+  entity.customers.push({
+    id: newCust.id,
+    name: newCust.name,
+    displayName: newCust.name,
+    phone: newCust.phone,
+    role: newCust.role,
+    balance: 0
+  });
+
+  saveState();
+
+  // Add option to select and select it
+  const select = document.getElementById('pos-customer');
+  if (select) {
+    const opt = document.createElement('option');
+    opt.value = newCust.id;
+    opt.text = `${newCust.name} (${newCust.phone}) — Owing: ₦0`;
+    opt.dataset.phone = newCust.phone;
+    opt.dataset.role = newCust.role;
+    opt.dataset.owing = 0;
+    opt.dataset.limit = 200000;
+    select.appendChild(opt);
+    select.value = newCust.id;
+  }
+
+  // Hide form & reset
+  if (nameInput) nameInput.value = '';
+  if (phoneInput) phoneInput.value = '';
+  const form = document.getElementById('pos-new-cust-form');
+  if (form) form.style.display = 'none';
+
+  window.handlePosCustomerChange();
+  showToast(`✓ Added ${name} (${phone}) to customer directory!`);
 };
 
 window.submitPosCheckout = function() {
@@ -9351,7 +9447,21 @@ window.submitPosCheckout = function() {
   const cash = Number(document.getElementById('tender-cash')?.value || 0);
   const isSplit = !!window.posSplitActive;
   const custSelect = document.getElementById('pos-customer');
-  const custName = custSelect?.options[custSelect.selectedIndex]?.text?.split('(')[0]?.trim() || 'Cash Walk-in';
+  const isWalkin = !custSelect || custSelect.value === 'walkin';
+
+  let custName = 'Walk-in Retail';
+  let custPhone = '';
+
+  if (isWalkin) {
+    const nameVal = document.getElementById('pos-walkin-name')?.value.trim();
+    const phoneVal = document.getElementById('pos-walkin-phone')?.value.trim();
+    if (nameVal) custName = nameVal;
+    if (phoneVal) custPhone = phoneVal;
+  } else {
+    const opt = custSelect.options[custSelect.selectedIndex];
+    custName = opt?.text?.split('(')[0]?.trim() || 'Customer';
+    custPhone = opt?.dataset.phone || '';
+  }
 
   if (!isSplit) {
     if (cash < targetTotal) {
@@ -9369,13 +9479,13 @@ window.submitPosCheckout = function() {
       return;
     }
 
-    if (bashi > 0 && custSelect?.value === 'walkin') {
-      alert("Cannot issue Bashi credit to Walk-in retail. Please select a registered distributor.");
-      custSelect.focus();
+    if (bashi > 0 && isWalkin) {
+      alert("Cannot issue Bashi credit to Walk-in retail. Please select or register a customer.");
+      custSelect?.focus();
       return;
     }
 
-    if (bashi > 0 && custSelect?.value !== 'walkin') {
+    if (bashi > 0 && !isWalkin) {
       const debtor = (state.entities[0].bashiDistributors || []).find(d => d.id === custSelect.value);
       if (debtor) debtor.balanceOwing = (debtor.balanceOwing || 0) + bashi;
     }
@@ -9384,10 +9494,14 @@ window.submitPosCheckout = function() {
   // Deduct inventory
   const entity = state.entities[0];
   const products = (entity.inventory || []).filter(i => i.type === 'product');
+  const soldItems = [];
   products.forEach(p => {
     const input = document.getElementById(`pos-qty-${p.id}`);
     const qty = Number(input?.value || 0);
-    if (qty > 0) p.qtyOnHand = Math.max(0, Number(p.qtyOnHand || 0) - qty);
+    if (qty > 0) {
+      p.qtyOnHand = Math.max(0, Number(p.qtyOnHand || 0) - qty);
+      soldItems.push({ id: p.id, name: p.name, qty: qty, price: Number(p.salesPrice || p.price || 850) });
+    }
   });
 
   // Update till cash
@@ -9397,8 +9511,48 @@ window.submitPosCheckout = function() {
     entity.cashShift.cashCollectedSales = (entity.cashShift.cashCollectedSales || 0) + cashAdded;
   }
 
+  // Record permanent sales log with customer data
+  if (!entity.salesLog) entity.salesLog = [];
+  entity.salesLog.unshift({
+    id: `sale-${Date.now()}`,
+    timestamp: new Date().toISOString(),
+    customerType: isWalkin ? 'walkin' : 'registered',
+    customerId: custSelect?.value || 'walkin',
+    customerName: custName,
+    customerPhone: custPhone,
+    total: targetTotal,
+    cashTendered: cash,
+    items: soldItems,
+    isSplit: isSplit,
+    tenders: {
+      cash: cashAdded,
+      pos: isSplit ? Number(document.getElementById('tender-pos')?.value || 0) : 0,
+      transfer: isSplit ? Number(document.getElementById('tender-transfer')?.value || 0) : 0,
+      bashi: isSplit ? Number(document.getElementById('tender-bashi')?.value || 0) : 0
+    }
+  });
+
+  // If phone was provided for walkin, save to retail customer directory for retention
+  if (isWalkin && custPhone) {
+    if (!entity.retailCustomers) entity.retailCustomers = [];
+    const exists = entity.retailCustomers.find(r => r.phone === custPhone);
+    if (!exists) {
+      entity.retailCustomers.push({
+        id: `ret-${Date.now()}`,
+        name: custName,
+        phone: custPhone,
+        firstVisit: new Date().toISOString(),
+        totalPurchases: targetTotal
+      });
+    } else {
+      exists.totalPurchases = (exists.totalPurchases || 0) + targetTotal;
+      if (custName !== 'Walk-in Retail') exists.name = custName;
+    }
+  }
+
   saveState();
-  showToast(`✓ Sale completed: ₦${targetTotal.toLocaleString()} dispatched to ${custName}!`);
+  const phoneLabel = custPhone ? ` (${custPhone})` : '';
+  showToast(`✓ Sale completed: ₦${targetTotal.toLocaleString()} dispatched to ${custName}${phoneLabel}!`);
   window.navigateTo('dashboard');
 };
 

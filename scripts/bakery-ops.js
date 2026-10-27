@@ -539,7 +539,18 @@ export function renderPosView(container, state, engine) {
   const isHa = currentLang === 'ha';
   const entity = state.entities[0] || {};
   const bashiList = entity.bashiDistributors || [];
+  const registeredCusts = entity.customers || [];
   const products = (entity.inventory || []).filter(i => i.type === 'product');
+
+  // Aggregate all registered customers & distributors without duplicates
+  const seenIds = new Set();
+  const allCustomers = [];
+  [...bashiList, ...registeredCusts].forEach(c => {
+    if (c && c.name && !seenIds.has(c.id || c.name)) {
+      seenIds.add(c.id || c.name);
+      allCustomers.push(c);
+    }
+  });
 
   container.innerHTML = `
     <div style="margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
@@ -573,14 +584,79 @@ export function renderPosView(container, state, engine) {
         </div>
       </div>
 
-      <!-- Right: Progressive Disclosure Payment Settlement (Default Cash) -->
+      <!-- Right: Customer Data Capture & Payment Settlement -->
       <div class="card" style="border: 2px solid var(--rusbi-green);">
         <div class="card__head">
           <b style="font-size: 15px;">${isHa ? 'Biya' : 'Payment'}</b>
           <span class="badge badge--pine" id="pos-badge-tender">${isHa ? 'Kudi' : 'Cash'}</span>
         </div>
 
-        <div style="background: var(--well); border-radius: 10px; padding: 14px; text-align: center; margin-bottom: 14px;">
+        <!-- Customer Identification & Data Collection -->
+        <div style="background: var(--well); border-radius: 10px; padding: 12px; margin-bottom: 12px; border: 1px solid var(--line);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <label style="font-size: 12px; font-weight: 800; text-transform: uppercase; color: var(--muted); letter-spacing: 0.03em;">
+              ${isHa ? 'Mai Saye' : 'Customer'}
+            </label>
+            <button type="button" class="btn btn--sm btn--ghost" id="btn-toggle-new-cust" onclick="window.togglePosNewCustomer()" style="padding: 2px 8px; font-size: 11px; font-weight: 700; color: var(--rusbi-green);">
+              + ${isHa ? 'Sabo' : 'New'}
+            </button>
+          </div>
+
+          <!-- Main Customer Dropdown -->
+          <select id="pos-customer" class="input" style="font-weight: 700; margin-bottom: 8px;" onchange="window.handlePosCustomerChange()">
+            <option value="walkin" selected>${isHa ? 'Kudin Hannu (Walk-in)' : 'Walk-in'}</option>
+            <optgroup label="${isHa ? 'Masu Sari & Kwangila' : 'Distributors & Regulars'}">
+              ${allCustomers.map(c => `
+                <option value="${c.id}" data-phone="${c.phone || ''}" data-role="${c.role || 'Wholesale'}" data-owing="${c.balanceOwing || c.balance || 0}" data-limit="${c.creditLimit || 0}">
+                  ${c.name} (${c.phone ? c.phone.replace('+234', '0') : ''}) — ${isHa ? 'Bashi' : 'Owing'}: ₦${(c.balanceOwing || c.balance || 0).toLocaleString()}
+                </option>
+              `).join('')}
+            </optgroup>
+          </select>
+
+          <!-- Walk-in Customer Data Capture (Visible by default for Walk-in) -->
+          <div id="pos-walkin-data" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div>
+              <input type="text" id="pos-walkin-name" class="input input--sm" placeholder="${isHa ? 'Suna (na zabi)' : 'Name (optional)'}" style="font-size: 12.5px; height: 36px;">
+            </div>
+            <div>
+              <input type="tel" id="pos-walkin-phone" class="input input--sm" placeholder="${isHa ? 'Lambar Waya' : 'Phone'}" maxlength="15" style="font-size: 12.5px; height: 36px;">
+            </div>
+          </div>
+
+          <!-- Registered Customer Details Badge (Visible when registered distributor/buyer is picked) -->
+          <div id="pos-registered-info" style="display: none; padding: 8px 10px; background: rgba(0, 166, 81, 0.08); border-radius: 6px; font-size: 12px; border: 1px solid rgba(0, 166, 81, 0.2);">
+            <div style="display: flex; justify-content: space-between; font-weight: 700;">
+              <span id="pos-cust-role-badge">Wholesale</span>
+              <span id="pos-cust-phone-disp" style="color: var(--muted); font-family: monospace;"></span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-top: 3px;">
+              <span style="color: var(--muted);">${isHa ? 'Bashi' : 'Owing'}:</span>
+              <b id="pos-cust-balance-disp" style="color: #d97706; font-weight: 800;">₦0</b>
+            </div>
+          </div>
+
+          <!-- Quick Add New Customer Form (Toggled by + New) -->
+          <div id="pos-new-cust-form" style="display: none; flex-direction: column; gap: 6px; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line);">
+            <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 6px;">
+              <input type="text" id="pos-new-cust-name" class="input input--sm" placeholder="${isHa ? 'Cikakken Suna' : 'Full Name'}" style="font-size: 12px; height: 34px;">
+              <input type="tel" id="pos-new-cust-phone" class="input input--sm" placeholder="${isHa ? 'Waya' : 'Phone'}" style="font-size: 12px; height: 34px;">
+            </div>
+            <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 6px;">
+              <select id="pos-new-cust-type" class="input input--sm" style="font-size: 11.5px; font-weight: 700; height: 34px;">
+                <option value="Wholesale Distributor (Mai Sari)">${isHa ? 'Mai Sari' : 'Wholesale'}</option>
+                <option value="Tea Vendor (Mai Shayi)">${isHa ? 'Mai Shayi' : 'Tea Vendor'}</option>
+                <option value="Retail Regular">${isHa ? 'Abokin Ciniki' : 'Retail Regular'}</option>
+                <option value="Institutional Account">${isHa ? 'Kwangila' : 'Institutional'}</option>
+              </select>
+              <button type="button" class="btn btn--ink btn--sm" onclick="window.savePosNewCustomer()" style="background: var(--rusbi-green); border-color: var(--rusbi-green); font-weight: 700; justify-content: center; height: 34px;">
+                ${isHa ? 'Ajiye' : 'Save'}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div style="background: var(--well); border-radius: 10px; padding: 14px; text-align: center; margin-bottom: 12px;">
           <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; font-weight: 800;">${isHa ? 'Jimlar Kudi' : 'Total'}</div>
           <div id="pos-total-display" style="font-size: 32px; font-weight: 900; color: var(--rusbi-green);">₦0.00</div>
         </div>
@@ -605,18 +681,6 @@ export function renderPosView(container, state, engine) {
 
         <!-- Hidden Split Container: Revealed only upon clicking Split Tender -->
         <div id="pos-split-container" style="display: none; flex-direction: column; gap: 10px; margin-bottom: 14px; padding-top: 10px; border-top: 1px dashed var(--line);">
-          <div class="field">
-            <label class="field__label">${isHa ? 'Mai Sari / Abokin Ciniki' : 'Customer'}</label>
-            <select id="pos-customer" class="input" style="font-weight: 700;" onchange="window.handlePosCustomerChange()">
-              <option value="walkin">${isHa ? 'Kudin Hannu (Walk-in)' : 'Walk-in Retail'}</option>
-              ${bashiList.map(d => `
-                <option value="${d.id}" data-limit="${d.creditLimit}" data-owing="${d.balanceOwing}">
-                  ${d.name} — ${isHa ? 'Bashi' : 'Owing'}: ₦${d.balanceOwing.toLocaleString()}
-                </option>
-              `).join('')}
-            </select>
-          </div>
-
           <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 8px;">
             <div>
               <label style="font-size: 11px; font-weight: 700; display: block; margin-bottom: 2px;">POS (₦)</label>
@@ -640,7 +704,7 @@ export function renderPosView(container, state, engine) {
           </div>
 
           <div>
-            <label style="font-size: 11px; font-weight: 700; display: block; margin-bottom: 2px; color: #d97706;">${isHa ? 'Bashi (Credit) (₦)' : 'Credit (₦)'}</label>
+            <label style="font-size: 11px; font-weight: 700; display: block; margin-bottom: 2px; color: #d97706;">${isHa ? 'Bashi' : 'Credit (₦)'}</label>
             <input type="number" id="tender-bashi" class="input" placeholder="0.00" oninput="window.onBashiInputChanged(this.value)">
           </div>
         </div>
