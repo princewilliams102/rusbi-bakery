@@ -3251,7 +3251,8 @@ html, body {
   color: #161b17;
 }
 
-.splash-brand-books {
+.splash-brand-books,
+.splash-brand-bakery {
   color: #0ea055;
   margin-left: 6px;
 }
