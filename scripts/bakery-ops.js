@@ -542,19 +542,20 @@ export function renderBakeryMasterDashboard(container, state, engine) {
 export function renderPosView(container, state, engine) {
   const isHa = currentLang === 'ha';
   const entity = state.entities[0] || {};
-  const bashiList = entity.bashiDistributors || [];
-  const registeredCusts = entity.customers || [];
+  const distributors = entity.bashiDistributors || [];
   const products = (entity.inventory || []).filter(i => i.type === 'product');
 
-  // Aggregate all registered customers & distributors without duplicates
-  const seenIds = new Set();
-  const allCustomers = [];
-  [...bashiList, ...registeredCusts].forEach(c => {
-    if (c && c.name && !seenIds.has(c.id || c.name)) {
-      seenIds.add(c.id || c.name);
-      allCustomers.push(c);
-    }
-  });
+  // Available bank accounts from Banking module
+  const bankAccounts = (entity.accounts || []).filter(a => a.type === 'Asset' && a.subType === 'Bank');
+  const activeBanks = bankAccounts.length > 0 ? bankAccounts : [
+    { code: '1010', name: 'Zenith Bank Plc (Operating Checking)', accountNumber: '1014523991' },
+    { code: '1030', name: 'Moniepoint MFB (POS & Collection)', accountNumber: '8204910283' },
+    { code: '1020', name: 'Access Bank Plc (Bakery Reserve)', accountNumber: '0029410291' }
+  ];
+
+  window.posCustType = window.posCustType || 'walkin';
+  window.posPayMethod = window.posPayMethod || 'cash';
+  window.posCalculatedTotal = 0;
 
   container.innerHTML = `
     <div style="margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
@@ -590,37 +591,30 @@ export function renderPosView(container, state, engine) {
         </div>
       </div>
 
-      <!-- Right: Visual Payment & Customer Settlement (NO Split Button!) -->
+      <!-- Right: Customer & Payment Settlement Panel -->
       <div class="card" style="border: 2px solid var(--rusbi-green);">
         <div class="card__head">
           <b style="font-size: 15px;">${isHa ? 'Biya' : 'Payment'}</b>
           <span class="badge badge--pine" id="pos-badge-status">${isHa ? 'Akwati' : 'Counter'}</span>
         </div>
 
-        <!-- 1. Customer Dropdown & Data Collection -->
+        <!-- 1. Customer Selection: Walk-in vs Distributor -->
         <div style="background: var(--well); border-radius: 10px; padding: 12px; margin-bottom: 12px; border: 1px solid var(--line);">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-            <label style="font-size: 11.5px; font-weight: 800; text-transform: uppercase; color: var(--muted); letter-spacing: 0.03em;">
-              ${isHa ? 'Mai Saye' : 'Customer'}
-            </label>
-            <button type="button" class="btn btn--sm btn--ghost" id="btn-toggle-new-cust" onclick="window.togglePosNewCustomer()" style="padding: 2px 8px; font-size: 11px; font-weight: 700; color: var(--rusbi-green);">
-              + ${isHa ? 'Sabo' : 'New'}
+          <label style="font-size: 11.5px; font-weight: 800; text-transform: uppercase; color: var(--muted); letter-spacing: 0.03em; display: block; margin-bottom: 6px;">
+            ${isHa ? 'Mai Saye' : 'Customer'}
+          </label>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+            <button type="button" id="btn-cust-type-walkin" class="btn btn--sm ${window.posCustType === 'walkin' ? 'btn--ink' : 'btn--ghost'}" onclick="window.setPosCustType('walkin')" style="font-weight: 800; justify-content: center;">
+              ${isHa ? 'Kudin Hannu' : 'Walk-in'}
+            </button>
+            <button type="button" id="btn-cust-type-distributor" class="btn btn--sm ${window.posCustType === 'distributor' ? 'btn--ink' : 'btn--ghost'}" onclick="window.setPosCustType('distributor')" style="font-weight: 800; justify-content: center;">
+              ${isHa ? 'Mai Sari' : 'Distributor'}
             </button>
           </div>
 
-          <select id="pos-customer" class="input" style="font-weight: 700; margin-bottom: 6px;" onchange="window.handlePosCustomerChange()">
-            <option value="walkin" id="opt-customer-walkin" selected>${isHa ? 'Kudin Hannu (Walk-in)' : 'Walk-in'}</option>
-            <optgroup label="${isHa ? 'Yan Sari' : 'Distributors'}">
-              ${allCustomers.map(c => `
-                <option value="${c.id}" data-phone="${c.phone || ''}" data-role="${c.role || 'Wholesale'}" data-owing="${c.balanceOwing || c.balance || 0}">
-                  ${c.name} — ${isHa ? 'Bashi' : 'Owing'}: ₦${(c.balanceOwing || c.balance || 0).toLocaleString()}
-                </option>
-              `).join('')}
-            </optgroup>
-          </select>
-
-          <!-- Walk-in Customer Contact Capture -->
-          <div id="pos-walkin-data" style="display: flex; flex-direction: column; gap: 4px;">
+          <!-- Walk-in Customer Contact Inputs (ONLY shown for walk-in!) -->
+          <div id="pos-walkin-box" style="display: ${window.posCustType === 'walkin' ? 'flex' : 'none'}; flex-direction: column; gap: 6px;">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
               <input type="text" id="pos-walkin-name" class="input input--sm" placeholder="${isHa ? 'Suna (na zabi)' : 'Name (optional)'}" style="font-size: 12px; height: 34px;">
               <input type="tel" id="pos-walkin-phone" class="input input--sm" placeholder="${isHa ? 'Lambar Waya' : 'Phone'}" maxlength="15" oninput="window.lookupWalkinPhone(this.value)" style="font-size: 12px; height: 34px;">
@@ -628,89 +622,116 @@ export function renderPosView(container, state, engine) {
             <div id="pos-walkin-found-badge" style="display: none; font-size: 11px; color: var(--rusbi-green); font-weight: 700; background: rgba(0, 166, 81, 0.08); padding: 4px 8px; border-radius: 6px;"></div>
           </div>
 
-          <!-- Registered Customer Badge -->
-          <div id="pos-registered-info" style="display: none; padding: 6px 10px; background: rgba(0, 166, 81, 0.08); border-radius: 6px; font-size: 12px; border: 1px solid rgba(0, 166, 81, 0.2);">
-            <div style="display: flex; justify-content: space-between; font-weight: 700;">
-              <span id="pos-cust-role-badge">Wholesale</span>
-              <span id="pos-cust-phone-disp" style="color: var(--muted); font-family: monospace;"></span>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin-top: 2px;">
-              <span style="color: var(--muted);">${isHa ? 'Bashi' : 'Owing'}:</span>
-              <b id="pos-cust-balance-disp" style="color: #d97706; font-weight: 800;">₦0</b>
-            </div>
-          </div>
-
-          <!-- Inline Quick Add Customer Form -->
-          <div id="pos-new-cust-form" style="display: none; flex-direction: column; gap: 6px; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line);">
-            <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 6px;">
-              <input type="text" id="pos-new-cust-name" class="input input--sm" placeholder="${isHa ? 'Cikakken Suna' : 'Full Name'}" style="font-size: 12px; height: 34px;">
-              <input type="tel" id="pos-new-cust-phone" class="input input--sm" placeholder="${isHa ? 'Waya' : 'Phone'}" style="font-size: 12px; height: 34px;">
-            </div>
+          <!-- Distributor Dropdown (ONLY shown for distributor, Name & Phone HIDDEN!) -->
+          <div id="pos-distributor-box" style="display: ${window.posCustType === 'distributor' ? 'flex' : 'none'}; flex-direction: column; gap: 6px;">
             <div style="display: flex; gap: 6px;">
-              <select id="pos-new-cust-type" class="input input--sm" style="font-size: 12px; font-weight: 700; height: 34px; flex: 1;">
-                <option value="Wholesale Distributor">${isHa ? 'Mai Sari' : 'Wholesale'}</option>
-                <option value="Tea Vendor">${isHa ? 'Mai Shayi' : 'Tea Vendor'}</option>
-                <option value="Institutional">${isHa ? 'Kwangila' : 'Institutional'}</option>
+              <select id="pos-distributor-select" class="input" style="font-weight: 700; flex: 1; height: 36px;" onchange="window.handlePosDistributorChange()">
+                ${distributors.map(d => `
+                  <option value="${d.id}" data-owing="${d.balanceOwing || 0}" data-name="${d.name}">
+                    ${d.name} — ${isHa ? 'Bashi' : 'Owing'}: ₦${(d.balanceOwing || 0).toLocaleString()}
+                  </option>
+                `).join('')}
               </select>
-              <button type="button" class="btn btn--ink btn--sm" onclick="window.savePosNewCustomer()" style="background: var(--rusbi-green); border-color: var(--rusbi-green); font-weight: 700; height: 34px; padding: 0 16px;">
-                ${isHa ? 'Ajiye' : 'Save'}
+              <button type="button" class="btn btn--sm btn--ghost" onclick="window.openNewCustomerModal()" style="font-weight: 700; color: var(--rusbi-green); height: 36px; padding: 0 10px;">
+                + ${isHa ? 'Sabo' : 'New'}
               </button>
+            </div>
+            <div id="pos-distributor-debt-badge" style="padding: 6px 10px; background: rgba(217, 119, 6, 0.08); border-radius: 6px; font-size: 12px; border: 1px solid rgba(217, 119, 6, 0.25); display: flex; justify-content: space-between;">
+              <span style="color: var(--muted);">${isHa ? 'Tsohon Bashi' : 'Current Debt'}:</span>
+              <b id="pos-dist-owing-display" style="color: #d97706; font-weight: 850;">
+                ₦${((distributors[0]?.balanceOwing) || 0).toLocaleString()}
+              </b>
             </div>
           </div>
         </div>
 
         <!-- 2. Live Total Display -->
         <div style="background: var(--well); border-radius: 10px; padding: 12px; text-align: center; margin-bottom: 12px;">
-          <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; font-weight: 800;">${isHa ? 'Jimlar Kudi' : 'Total'}</div>
-          <div id="pos-total-display" style="font-size: 30px; font-weight: 900; color: var(--rusbi-green);">₦0.00</div>
+          <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; font-weight: 800;">${isHa ? 'Jimlar Kudi' : 'Total Due'}</div>
+          <div id="pos-total-display" style="font-size: 32px; font-weight: 900; color: var(--rusbi-green);">₦0.00</div>
         </div>
 
-        <!-- 3. Four Simple Visual Payment Rows -->
-        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
-          <!-- Cash -->
-          <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
-            <label style="font-size: 13px; font-weight: 800; min-width: 60px;">${isHa ? 'Kudi' : 'Cash'}</label>
-            <input type="number" id="tender-cash" class="input" placeholder="0.00" style="font-size: 15px; font-weight: 800; text-align: right; height: 38px;" oninput="window.calcLiveTenders()">
+        <!-- 3. Where is the cash/money coming from: Cash, POS or Transfer -->
+        <div style="background: var(--well); border-radius: 10px; padding: 12px; margin-bottom: 12px; border: 1px solid var(--line);">
+          <label style="font-size: 11.5px; font-weight: 800; text-transform: uppercase; color: var(--muted); letter-spacing: 0.03em; display: block; margin-bottom: 6px;">
+            ${isHa ? 'Hanyar Biya' : 'Payment Method'}
+          </label>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 10px;">
+            <button type="button" id="btn-pay-method-cash" class="btn btn--sm ${window.posPayMethod === 'cash' ? 'btn--ink' : 'btn--ghost'}" onclick="window.setPosPayMethod('cash')" style="font-weight: 800; justify-content: center; font-size: 12px;">
+              ${isHa ? 'Kudi' : 'Cash'}
+            </button>
+            <button type="button" id="btn-pay-method-pos" class="btn btn--sm ${window.posPayMethod === 'pos' ? 'btn--ink' : 'btn--ghost'}" onclick="window.setPosPayMethod('pos')" style="font-weight: 800; justify-content: center; font-size: 12px;">
+              POS
+            </button>
+            <button type="button" id="btn-pay-method-transfer" class="btn btn--sm ${window.posPayMethod === 'transfer' ? 'btn--ink' : 'btn--ghost'}" onclick="window.setPosPayMethod('transfer')" style="font-weight: 800; justify-content: center; font-size: 12px;">
+              ${isHa ? 'Tura Banki' : 'Transfer'}
+            </button>
           </div>
 
-          <!-- POS -->
-          <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
-            <label style="font-size: 13px; font-weight: 800; min-width: 60px;">POS</label>
-            <input type="number" id="tender-pos" class="input" placeholder="0.00" style="font-size: 15px; font-weight: 800; text-align: right; height: 38px;" oninput="window.calcLiveTenders()">
+          <!-- Connected Bank Account Selector (for Transfer) -->
+          <div id="pos-transfer-bank-box" style="display: ${window.posPayMethod === 'transfer' ? 'block' : 'none'};">
+            <label style="font-size: 11px; font-weight: 700; color: var(--muted); display: block; margin-bottom: 4px;">
+              ${isHa ? 'Asusun Banki' : 'Destination Bank Account'}
+            </label>
+            <select id="pos-transfer-bank-account" class="input input--sm" style="font-weight: 700; width: 100%;">
+              ${activeBanks.map(b => `
+                <option value="${b.code || b.name}">${b.name} ${b.accountNumber ? `(${b.accountNumber})` : ''}</option>
+              `).join('')}
+            </select>
           </div>
 
-          <!-- Transfer -->
-          <div style="display: flex; flex-direction: column; gap: 4px;">
-            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
-              <label style="font-size: 13px; font-weight: 800; min-width: 60px;">${isHa ? 'Tura Banki' : 'Transfer'}</label>
-              <input type="number" id="tender-transfer" class="input" placeholder="0.00" style="font-size: 15px; font-weight: 800; text-align: right; height: 38px;" oninput="window.calcLiveTenders()">
+          <!-- POS Terminal Account Selector (for POS) -->
+          <div id="pos-terminal-box" style="display: ${window.posPayMethod === 'pos' ? 'block' : 'none'};">
+            <label style="font-size: 11px; font-weight: 700; color: var(--muted); display: block; margin-bottom: 4px;">
+              ${isHa ? 'Na\'urar POS' : 'POS Terminal / Account'}
+            </label>
+            <select id="pos-terminal-account" class="input input--sm" style="font-weight: 700; width: 100%;">
+              <option value="moniepoint">Moniepoint POS Terminal #01 (8204910283)</option>
+              <option value="zenith">Zenith Bank POS Terminal (1014523991)</option>
+            </select>
+          </div>
+
+          <!-- Cash Drawer Info (for Cash) -->
+          <div id="pos-cash-box" style="display: ${window.posPayMethod === 'cash' ? 'block' : 'none'}; font-size: 12px; color: var(--muted);">
+            <span>${isHa ? 'Kudin Akwatin Mai Kudi (Drawer Till)' : 'Deposits into Cashier Drawer Till'}</span>
+          </div>
+        </div>
+
+        <!-- 4. Amount Paid & Owing Balance Math -->
+        <div style="background: var(--well); border-radius: 10px; padding: 12px; margin-bottom: 14px; border: 1px solid var(--line);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <label style="font-size: 11.5px; font-weight: 800; text-transform: uppercase; color: var(--muted); letter-spacing: 0.03em;">
+              ${isHa ? 'Kudin da aka Biya' : 'Amount Paid (₦)'}
+            </label>
+            <div style="display: flex; gap: 4px;">
+              <button type="button" class="btn btn--sm btn--ghost" onclick="window.setPosAmountPreset('full')" style="padding: 2px 8px; font-size: 11px; font-weight: 700;">
+                ${isHa ? 'Duka' : 'Full'}
+              </button>
+              <button type="button" class="btn btn--sm btn--ghost" onclick="window.setPosAmountPreset('zero')" style="padding: 2px 8px; font-size: 11px; font-weight: 700; color: #d97706;">
+                ${isHa ? 'Bashi (₦0)' : 'Credit (₦0)'}
+              </button>
             </div>
-            <div id="pos-transfer-bank-box" style="display: none; justify-content: flex-end;">
-              <select id="tender-transfer-bank" class="input input--sm" style="font-size: 11.5px; font-weight: 700; width: 180px; height: 30px;">
-                <option value="Zenith Bank">Zenith Bank</option>
-                <option value="Access Bank">Access Bank</option>
-                <option value="Moniepoint">Moniepoint</option>
-                <option value="OPay">OPay</option>
-              </select>
+          </div>
+
+          <input type="number" id="pos-amount-paid" class="input" placeholder="0.00" style="font-size: 20px; font-weight: 850; text-align: center; height: 44px; margin-bottom: 8px;" oninput="window.calcPosPaymentMath()">
+
+          <!-- Live Breakdown Result -->
+          <div id="pos-settlement-breakdown" style="padding: 8px 10px; background: rgba(0,0,0,0.03); border-radius: 8px; display: flex; flex-direction: column; gap: 4px; font-size: 12.5px;">
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: var(--muted);">${isHa ? 'An Biya:' : 'Paid:'}</span>
+              <b id="pos-breakdown-paid" style="color: var(--rusbi-green);">₦0.00</b>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span id="pos-breakdown-debt-label" style="color: #d97706; font-weight: 700;">${isHa ? 'Karin Bashi:' : 'Added to Debt:'}</span>
+              <b id="pos-breakdown-owing" style="color: #d97706; font-weight: 850;">₦0.00</b>
             </div>
           </div>
-
-          <!-- Credit (Bashi) -->
-          <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
-            <label style="font-size: 13px; font-weight: 800; color: #d97706; min-width: 60px;">${isHa ? 'Bashi' : 'Credit'}</label>
-            <input type="number" id="tender-bashi" class="input" placeholder="0.00" style="font-size: 15px; font-weight: 800; text-align: right; height: 38px; color: #d97706; border-color: rgba(217, 119, 6, 0.4);" oninput="window.calcLiveTenders()">
-          </div>
         </div>
 
-        <!-- 4. Live Remaining / Change Bar -->
-        <div id="pos-balance-banner" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: var(--well); border-radius: 8px; margin-bottom: 14px; border: 1px solid var(--line);">
-          <span style="font-size: 13px; font-weight: 700;" id="pos-balance-label">${isHa ? 'Ragewa:' : 'Remaining:'}</span>
-          <b id="pos-balance-value" style="font-size: 18px; font-weight: 900; color: var(--bad);">₦0.00</b>
-        </div>
-
-        <!-- 5. Complete Sale Button: ONLY green when Remaining is exactly 0 -->
-        <button type="button" id="btn-complete-sale" class="btn btn--ink" onclick="window.submitPosCheckout()" disabled style="width: 100%; height: 48px; font-size: 15px; font-weight: 850; justify-content: center; background: #64748b; border-color: #64748b; cursor: not-allowed; opacity: 0.6; transition: all 0.2s;">
-          ${isHa ? 'Sayarwa' : 'Complete Sale'}
+        <!-- 5. Complete Sale Button: ALWAYS ENABLED when items in cart! -->
+        <button type="button" id="btn-complete-sale" class="btn btn--ink" onclick="window.submitPosCheckout()" disabled style="width: 100%; height: 50px; font-size: 16px; font-weight: 850; justify-content: center; background: #64748b; border-color: #64748b; cursor: not-allowed; opacity: 0.6; transition: all 0.2s;">
+          ${isHa ? 'Kammala Sayarwa' : 'Complete Sale'}
         </button>
       </div>
     </div>

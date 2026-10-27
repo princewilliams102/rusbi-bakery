@@ -28,13 +28,47 @@ async function run() {
   await new Promise(r => setTimeout(r, 800));
 
   // ==========================================
-  // TEST 1: SALES POS (VISUAL PAYMENT & CREDIT RULE)
+  // TEST 1: SALES POS (WALK-IN VS DISTRIBUTOR & PARTIAL / ZERO PAYMENT)
   // ==========================================
   console.log('\n--- 1. Testing Sales POS ---');
   await page.evaluate(() => window.navigateTo('pos'));
   await new Promise(r => setTimeout(r, 500));
 
-  // Add 10 loaves
+  // 1. Verify default Customer mode is Walk-in with Name & Phone inputs
+  const walkinBoxDisplay = await page.$eval('#pos-walkin-box', el => el.style.display);
+  const distBoxDisplay = await page.$eval('#pos-distributor-box', el => el.style.display);
+  assert.notStrictEqual(walkinBoxDisplay, 'none', 'Walk-in box must be visible by default');
+  assert.strictEqual(distBoxDisplay, 'none', 'Distributor box must be hidden by default');
+  console.log(' [PASS] Default customer mode: Walk-in (Name & Phone inputs visible)');
+
+  // 2. Switch to Distributor: Name & Phone inputs hidden, distributor dropdown shown
+  await page.evaluate(() => window.setPosCustType('distributor'));
+  const walkinBoxAfter = await page.$eval('#pos-walkin-box', el => el.style.display);
+  const distBoxAfter = await page.$eval('#pos-distributor-box', el => el.style.display);
+  assert.strictEqual(walkinBoxAfter, 'none', 'Walk-in inputs must be hidden for Distributors');
+  assert.notStrictEqual(distBoxAfter, 'none', 'Distributor dropdown must be visible for Distributors');
+  const debtPillText = await page.$eval('#pos-distributor-debt-badge', el => el.innerText);
+  console.log(' [PASS] Distributor mode active (Name & Phone hidden). Debt status:', debtPillText);
+
+  // 3. Test Payment Methods & Bank Selection
+  await page.evaluate(() => window.setPosPayMethod('transfer'));
+  const transferBankBoxDisplay = await page.$eval('#pos-transfer-bank-box', el => el.style.display);
+  assert.notStrictEqual(transferBankBoxDisplay, 'none', 'Destination bank selector must be visible on Transfer');
+  const bankOptionsCount = await page.$$eval('#pos-transfer-bank-account option', opts => opts.length);
+  assert.ok(bankOptionsCount >= 1, 'Must have at least one bank account from Banking module');
+  console.log(` [PASS] Transfer selected: Destination bank account selector visible (${bankOptionsCount} accounts linked)`);
+
+  await page.evaluate(() => window.setPosPayMethod('pos'));
+  const posTerminalBoxDisplay = await page.$eval('#pos-terminal-box', el => el.style.display);
+  assert.notStrictEqual(posTerminalBoxDisplay, 'none', 'POS terminal selector must be visible on POS');
+  console.log(' [PASS] POS method selected: Terminal account selector visible');
+
+  await page.evaluate(() => window.setPosPayMethod('cash'));
+  const cashBoxDisplay = await page.$eval('#pos-cash-box', el => el.style.display);
+  assert.notStrictEqual(cashBoxDisplay, 'none', 'Cash till information must be visible on Cash');
+  console.log(' [PASS] Cash method selected: Cash drawer till active');
+
+  // 4. Add 10 loaves (₦12,000)
   await page.evaluate(() => {
     const qtyInput = document.querySelector('.pos-bread-qty');
     if (qtyInput) {
@@ -42,55 +76,33 @@ async function run() {
       window.calcPosTotal();
     }
   });
-
   const totalText = await page.$eval('#pos-total-display', el => el.innerText);
   console.log(' [PASS] Bread selected, Total updated:', totalText);
   assert.ok(totalText.includes('12,000'), 'Total should calculate to ₦12,000 (10 × ₦1,200)');
 
-  // Verify Complete button is disabled when nothing tendered
-  const btnDisabledBefore = await page.$eval('#btn-complete-sale', el => el.disabled);
-  assert.strictEqual(btnDisabledBefore, true, 'Complete button must be disabled when unpaid');
-  console.log(' [PASS] Complete button disabled when unpaid');
-
-  // Test Transfer bank dropdown reveal
+  // 5. Partial Payment Math (e.g. paying ₦5,000 on ₦12,000 order)
   await page.evaluate(() => {
-    const transferInp = document.getElementById('tender-transfer');
-    if (transferInp) {
-      transferInp.value = '2000';
-      window.calcLiveTenders();
+    const paidInput = document.getElementById('pos-amount-paid');
+    if (paidInput) {
+      paidInput.value = '5000';
+      window.calcPosPaymentMath();
     }
   });
-  const bankBoxDisplay = await page.$eval('#pos-transfer-bank-box', el => el.style.display);
-  assert.strictEqual(bankBoxDisplay, 'flex', 'Transfer bank dropdown must reveal when transfer > 0');
-  console.log(' [PASS] Transfer bank dropdown displays inline');
+  const paidText = await page.$eval('#pos-breakdown-paid', el => el.innerText);
+  const owingText = await page.$eval('#pos-breakdown-owing', el => el.innerText);
+  assert.ok(paidText.includes('5,000'), 'Paid breakdown should show ₦5,000');
+  assert.ok(owingText.includes('7,000'), 'Owing balance should add ₦7,000');
+  const btnEnabledPartial = await page.$eval('#btn-complete-sale', el => !el.disabled);
+  assert.strictEqual(btnEnabledPartial, true, 'Complete button must be enabled on partial payment');
+  console.log(` [PASS] Partial payment math: Paid ${paidText}, Added to Debt: ${owingText}. Complete button enabled!`);
 
-  // Test Credit Rule: Walk-in cannot get credit
-  await page.evaluate(() => {
-    const bashiInp = document.getElementById('tender-bashi');
-    if (bashiInp) {
-      bashiInp.value = '3000';
-      window.calcLiveTenders();
-    }
-  });
-  const walkinDisabled = await page.$eval('#opt-customer-walkin', el => el.disabled);
-  const selectedCust = await page.$eval('#pos-customer', el => el.value);
-  assert.strictEqual(walkinDisabled, true, 'Walkin option must be disabled when credit > 0');
-  assert.notStrictEqual(selectedCust, 'walkin', 'Customer must auto-switch away from walkin when credit > 0');
-  console.log(' [PASS] Credit Rule enforced: Walk-in disabled, switched to registered buyer:', selectedCust);
-
-  // Pay remaining in Cash (12000 - 2000 - 3000 = 7000)
-  await page.evaluate(() => {
-    const cashInp = document.getElementById('tender-cash');
-    if (cashInp) {
-      cashInp.value = '7000';
-      window.calcLiveTenders();
-    }
-  });
-  const remValue = await page.$eval('#pos-balance-value', el => el.innerText);
-  const btnDisabledAfter = await page.$eval('#btn-complete-sale', el => el.disabled);
-  assert.strictEqual(remValue, '₦0.00', 'Remaining balance should be ₦0.00');
-  assert.strictEqual(btnDisabledAfter, false, 'Complete button must be enabled when Remaining === 0');
-  console.log(' [PASS] Exact tender match: Remaining is ₦0.00, Complete button is active');
+  // 6. Zero Payment Math (100% credit checkout)
+  await page.evaluate(() => window.setPosAmountPreset('zero'));
+  const owingFullText = await page.$eval('#pos-breakdown-owing', el => el.innerText);
+  assert.ok(owingFullText.includes('12,000'), 'Zero payment should drop entire ₦12,000 to owing balance');
+  const btnEnabledZero = await page.$eval('#btn-complete-sale', el => !el.disabled);
+  assert.strictEqual(btnEnabledZero, true, 'Complete button must remain enabled even on ₦0 payment');
+  console.log(' [PASS] Zero payment preset (Credit ₦0): Entire ₦12,000 drops into owing balance. Checkout enabled!');
 
   // ==========================================
   // TEST 2: PRODUCTION (DRAWER & END BATCH)

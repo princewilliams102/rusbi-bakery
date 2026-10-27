@@ -298,14 +298,24 @@ export const INITIAL_DATA = {
       "accounts": [
         {
           "code": "1010",
-          "name": "Operating Checking (Zenith Bank)",
+          "name": "Zenith Bank Plc (Operating Checking)",
+          "accountNumber": "1014523991",
+          "type": "Asset",
+          "subType": "Bank",
+          "balance": 0
+        },
+        {
+          "code": "1030",
+          "name": "Moniepoint MFB (POS & Collection)",
+          "accountNumber": "8204910283",
           "type": "Asset",
           "subType": "Bank",
           "balance": 0
         },
         {
           "code": "1020",
-          "name": "Bakery Reserve (Access Bank)",
+          "name": "Access Bank Plc (Bakery Reserve)",
+          "accountNumber": "0029410291",
           "type": "Asset",
           "subType": "Bank",
           "balance": 0

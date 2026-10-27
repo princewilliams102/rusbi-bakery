@@ -9375,349 +9375,334 @@ window.calcPosTotal = function() {
   window.posCalculatedTotal = total;
   const display = document.getElementById('pos-total-display');
   if (display) display.innerText = `₦${total.toLocaleString()}`;
-  window.calcLiveTenders();
+
+  const paidInput = document.getElementById('pos-amount-paid');
+  if (paidInput && (paidInput.value === '' || paidInput.dataset.autoTracked === 'true')) {
+    paidInput.value = total > 0 ? total : '';
+    paidInput.dataset.autoTracked = 'true';
+  }
+
+  window.calcPosPaymentMath();
 };
 
 window.getPosTotal = function() {
   return window.posCalculatedTotal || 0;
 };
 
-window.calcLiveTenders = function() {
-  const targetTotal = window.posCalculatedTotal || 0;
-  const cash = Number(document.getElementById('tender-cash')?.value || 0);
-  const pos = Number(document.getElementById('tender-pos')?.value || 0);
-  const transfer = Number(document.getElementById('tender-transfer')?.value || 0);
-  const bashi = Number(document.getElementById('tender-bashi')?.value || 0);
+window.setPosCustType = function(type) {
+  window.posCustType = type;
+  const walkinBtn = document.getElementById('btn-cust-type-walkin');
+  const distBtn = document.getElementById('btn-cust-type-distributor');
+  const walkinBox = document.getElementById('pos-walkin-box');
+  const distBox = document.getElementById('pos-distributor-box');
 
-  // Auto-show/hide transfer bank dropdown
-  const bankBox = document.getElementById('pos-transfer-bank-box');
-  if (bankBox) {
-    bankBox.style.display = transfer > 0 ? 'flex' : 'none';
+  if (walkinBtn && distBtn) {
+    walkinBtn.className = `btn btn--sm ${type === 'walkin' ? 'btn--ink' : 'btn--ghost'}`;
+    distBtn.className = `btn btn--sm ${type === 'distributor' ? 'btn--ink' : 'btn--ghost'}`;
   }
+  if (walkinBox) walkinBox.style.display = type === 'walkin' ? 'flex' : 'none';
+  if (distBox) distBox.style.display = type === 'distributor' ? 'flex' : 'none';
 
-  // Credit Rule: If bashi > 0, Walk-in is strictly forbidden!
-  const custSelect = document.getElementById('pos-customer');
-  const walkinOpt = document.getElementById('opt-customer-walkin');
-  if (bashi > 0) {
-    if (walkinOpt) walkinOpt.disabled = true;
-    if (custSelect && custSelect.value === 'walkin') {
-      if (custSelect.options.length > 1) {
-        custSelect.selectedIndex = 1;
-        window.handlePosCustomerChange();
-      }
-    }
-  } else {
-    if (walkinOpt) walkinOpt.disabled = false;
-  }
-
-  const sum = cash + pos + transfer + bashi;
-  const isHa = localStorage.getItem('rusbi_lang') === 'ha';
-  const labelEl = document.getElementById('pos-balance-label');
-  const valEl = document.getElementById('pos-balance-value');
-  const btn = document.getElementById('btn-complete-sale');
-
-  if (targetTotal <= 0) {
-    if (labelEl) labelEl.innerText = isHa ? 'Ragewa:' : 'Remaining:';
-    if (valEl) {
-      valEl.innerText = '₦0.00';
-      valEl.style.color = 'var(--muted)';
-    }
-    if (btn) {
-      btn.disabled = true;
-      btn.style.background = '#64748b';
-      btn.style.borderColor = '#64748b';
-      btn.style.cursor = 'not-allowed';
-      btn.style.opacity = '0.6';
-    }
-    return;
-  }
-
-  // Exact Match
-  if (sum === targetTotal) {
-    if (labelEl) labelEl.innerText = isHa ? 'Ragewa:' : 'Remaining:';
-    if (valEl) {
-      valEl.innerText = '₦0.00';
-      valEl.style.color = 'var(--rusbi-green)';
-    }
-    if (btn) {
-      btn.disabled = false;
-      btn.style.background = 'var(--rusbi-green)';
-      btn.style.borderColor = 'var(--rusbi-green)';
-      btn.style.cursor = 'pointer';
-      btn.style.opacity = '1';
-    }
-  } else if (sum < targetTotal) {
-    const diff = targetTotal - sum;
-    if (labelEl) labelEl.innerText = isHa ? 'Ragewa:' : 'Remaining:';
-    if (valEl) {
-      valEl.innerText = `₦${diff.toLocaleString()}`;
-      valEl.style.color = 'var(--bad)';
-    }
-    if (btn) {
-      btn.disabled = true;
-      btn.style.background = '#64748b';
-      btn.style.borderColor = '#64748b';
-      btn.style.cursor = 'not-allowed';
-      btn.style.opacity = '0.6';
-    }
-  } else {
-    // If only cash paid and cash > targetTotal, it is Change!
-    if (cash >= targetTotal && pos === 0 && transfer === 0 && bashi === 0) {
-      const change = cash - targetTotal;
-      if (labelEl) labelEl.innerText = isHa ? 'Canji:' : 'Change:';
-      if (valEl) {
-        valEl.innerText = `₦${change.toLocaleString()}`;
-        valEl.style.color = 'var(--rusbi-green)';
-      }
-      if (btn) {
-        btn.disabled = false;
-        btn.style.background = 'var(--rusbi-green)';
-        btn.style.borderColor = 'var(--rusbi-green)';
-        btn.style.cursor = 'pointer';
-        btn.style.opacity = '1';
-      }
-    } else {
-      const excess = sum - targetTotal;
-      if (labelEl) labelEl.innerText = isHa ? 'Kari:' : 'Over:';
-      if (valEl) {
-        valEl.innerText = `+₦${excess.toLocaleString()}`;
-        valEl.style.color = '#ef4444';
-      }
-      if (btn) {
-        btn.disabled = true;
-        btn.style.background = '#64748b';
-        btn.style.borderColor = '#64748b';
-        btn.style.cursor = 'not-allowed';
-        btn.style.opacity = '0.6';
-      }
-    }
-  }
+  window.handlePosDistributorChange();
+  window.calcPosPaymentMath();
 };
 
-window.handlePosCustomerChange = function() {
-  const select = document.getElementById('pos-customer');
-  const bashiInput = document.getElementById('tender-bashi');
-  const walkinBox = document.getElementById('pos-walkin-data');
-  const regInfo = document.getElementById('pos-registered-info');
-  if (!select) return;
-
-  const opt = select.options[select.selectedIndex];
-
-  if (select.value === 'walkin') {
-    if (walkinBox) walkinBox.style.display = 'grid';
-    if (regInfo) regInfo.style.display = 'none';
-    if (bashiInput && Number(bashiInput.value) > 0) {
-      bashiInput.value = '';
-      window.calcLiveTenders();
-    }
-  } else {
-    if (walkinBox) walkinBox.style.display = 'none';
-    if (regInfo) {
-      regInfo.style.display = 'block';
-      const roleEl = document.getElementById('pos-cust-role-badge');
-      const phoneEl = document.getElementById('pos-cust-phone-disp');
-      const balEl = document.getElementById('pos-cust-balance-disp');
-      if (roleEl) roleEl.innerText = opt?.dataset.role || 'Wholesale';
-      if (phoneEl) phoneEl.innerText = opt?.dataset.phone || '';
-      if (balEl) balEl.innerText = `₦${Number(opt?.dataset.owing || 0).toLocaleString()}`;
-    }
-  }
-};
-
-window.togglePosNewCustomer = function() {
-  const form = document.getElementById('pos-new-cust-form');
-  if (form) {
-    const isHidden = form.style.display === 'none' || !form.style.display;
-    form.style.display = isHidden ? 'flex' : 'none';
-    if (isHidden) {
-      document.getElementById('pos-new-cust-name')?.focus();
-    }
-  }
-};
-
-window.savePosNewCustomer = function() {
-  const nameInput = document.getElementById('pos-new-cust-name');
-  const phoneInput = document.getElementById('pos-new-cust-phone');
-  const typeSelect = document.getElementById('pos-new-cust-type');
-  const name = (nameInput?.value || '').trim();
-  const phone = (phoneInput?.value || '').trim();
-  const role = typeSelect?.value || 'Wholesale Distributor';
-
-  if (!name) {
-    showToast("Please enter customer name", true);
-    nameInput?.focus();
-    return;
-  }
-
-  const entity = state.entities[0] || {};
-  if (!entity.bashiDistributors) entity.bashiDistributors = [];
-
-  const newCust = {
-    id: `cust-${Date.now()}`,
-    name: name,
-    phone: phone || '+234 800 000 0000',
-    role: role,
-    dailyAllocation: 50,
-    creditLimit: 250000,
-    balanceOwing: 0,
-    overdueDays: 0,
-    status: 'active'
-  };
-
-  entity.bashiDistributors.push(newCust);
-  if (!entity.customers) entity.customers = [];
-  entity.customers.push({
-    id: newCust.id,
-    name: newCust.name,
-    displayName: newCust.name,
-    phone: newCust.phone,
-    role: newCust.role,
-    balance: 0
+window.setPosPayMethod = function(method) {
+  window.posPayMethod = method;
+  ['cash', 'pos', 'transfer'].forEach(m => {
+    const btn = document.getElementById(`btn-pay-method-${m}`);
+    if (btn) btn.className = `btn btn--sm ${method === m ? 'btn--ink' : 'btn--ghost'}`;
   });
 
-  saveState();
+  const transferBox = document.getElementById('pos-transfer-bank-box');
+  const posBox = document.getElementById('pos-terminal-box');
+  const cashBox = document.getElementById('pos-cash-box');
 
-  const select = document.getElementById('pos-customer');
-  if (select) {
-    const opt = document.createElement('option');
-    opt.value = newCust.id;
-    opt.text = `${newCust.name} — Owing: ₦0`;
-    opt.dataset.phone = newCust.phone;
-    opt.dataset.role = newCust.role;
-    opt.dataset.owing = 0;
-    opt.dataset.limit = 250000;
-    select.appendChild(opt);
-    select.value = newCust.id;
+  if (transferBox) transferBox.style.display = method === 'transfer' ? 'block' : 'none';
+  if (posBox) posBox.style.display = method === 'pos' ? 'block' : 'none';
+  if (cashBox) cashBox.style.display = method === 'cash' ? 'block' : 'none';
+};
+
+window.handlePosDistributorChange = function() {
+  const select = document.getElementById('pos-distributor-select');
+  const owingDisp = document.getElementById('pos-dist-owing-display');
+  if (select && owingDisp) {
+    const opt = select.options[select.selectedIndex];
+    const owing = Number(opt?.dataset.owing || 0);
+    owingDisp.innerText = `₦${owing.toLocaleString()}`;
+  }
+};
+
+window.setPosAmountPreset = function(preset) {
+  const total = window.posCalculatedTotal || 0;
+  const paidInput = document.getElementById('pos-amount-paid');
+  if (!paidInput) return;
+  if (preset === 'full') {
+    paidInput.value = total > 0 ? total : '';
+    paidInput.dataset.autoTracked = 'true';
+  } else if (preset === 'zero') {
+    paidInput.value = '0';
+    paidInput.dataset.autoTracked = 'false';
+  }
+  window.calcPosPaymentMath();
+};
+
+window.calcPosPaymentMath = function() {
+  const total = window.posCalculatedTotal || 0;
+  const paidInput = document.getElementById('pos-amount-paid');
+  const rawPaid = paidInput?.value.trim();
+  const amountPaid = rawPaid === '' ? total : Math.max(0, Number(rawPaid || 0));
+
+  const breakdownPaid = document.getElementById('pos-breakdown-paid');
+  const breakdownOwing = document.getElementById('pos-breakdown-owing');
+  const debtLabel = document.getElementById('pos-breakdown-debt-label');
+  const completeBtn = document.getElementById('btn-complete-sale');
+
+  const owing = Math.max(0, total - amountPaid);
+  const change = Math.max(0, amountPaid - total);
+
+  if (breakdownPaid) {
+    breakdownPaid.innerText = `₦${amountPaid.toLocaleString()}`;
   }
 
-  if (nameInput) nameInput.value = '';
-  if (phoneInput) phoneInput.value = '';
-  const form = document.getElementById('pos-new-cust-form');
-  if (form) form.style.display = 'none';
+  if (breakdownOwing) {
+    if (owing > 0) {
+      if (debtLabel) debtLabel.innerText = 'Added to Debt:';
+      breakdownOwing.innerText = `₦${owing.toLocaleString()}`;
+      breakdownOwing.style.color = '#d97706';
+    } else if (change > 0) {
+      if (debtLabel) debtLabel.innerText = 'Change / Excess:';
+      breakdownOwing.innerText = `₦${change.toLocaleString()}`;
+      breakdownOwing.style.color = 'var(--rusbi-green)';
+    } else {
+      if (debtLabel) debtLabel.innerText = 'Added to Debt:';
+      breakdownOwing.innerText = '₦0.00';
+      breakdownOwing.style.color = 'var(--text)';
+    }
+  }
 
-  window.handlePosCustomerChange();
-  showToast(`✓ Added ${name} to customer directory!`);
+  // Complete button is enabled as long as cart has items (total > 0)!
+  if (completeBtn) {
+    if (total > 0) {
+      completeBtn.disabled = false;
+      completeBtn.style.background = 'var(--rusbi-green)';
+      completeBtn.style.borderColor = 'var(--rusbi-green)';
+      completeBtn.style.color = '#ffffff';
+      completeBtn.style.cursor = 'pointer';
+      completeBtn.style.opacity = '1';
+    } else {
+      completeBtn.disabled = true;
+      completeBtn.style.background = '#64748b';
+      completeBtn.style.borderColor = '#64748b';
+      completeBtn.style.color = '#ffffff';
+      completeBtn.style.cursor = 'not-allowed';
+      completeBtn.style.opacity = '0.6';
+    }
+  }
+};
+
+window.calcLiveTenders = window.calcPosPaymentMath;
+
+window.handlePosCustomerChange = function() {
+  window.handlePosDistributorChange();
 };
 
 window.submitPosCheckout = function() {
-  const targetTotal = window.posCalculatedTotal || 0;
-  if (targetTotal <= 0) {
+  const total = window.posCalculatedTotal || 0;
+  if (total <= 0) {
     showToast("Please select at least 1 loaf of bread.", true);
     return;
   }
 
-  const cash = Number(document.getElementById('tender-cash')?.value || 0);
-  const pos = Number(document.getElementById('tender-pos')?.value || 0);
-  const transfer = Number(document.getElementById('tender-transfer')?.value || 0);
-  const bashi = Number(document.getElementById('tender-bashi')?.value || 0);
-  const transferBank = document.getElementById('tender-transfer-bank')?.value || 'Zenith Bank';
-
-  const sum = cash + pos + transfer + bashi;
-  if (sum < targetTotal) {
-    showToast(`Payment incomplete: ₦${(targetTotal - sum).toLocaleString()} remaining.`, true);
-    return;
-  }
-
-  const custSelect = document.getElementById('pos-customer');
-  const isWalkin = !custSelect || custSelect.value === 'walkin';
-
-  if (bashi > 0 && isWalkin) {
-    showToast("Credit cannot be issued to Walk-in retail. Select a registered customer.", true);
-    custSelect?.focus();
-    return;
-  }
-
-  let custName = 'Walk-in Retail';
-  let custPhone = '';
-
-  if (isWalkin) {
-    const nameVal = document.getElementById('pos-walkin-name')?.value.trim();
-    const phoneVal = document.getElementById('pos-walkin-phone')?.value.trim();
-    if (nameVal) custName = nameVal;
-    if (phoneVal) custPhone = phoneVal;
-  } else {
-    const opt = custSelect.options[custSelect.selectedIndex];
-    custName = opt?.text?.split('—')[0]?.split('(')[0]?.trim() || 'Customer';
-    custPhone = opt?.dataset.phone || '';
-  }
+  const custType = window.posCustType || 'walkin';
+  const payMethod = window.posPayMethod || 'cash';
+  const paidInput = document.getElementById('pos-amount-paid');
+  const rawPaid = paidInput ? paidInput.value.trim() : '';
+  const amountPaid = rawPaid === '' ? total : Math.max(0, Number(rawPaid || 0));
+  const remainingOwed = Math.max(0, total - amountPaid);
 
   const entity = state.entities[0];
 
-  // If credit, add to debtor's balance
-  if (bashi > 0 && !isWalkin) {
-    const debtor = (entity.bashiDistributors || []).find(d => d.id === custSelect.value);
-    if (debtor) debtor.balanceOwing = (debtor.balanceOwing || 0) + bashi;
+  let custId = 'walkin';
+  let custName = 'Walk-in Retail';
+  let custPhone = '';
+
+  if (custType === 'distributor') {
+    const select = document.getElementById('pos-distributor-select');
+    custId = select ? select.value : '';
+    const distributor = (entity.bashiDistributors || []).find(d => d.id === custId);
+    if (!distributor) {
+      showToast("Please select a valid distributor.", true);
+      return;
+    }
+    custName = distributor.name;
+    custPhone = distributor.phone || '';
+
+    // Add remaining balance to distributor's owing balance!
+    if (remainingOwed > 0) {
+      distributor.balanceOwing = (distributor.balanceOwing || 0) + remainingOwed;
+    }
+  } else {
+    // Walk-in
+    const nameVal = document.getElementById('pos-walkin-name') ? document.getElementById('pos-walkin-name').value.trim() : '';
+    const phoneVal = document.getElementById('pos-walkin-phone') ? document.getElementById('pos-walkin-phone').value.trim() : '';
+
+    // If walk-in owes money, they MUST provide name and phone so debt is recorded!
+    if (remainingOwed > 0 && (!nameVal || !phoneVal)) {
+      showToast("To complete sale on credit, please enter customer Name and Phone.", true);
+      if (!nameVal) { const el = document.getElementById('pos-walkin-name'); if (el) el.focus(); }
+      else { const el = document.getElementById('pos-walkin-phone'); if (el) el.focus(); }
+      return;
+    }
+
+    if (nameVal) custName = nameVal;
+    if (phoneVal) custPhone = phoneVal;
+
+    // Record or update in retailCustomers
+    if (!entity.retailCustomers) entity.retailCustomers = [];
+    const cleanPhone = custPhone.replace(/[^0-9]/g, '');
+    let existing = cleanPhone ? entity.retailCustomers.find(r => (r.phone || '').replace(/[^0-9]/g, '') === cleanPhone) : null;
+    if (!existing && custName !== 'Walk-in Retail') {
+      existing = entity.retailCustomers.find(r => (r.name || '').toLowerCase() === custName.toLowerCase());
+    }
+
+    if (existing) {
+      existing.visitsCount = (existing.visitsCount || 1) + 1;
+      existing.totalPurchases = (existing.totalPurchases || 0) + total;
+      existing.lastVisit = new Date().toISOString();
+      if (custName !== 'Walk-in Retail') existing.name = custName;
+      if (custPhone) existing.phone = custPhone;
+    } else if (custPhone || (custName && custName !== 'Walk-in Retail')) {
+      entity.retailCustomers.unshift({
+        id: 'ret-' + Date.now(),
+        name: custName !== 'Walk-in Retail' ? custName : ('Customer (' + custPhone + ')'),
+        phone: custPhone,
+        firstVisit: new Date().toISOString(),
+        lastVisit: new Date().toISOString(),
+        totalPurchases: total,
+        visitsCount: 1
+      });
+    }
+
+    // If walk-in owes money, also record in bashiDistributors so it shows on Credit (Bashi) list!
+    if (remainingOwed > 0) {
+      if (!entity.bashiDistributors) entity.bashiDistributors = [];
+      let debtor = entity.bashiDistributors.find(d => (d.phone && cleanPhone && d.phone.replace(/[^0-9]/g, '') === cleanPhone) || d.name.toLowerCase() === custName.toLowerCase());
+      if (debtor) {
+        debtor.balanceOwing = (debtor.balanceOwing || 0) + remainingOwed;
+      } else {
+        entity.bashiDistributors.unshift({
+          id: 'bashi-' + Date.now(),
+          name: custName,
+          role: 'Counter Retail (Walk-in)',
+          phone: custPhone,
+          dailyAllocation: 0,
+          creditLimit: 50000,
+          balanceOwing: remainingOwed,
+          overdueDays: 0,
+          status: 'active',
+          guarantor: 'Walk-in Counter Record',
+          guarantorPhone: custPhone,
+          lastPayment: 'None'
+        });
+      }
+    }
   }
 
-  // Deduct inventory
+  // Deduct bread loaves from inventory
   const products = (entity.inventory || []).filter(i => i.type === 'product');
   const soldItems = [];
   products.forEach(p => {
-    const input = document.getElementById(`pos-qty-${p.id}`);
-    const qty = Number(input?.value || 0);
+    const input = document.getElementById('pos-qty-' + p.id);
+    const qty = Number(input ? input.value : 0);
     if (qty > 0) {
       p.qtyOnHand = Math.max(0, Number(p.qtyOnHand || 0) - qty);
       soldItems.push({ id: p.id, name: p.name, qty: qty, price: Number(p.salesPrice || p.price || 850) });
     }
   });
 
-  // Till cash: cash portion up to total
-  const cashAdded = Math.min(cash, targetTotal);
-  if (cashAdded > 0 && entity.cashShift) {
-    entity.cashShift.expectedInDrawer = (entity.cashShift.expectedInDrawer || 0) + cashAdded;
-    entity.cashShift.cashCollectedSales = (entity.cashShift.cashCollectedSales || 0) + cashAdded;
-  }
-
-  // Permanent sales record
-  if (!entity.salesLog) entity.salesLog = [];
-  entity.salesLog.unshift({
-    id: `sale-${Date.now()}`,
-    timestamp: new Date().toISOString(),
-    customerType: isWalkin ? 'walkin' : 'registered',
-    customerId: custSelect?.value || 'walkin',
-    customerName: custName,
-    customerPhone: custPhone,
-    total: targetTotal,
-    cashTendered: cash,
-    items: soldItems,
-    tenders: {
-      cash: cashAdded,
-      pos: pos,
-      transfer: transfer,
-      transferBank: transfer > 0 ? transferBank : null,
-      bashi: bashi
-    }
-  });
-
-  if (isWalkin) {
-    if (!entity.retailCustomers) entity.retailCustomers = [];
-    const cleanPhone = custPhone.replace(/[^0-9]/g, '');
-    let exists = cleanPhone ? entity.retailCustomers.find(r => (r.phone || '').replace(/[^0-9]/g, '') === cleanPhone) : null;
-    if (!exists && custName && custName !== 'Walk-in Retail') {
-      exists = entity.retailCustomers.find(r => (r.name || '').toLowerCase() === custName.toLowerCase());
-    }
-    if (exists) {
-      exists.totalPurchases = (exists.totalPurchases || 0) + targetTotal;
-      exists.visitsCount = (exists.visitsCount || 1) + 1;
-      exists.lastVisit = new Date().toISOString();
-      if (custName && custName !== 'Walk-in Retail') exists.name = custName;
-      if (custPhone) exists.phone = custPhone;
-    } else if (custPhone || (custName && custName !== 'Walk-in Retail')) {
-      entity.retailCustomers.unshift({
-        id: `ret-${Date.now()}`,
-        name: custName !== 'Walk-in Retail' ? custName : `Customer (${custPhone})`,
-        phone: custPhone,
-        firstVisit: new Date().toISOString(),
-        lastVisit: new Date().toISOString(),
-        totalPurchases: targetTotal,
-        visitsCount: 1
+  // Financial posting for amount actually paid
+  let paymentTargetLabel = 'Cash Drawer';
+  if (amountPaid > 0) {
+    if (payMethod === 'cash') {
+      if (entity.cashShift) {
+        entity.cashShift.expectedInDrawer = (entity.cashShift.expectedInDrawer || 0) + amountPaid;
+        entity.cashShift.cashCollectedSales = (entity.cashShift.cashCollectedSales || 0) + amountPaid;
+      }
+      paymentTargetLabel = 'Cash Drawer';
+    } else if (payMethod === 'transfer') {
+      const bankSelect = document.getElementById('pos-transfer-bank-account');
+      const bankVal = bankSelect ? bankSelect.value : '1010';
+      const bankAccount = (entity.accounts || []).find(a => a.code === bankVal || a.name === bankVal);
+      if (bankAccount) {
+        bankAccount.balance = (bankAccount.balance || 0) + amountPaid;
+        paymentTargetLabel = bankAccount.name;
+      } else {
+        paymentTargetLabel = bankVal;
+      }
+      if (!entity.bankTransactions) entity.bankTransactions = [];
+      entity.bankTransactions.unshift({
+        id: 'tx-' + Date.now(),
+        date: new Date().toISOString().split('T')[0],
+        description: 'Direct Transfer: Bread Sales (' + custName + ')',
+        amount: amountPaid,
+        accountCode: bankAccount ? bankAccount.code : '1010',
+        accountName: paymentTargetLabel,
+        type: 'deposit',
+        cleared: true
+      });
+    } else if (payMethod === 'pos') {
+      const posSelect = document.getElementById('pos-terminal-account');
+      const posVal = posSelect ? posSelect.value : 'moniepoint';
+      const posName = posVal === 'moniepoint' ? 'Moniepoint MFB (POS)' : 'Zenith Bank POS';
+      const bankAccount = (entity.accounts || []).find(a => a.code === '1030' || a.name.includes('Moniepoint'));
+      if (bankAccount) {
+        bankAccount.balance = (bankAccount.balance || 0) + amountPaid;
+      }
+      paymentTargetLabel = posName;
+      if (!entity.bankTransactions) entity.bankTransactions = [];
+      entity.bankTransactions.unshift({
+        id: 'tx-' + Date.now(),
+        date: new Date().toISOString().split('T')[0],
+        description: 'POS Card Swipe: Bread Sales (' + custName + ')',
+        amount: amountPaid,
+        accountCode: '1030',
+        accountName: posName,
+        type: 'deposit',
+        cleared: true
       });
     }
   }
 
+  // Permanent sales record in entity.salesLog
+  if (!entity.salesLog) entity.salesLog = [];
+  entity.salesLog.unshift({
+    id: 'sale-' + Date.now(),
+    timestamp: new Date().toISOString(),
+    customerType: custType,
+    customerId: custId,
+    customerName: custName,
+    customerPhone: custPhone,
+    total: total,
+    amountPaid: amountPaid,
+    remainingOwed: remainingOwed,
+    paymentMethod: payMethod,
+    paymentDestination: paymentTargetLabel,
+    items: soldItems
+  });
+
   saveState();
-  const phoneLabel = custPhone ? ` (${custPhone})` : '';
-  showToast(`✓ Sale completed: ₦${targetTotal.toLocaleString()} dispatched to ${custName}${phoneLabel}!`);
+
+  let msg = '';
+  if (remainingOwed === 0) {
+    msg = '✓ Sale completed: ₦' + total.toLocaleString() + ' paid in full via ' + payMethod.toUpperCase() + ' (' + paymentTargetLabel + ')!';
+  } else if (amountPaid === 0) {
+    msg = '✓ Sale completed: ₦' + total.toLocaleString() + ' (100% on credit) added to ' + custName + ' owing balance!';
+  } else {
+    msg = '✓ Sale completed: ₦' + amountPaid.toLocaleString() + ' paid via ' + payMethod.toUpperCase() + ', ₦' + remainingOwed.toLocaleString() + ' added to ' + custName + ' owing balance!';
+  }
+
+  showToast(msg);
   window.navigateTo('dashboard');
 };
 
