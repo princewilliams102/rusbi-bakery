@@ -14,7 +14,8 @@ async function run() {
   const page = await browser.newPage();
   await page.setViewport({ width: 1440, height: 900 });
 
-  await page.goto('http://localhost:3000', { waitUntil: 'networkidle2' });
+  const PORT = process.env.PORT || 3001;
+  await page.goto(`http://localhost:${PORT}`, { waitUntil: 'networkidle2' });
 
   // Log in as master
   await page.evaluate(() => {

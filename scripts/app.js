@@ -1497,12 +1497,14 @@ export function navigateTo(route) {
 
   if (!isAllowed) {
     currentRoute = normalizedRoute;
+  window.currentRoute = normalizedRoute;
     renderCurrentView();
     showToast(`Access Restricted: Your role does not permit access to ${route}.`);
     return;
   }
 
   currentRoute = normalizedRoute;
+  window.currentRoute = normalizedRoute;
 
   // Sync route into browser URL hash so page refreshes persist on this exact screen
   if (window.location.hash !== `#${normalizedRoute}`) {
@@ -9817,7 +9819,7 @@ window.executeStartBatch = function(e) {
 
   // Re-render table in background if currently visible
   const mainContent = document.getElementById('main-content');
-  if (mainContent && window.currentNav === 'batches') {
+  if (mainContent && (currentRoute === 'batches' || window.currentRoute === 'batches')) {
     renderBatchesView(mainContent, state);
   }
 
@@ -10088,7 +10090,7 @@ window.executeEndBatch = function(e) {
   showToast(`✓ Batch completed: ${bagged.toLocaleString()} loaves added to finished inventory! Yield: ${yieldVal}%`);
 
   const mainContent = document.getElementById('main-content');
-  if (mainContent && window.currentNav === 'batches') {
+  if (mainContent && (currentRoute === 'batches' || window.currentRoute === 'batches')) {
     renderBatchesView(mainContent, state);
   }
 };

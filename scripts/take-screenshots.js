@@ -50,7 +50,8 @@ async function captureAll() {
   await page.setViewport({ width: 1440, height: 960, deviceScaleFactor: 2 });
 
   console.log('1. Capturing Login Portal...');
-  await page.goto('http://localhost:3000', { waitUntil: 'networkidle2' });
+  const PORT = process.env.PORT || 3001;
+  await page.goto(`http://localhost:${PORT}`, { waitUntil: 'networkidle2' });
   await new Promise(r => setTimeout(r, 1000));
 
   // Dismiss splash screen if visible

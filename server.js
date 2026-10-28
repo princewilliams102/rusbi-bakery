@@ -10,7 +10,7 @@ const path = require('node:path');
 const url = require('node:url');
 const { DatabaseSync } = require('node:sqlite');
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 const ROOT_DIR = __dirname;
 const DB_PATH = path.join(ROOT_DIR, 'data', 'books.sqlite');
 
